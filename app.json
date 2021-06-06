@@ -1,0 +1,142 @@
+{
+    "$schema": "https://awesome.cqp.moe/schema/app/v9/app-schema.json",
+    "ret": 1,
+    "apiver": 9,
+    "name": "Bingy",
+    "version": "1.0.0",
+    "version_id": 1,
+    "author": "冰棍",
+    "description": "Bingy",
+    "event": [
+        {
+            "id": 1003,
+            "type": 1003,
+            "name": "插件启用",
+            "priority": 30000,
+            "function": "cq_event_enable"
+        },
+        {
+            "id": 1004,
+            "type": 1004,
+            "name": "插件停用",
+            "priority": 30000,
+            "function": "cq_event_disable"
+        },
+        {
+            "id": 1001,
+            "type": 1001,
+            "name": "酷Q启动",
+            "priority": 30000,
+            "function": "cq_event_coolq_start"
+        },
+        {
+            "id": 1002,
+            "type": 1002,
+            "name": "酷Q退出",
+            "priority": 30000,
+            "function": "cq_event_coolq_exit"
+        },
+        {
+            "id": 1,
+            "type": 21,
+            "name": "私聊消息",
+            "function": "cq_event_private_message",
+            "priority": 30000
+        },
+        {
+            "id": 2,
+            "type": 2,
+            "name": "群消息",
+            "function": "cq_event_group_message",
+            "priority": 30000
+        },
+        {
+            "id": 3,
+            "type": 4,
+            "name": "讨论组消息",
+            "function": "cq_event_discuss_message",
+            "priority": 30000
+        },
+        {
+            "id": 4,
+            "type": 11,
+            "name": "群文件上传",
+            "function": "cq_event_group_upload",
+            "priority": 30000
+        },
+        {
+            "id": 5,
+            "type": 101,
+            "name": "群管理员变动",
+            "function": "cq_event_group_admin",
+            "priority": 30000
+        },
+        {
+            "id": 6,
+            "type": 102,
+            "name": "群成员减少",
+            "function": "cq_event_group_member_decrease",
+            "priority": 30000
+        },
+        {
+            "id": 7,
+            "type": 103,
+            "name": "群成员增加",
+            "function": "cq_event_group_member_increase",
+            "priority": 30000
+        },
+        {
+            "id": 8,
+            "type": 104,
+            "name": "群禁言",
+            "function": "cq_event_group_ban",
+            "priority": 30000
+        },
+        {
+            "id": 10,
+            "type": 201,
+            "name": "好友已添加",
+            "function": "cq_event_friend_add",
+            "priority": 30000
+        },
+        {
+            "id": 11,
+            "type": 301,
+            "name": "好友请求",
+            "function": "cq_event_friend_request",
+            "priority": 30000
+        },
+        {
+            "id": 12,
+            "type": 302,
+            "name": "群请求",
+            "function": "cq_event_group_request",
+            "priority": 30000
+        }
+    ],
+    "menu": [],
+    "status": [],
+    "auth": [
+        101, 
+        103,
+        106, 
+        120, 
+        121, 
+        122, 
+        123, 
+        124, 
+        125, 
+        126, 
+        128, 
+        130, 
+        131, 
+        132, 
+        140, 
+        150, 
+        151, 
+        160,
+        161, 
+        162,
+        180 
+    ]
+}
