@@ -11,24 +11,11 @@
 #include <mutex>
 #include <list>
 #include "inventory.hpp"
+#include "equipment.hpp"
 
 #define INV_DEFAULT_CAPACITY 50
 
 using LL = long long;
-
-// 装备类型
-enum class EqiType {
-    armor_helmet,
-    armor_body,
-    armor_leg,
-    armor_boot,
-    weapon_primary,
-    weapon_secondary,
-    ornament_earrings,
-    ornament_rings,
-    ornament_necklace,
-    ornament_diamond
-};
 
 class player {
 private:
