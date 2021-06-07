@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using LL = long long;
 
@@ -29,3 +30,7 @@ public:
     std::string                 message;                // 出场消息
     std::vector<monsterDrop>    drop;                   // 掉落
 };
+
+extern std::unordered_map<LL, monsterData> allMonsters;
+
+bool bg_load_monster_config();

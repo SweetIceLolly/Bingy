@@ -9,8 +9,8 @@
 
 #define LOCK_CURR_PLAYER std::scoped_lock<std::mutex> __lock(this->mutexPlayer);
 
-std::unordered_map<long long, player>   allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 写入的时候必须加锁
-std::mutex                              mutexAllPlayers;
+std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 写入的时候必须加锁
+std::mutex                      mutexAllPlayers;
 
 // --------------------------------------------------
 // 构造函数
