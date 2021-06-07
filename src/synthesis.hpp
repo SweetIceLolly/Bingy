@@ -11,7 +11,10 @@
 using LL = long long;
 
 class synthesisInfo {
+public:
     std::vector<LL> requirements;       // 所需装备
     LL              coins;              // 所需硬币
     LL              targetId;           // 合成目标 ID
 };
+
+extern std::vector<synthesisInfo>   allSynthesises;

@@ -9,7 +9,11 @@
 #include <string>
 #include "inventory.hpp"
 
+#define DEFAULT_EQI_PATH    "equipments.txt"
+
 using LL = long long;
+
+extern std::string eqiConfigPath;
 
 // 装备类型
 enum class EqiType {

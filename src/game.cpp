@@ -8,6 +8,9 @@
 #include "player.hpp"
 #include <mongocxx/exception/exception.hpp>
 
+std::unordered_set<LL>  blacklist;          // 黑名单 (修改项目前记得加锁)
+std::unordered_set<LL>  allAdmins;          // 管理员 (修改项目前记得加锁)
+
 // 取得艾特玩家字符串
 std::string bg_at(const cq::MessageEvent &ev) {
     try {
@@ -63,7 +66,7 @@ bool preViewCoinsCallback(const cq::MessageEvent &ev) {
 void postViewCoinsCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "硬币数: " +
-            std::to_string(allPlayers[USER_ID].getCoins())
+            std::to_string(allPlayers.at(USER_ID).getCoins())
         );
     }
     catch (mongocxx::exception e) {
@@ -82,7 +85,7 @@ bool preSignInCallback(const cq::MessageEvent &ev) {
 // 签到
 void postSignInCallback(const cq::MessageEvent &ev) {
     try {
-        if (!allPlayers[USER_ID].incCoins(1000)) {
+        if (!allPlayers.at(USER_ID).incCoins(1000)) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
             return;
         }

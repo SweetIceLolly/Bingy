@@ -11,6 +11,8 @@
 
 using LL = long long;
 
+extern std::string monsterConfigPath;
+
 class monsterDrop {
 public:
     LL          id;

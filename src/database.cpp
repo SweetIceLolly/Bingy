@@ -10,7 +10,7 @@ using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
 
 // 一些数据库操作需要的全局变量
-std::string             dbUri = DB_DEFAULT_URI;
+std::string             dbUri = DEFAULT_DB_URI;
 std::string             dbName = DB_NAME;
 
 mongocxx::instance      mongoInst{};

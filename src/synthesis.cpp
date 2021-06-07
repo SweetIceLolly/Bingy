@@ -6,3 +6,4 @@
 
 #include "synthesis.hpp"
 
+std::vector<synthesisInfo>  allSynthesises;
