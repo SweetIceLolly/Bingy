@@ -15,6 +15,11 @@
 
 #define INV_DEFAULT_CAPACITY 50
 
+#define DEF_LL_GET_SET_INC(propName)                        \
+    LL player::get_##propName##(bool use_cache = true);     \
+    bool player::set_##propName##(const LL &val);           \
+    bool player::inc_##propName##(const LL &val);           \
+
 using LL = long long;
 
 class player {
@@ -55,14 +60,22 @@ public:
 
     // ---------------------------------------------------------
 
-    LL getId();
+    LL get_id();
 
-    std::string getNickname(bool use_cache = true);
-    bool player::setNickname(const std::string &val);
+    std::string get_nickname(bool use_cache = true);
+    bool player::set_nickname(const std::string &val);
 
-    LL player::getCoins(bool use_cache = true);
-    bool player::setCoins(const LL &val);
-    bool player::incCoins(const LL &val);
+    DEF_LL_GET_SET_INC(signInCount);
+    DEF_LL_GET_SET_INC(signInCountCont);
+    DEF_LL_GET_SET_INC(lastFight);
+    DEF_LL_GET_SET_INC(lastSignIn);
+    DEF_LL_GET_SET_INC(coins);
+    DEF_LL_GET_SET_INC(heroCoin);
+    DEF_LL_GET_SET_INC(level);
+    DEF_LL_GET_SET_INC(energy);
+    DEF_LL_GET_SET_INC(exp);
+    DEF_LL_GET_SET_INC(invCapacity);
+    DEF_LL_GET_SET_INC(vip);
 };
 
 extern std::unordered_map<long long, player>   allPlayers;

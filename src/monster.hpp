@@ -17,7 +17,7 @@ extern std::string monsterConfigPath;
 class monsterDrop {
 public:
     LL          id;
-    LL          chance;
+    double      chance;
 };
 
 class monsterData {

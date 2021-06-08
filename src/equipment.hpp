@@ -7,40 +7,44 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include "inventory.hpp"
-
-#define DEFAULT_EQI_PATH    "equipments.txt"
 
 using LL = long long;
 
-extern std::string eqiConfigPath;
-
 // 装备类型
-enum class EqiType {
+enum class EqiType : unsigned char {
     // 护甲类
-    armor_helmet,       // 头盔
-    armor_body,         // 战甲
-    armor_leg,          // 护腿
-    armor_boot,         // 战靴
+    armor_helmet = 0U,          // 头盔
+    armor_body = 1U,            // 战甲
+    armor_leg = 2U,             // 护腿
+    armor_boot = 3U,            // 战靴
     
     // 武器类
-    weapon_primary,     // 主武器
-    weapon_secondary,   // 服务器
+    weapon_primary = 4U,        // 主武器
+    weapon_secondary = 5U,      // 副武器
 
     // 饰品类
-    ornament_earrings,  // 耳环
-    ornament_rings,     // 戒指
-    ornament_necklace,  // 项链
-    ornament_jewelry,   // 宝石
+    ornament_earrings = 6U,     // 耳环
+    ornament_rings = 7U,        // 戒指
+    ornament_necklace = 8U,     // 项链
+    ornament_jewelry = 9U,      // 宝石
 
     // 一次性
-    single_use
+    single_use = 10U
 };
 
 class equipmentData {
 public:
     LL          id;
+    EqiType     type;                               // 装备类型
     std::string name;
     LL          atk, def, brk, agi, hp, mp, crt;    // 攻防破敏血魔暴
+    LL          wear;                               // 磨损
     LL          price;                              // 出售价格
 };
+
+extern std::string                             eqiConfigPath;
+extern std::unordered_map<LL, equipmentData>   allEquipments;
+
+bool bg_load_equipment_config();

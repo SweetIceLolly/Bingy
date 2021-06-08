@@ -45,7 +45,12 @@ bool bg_init() {
     console_log("成功读取怪物数据: 共计" + std::to_string(allMonsters.size()) + "个怪物");
 
     // 加载装备数据
-
+    console_log("正在读取装备数据...");
+    if (!bg_load_equipment_config()) {
+        console_log("读取装备数据文件失败!", LogType::error);
+        return false;
+    }
+    console_log("成功读取装备数据: 共计" + std::to_string(allEquipments.size()) + "个装备");
 
     // 连接数据库
     console_log("正在连接数据库...");

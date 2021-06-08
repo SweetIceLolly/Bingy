@@ -9,7 +9,7 @@
 
 #define LOCK_CURR_PLAYER std::scoped_lock<std::mutex> __lock(this->mutexPlayer);
 
-std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 写入的时候必须加锁
+std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
 std::mutex                      mutexAllPlayers;
 
 // --------------------------------------------------
@@ -164,13 +164,70 @@ bool bg_get_allplayers_from_db() {
 // --------------------------------------------------
 // 各种属性的 getter 和 setter
 
+// 懒人宏
+// 方便编写 LL 类型属性的 getter 和 setter. 其中包括:
+// 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
+#define LL_GET_SET_INC(propName)                                                \
+    LL player::get_##propName##(bool use_cache) {                               \
+        if (##propName##_cache && use_cache)                                    \
+            return this->##propName##;                                          \
+                                                                                \
+        auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id);              \
+        if (!result)                                                            \
+            throw "找不到对应的玩家 ID";                                         \
+        auto field = result->view()[#propName];                                 \
+        if (!field.raw())                                                       \
+            throw "没有找到 " #propName " field";                               \
+        auto tmp = field.get_int64().value;                                     \
+                                                                                \
+        LOCK_CURR_PLAYER;                                                       \
+        this->##propName## = tmp;                                               \
+        this->##propName##_cache = true;                                        \
+        return tmp;                                                             \
+    }                                                                           \
+                                                                                \
+    bool player::set_##propName##(const LL &val) {                              \
+        LOCK_CURR_PLAYER;                                                       \
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, #propName, val)) {    \
+            this->##propName## = val;                                           \
+            this->##propName##_cache = true;                                    \
+            return true;                                                        \
+        }                                                                       \
+        return false;                                                           \
+    }                                                                           \
+                                                                                \
+    bool player::inc_##propName##(const LL &val) {                              \
+        LOCK_CURR_PLAYER;                                                       \
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$inc",               \
+            bsoncxx::builder::stream::document{} << #propName << val            \
+            << bsoncxx::builder::stream::finalize)) {                           \
+                                                                                \
+            this->##propName## += val;                                          \
+            this->##propName##_cache = true;                                    \
+            return true;                                                        \
+        }                                                                       \
+        return false;                                                           \
+    }
+
+LL_GET_SET_INC(signInCount);
+LL_GET_SET_INC(signInCountCont);
+LL_GET_SET_INC(lastFight);
+LL_GET_SET_INC(lastSignIn);
+LL_GET_SET_INC(coins);
+LL_GET_SET_INC(heroCoin);
+LL_GET_SET_INC(level);
+LL_GET_SET_INC(energy);
+LL_GET_SET_INC(exp);
+LL_GET_SET_INC(invCapacity);
+LL_GET_SET_INC(vip);
+
 // 玩家 ID
-LL player::getId() {
+LL player::get_id() {
     return this->id;
 }
 
 // 获取昵称
-std::string player::getNickname(bool use_cache) {
+std::string player::get_nickname(bool use_cache) {
     if (nickname_cache && use_cache)
         return this->nickname;
 
@@ -181,7 +238,7 @@ std::string player::getNickname(bool use_cache) {
     if (!field.raw())
         throw "没有找到 nickname field";
     auto tmp = std::string(result->view()["nickname"].get_utf8().value);
-    
+
     LOCK_CURR_PLAYER;
     this->nickname = tmp;
     this->nickname_cache = true;
@@ -189,54 +246,10 @@ std::string player::getNickname(bool use_cache) {
 }
 
 // 设置昵称
-bool player::setNickname(const std::string &val) {
-    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "nickname", val)) {
-        return true;
-
-        LOCK_CURR_PLAYER;
-        this->nickname = val;
-        this->nickname_cache = true;
-    }
-    return false;
-}
-
-// 获取硬币
-LL player::getCoins(bool use_cache) {
-    if (coins_cache && use_cache)
-        return this->coins;
-
-    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id);
-    if (!result)
-        throw "找不到对应的玩家 ID";
-    auto field = result->view()["coins"];
-    if (!field.raw())
-        throw "没有找到 coins field";
-    auto tmp = field.get_int64().value;
-
+bool player::set_nickname(const std::string &val) {
     LOCK_CURR_PLAYER;
-    this->coins = tmp;
-    this->coins_cache = true;
-    return tmp;
-}
-
-// 设置硬币
-bool player::setCoins(const LL &val) {
-    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "coins", val)) {
-        LOCK_CURR_PLAYER;
-        this->coins = val;
-        this->nickname_cache = true;
-        return true;
-    }
-    return false;
-}
-
-// 添加硬币
-bool player::incCoins(const LL &val) {
-    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$inc",
-        bsoncxx::builder::stream::document{} << "i" << val << bsoncxx::builder::stream::finalize)) {
-
-        LOCK_CURR_PLAYER;
-        this->coins += val;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "nickname", val)) {
+        this->nickname = val;
         this->nickname_cache = true;
         return true;
     }

@@ -10,8 +10,8 @@
 
 #define DEFAULT_MONSTER_PATH    "monsters.txt"
 
-std::string monsterConfigPath = DEFAULT_MONSTER_PATH;
-std::unordered_map<LL, monsterData> allMonsters;
+std::string                         monsterConfigPath = DEFAULT_MONSTER_PATH;
+std::unordered_map<LL, monsterData> allMonsters;    // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
 
 // 读取所有怪物信息
 bool bg_load_monster_config() {
@@ -29,7 +29,33 @@ bool bg_load_monster_config() {
             try {
                 if (propName == "id")
                     temp->id = std::stoll(propValue);
-                // todo
+                else if (propName == "name")
+                    temp->name = propValue;
+                else if (propName == "atk")
+                    temp->atk = std::stoll(propValue);
+                else if (propName == "def")
+                    temp->def = std::stoll(propValue);
+                else if (propName == "agi")
+                    temp->agi = std::stoll(propValue);
+                else if (propName == "hp")
+                    temp->hp = std::stoll(propValue);
+                else if (propName == "coin")
+                    temp->coin = std::stoll(propValue);
+                else if (propName == "exp")
+                    temp->exp = std::stoll(propValue);
+                else if (propName == "message")
+                    temp->message = propValue;
+                else if (propName == "drop") {
+                    for (const auto &it : str_split(propValue, ',')) {
+                        // drop=id1:chance1,id2:chance2,id3:chance3, ...
+                        auto dropProp = str_split(it, ':');
+                        auto *dropInfo = new monsterDrop();
+                        dropInfo->id = std::stoll(dropProp[0]);
+                        dropInfo->chance = std::stod(dropProp[1]);
+                        temp->drop.push_back(*dropInfo);
+                        delete dropInfo;
+                    }
+                }
             }
             catch (...) {
                 console_log("处理怪物配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);

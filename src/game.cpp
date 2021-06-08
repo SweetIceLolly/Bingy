@@ -29,6 +29,13 @@ bool accountCheck(const cq::MessageEvent &ev) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "要先注册哦! 快发送\"bg 注册\"加入游戏吧!");
         return false;
     }
+
+    // 检查玩家是否在小黑屋
+    if (blacklist.find(USER_ID) != blacklist.end()) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "你被拉黑了!");
+        return false;
+    }
+
     return true;
 }
 
@@ -66,7 +73,7 @@ bool preViewCoinsCallback(const cq::MessageEvent &ev) {
 void postViewCoinsCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "硬币数: " +
-            std::to_string(allPlayers.at(USER_ID).getCoins())
+            std::to_string(allPlayers.at(USER_ID).get_coins())
         );
     }
     catch (mongocxx::exception e) {
@@ -79,13 +86,17 @@ void postViewCoinsCallback(const cq::MessageEvent &ev) {
 
 // 签到前检查
 bool preSignInCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
+    if (!accountCheck(ev))
+        return false;
+
+    // 如果玩家上次签到日期跟今天一样则拒绝签到
+    auto lastSignInDate = allPlayers.at(USER_ID).get_lastSignIn();
 }
 
 // 签到
 void postSignInCallback(const cq::MessageEvent &ev) {
     try {
-        if (!allPlayers.at(USER_ID).incCoins(1000)) {
+        if (!allPlayers.at(USER_ID).inc_coins(1000)) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
             return;
         }
