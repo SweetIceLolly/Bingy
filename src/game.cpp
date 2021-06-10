@@ -6,6 +6,7 @@
 
 #include "game.hpp"
 #include "player.hpp"
+#include "utils.hpp"
 #include <mongocxx/exception/exception.hpp>
 
 std::unordered_set<LL>  blacklist;          // 黑名单 (修改项目前记得加锁)
@@ -90,12 +91,26 @@ bool preSignInCallback(const cq::MessageEvent &ev) {
         return false;
 
     // 如果玩家上次签到日期跟今天一样则拒绝签到
-    auto lastSignInDate = allPlayers.at(USER_ID).get_lastSignIn();
+    dateTime signInDate = dateTime((time_t)allPlayers.at(USER_ID).get_lastSignIn());
+    dateTime today = dateTime();
+
+    if (signInDate.get_year() == today.get_year() && signInDate.get_month() == today.get_month() && signInDate.get_day() == today.get_day()) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "你今天已经签到过了哦!");
+        return false;
+    }
 }
 
 // 签到
 void postSignInCallback(const cq::MessageEvent &ev) {
     try {
+        if (!allPlayers.at(USER_ID).set_lastSignIn((LL)dateTime().get_timestamp())) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 设置签到时间失败"));
+            return;
+        }
+
+        LL deltaCoins = 0;
+        LL deltaEnergy = 0;
+        LL deltaExp = 0;
         if (!allPlayers.at(USER_ID).inc_coins(1000)) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
             return;

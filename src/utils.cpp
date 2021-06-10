@@ -7,6 +7,7 @@
 #include "utils.hpp"
 #include <iostream>
 #include <cqcppsdk/cqcppsdk.hpp>
+#include <mutex>
 
 #ifdef WIN32
 #ifndef WIN32_MEAN_AND_LEAN
@@ -17,6 +18,10 @@
 #define YELLOW  14
 #define WHITE   15
 #endif
+
+// 初始化随机数产生器
+std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+std::mutex mutexRndGen;
 
 void console_log(const std::string &msg, const LogType &type) {
 #ifdef WIN32
@@ -58,6 +63,8 @@ void console_log(const std::string &msg, const LogType &type) {
 #endif
 }
 
+// --------------------------------------------------------------
+
 std::string str_trim(const std::string &str) {
     size_t start = str.find_first_not_of(' ');
     size_t end = str.find_last_not_of(' ');
@@ -87,4 +94,87 @@ void str_lcase(std::string &str) {
         if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'))
             str[i] |= 32;           // 如果是字母, 则转换为小写字母
     }
+}
+
+// --------------------------------------------------------------
+
+LL rndRange(const LL &min, const LL &max) {
+    std::lock_guard<std::mutex> lock(mutexRndGen);
+    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(min, max);
+    return rnd(rndGen);
+}
+
+LL rndRange(const LL &max) {
+    std::lock_guard<std::mutex> lock(mutexRndGen);
+    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(0, max);
+    return rnd(rndGen);
+}
+
+// --------------------------------------------------------------
+
+void luckyDraw::insertItem(const LL &itemId, const LL &weight) {
+    std::lock_guard<std::mutex> lock(mutexItems);
+    maxIndex = currIndex + weight;
+    items.push_back(std::make_pair(itemId, std::make_pair(currIndex, maxIndex)));
+    currIndex = maxIndex;
+}
+
+bool luckyDraw::removeItem(const LL &itemId) {
+    std::lock_guard<std::mutex> lock(mutexItems);
+    for (auto it = items.begin(); it != items.end(); ++it) {
+        if (it->first == itemId) {
+            // 把后面条目的序号前移
+            LL weight = it->second.second - it->second.first;
+            for (auto it_after = it + 1; it_after != items.end(); ++it_after) {
+                it_after->second.first -= weight;
+                it_after->second.second -= weight;
+            }
+
+            // 修改总数量
+            maxIndex -= weight;
+            currIndex -= weight;
+
+            // 移除条目
+            items.erase(it);
+
+            return true;
+        }
+    }
+    return false;
+}
+
+LL luckyDraw::draw() {
+    LL rnd = rndRange(maxIndex - 1);
+
+    for (const auto &it : items) {
+        // 格式: (物品 ID, (起始序号, 结束序号))
+        if (it.second.first <= rnd && rnd < it.second.second)
+            return it.first;
+    }
+    return LLONG_MIN;       // 希望不会来到这里吧...
+}
+
+LL luckyDraw::massive_draw() {
+    LL rnd = rndRange(maxIndex - 1);
+
+    // 对物品进行二分搜索
+    // 格式: (物品 ID, (起始序号, 结束序号))
+    // 若 起始序号 <= rnd < 结束序号, 则抽中对应物品
+    size_t start = 0, end = items.size(), curr = (start + end) / 2;
+    while (end > start) {
+        if (items[curr].second.first <= rnd && rnd < items[curr].second.second)
+            // 刚好落在范围内
+            return items[curr].first;
+        else if (rnd < items[curr].second.first) {
+            // 目标范围在当前范围的前面
+            end = curr - 1;
+            curr = (start + end) / 2;
+        }
+        else {
+            // 目标范围在当前范围的后面
+            start = curr + 1;
+            curr = (start + end) / 2;
+        }
+    }
+    return LLONG_MIN;       // 希望不会来到这里吧...
 }

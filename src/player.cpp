@@ -188,7 +188,10 @@ bool bg_get_allplayers_from_db() {
                                                                                 \
     bool player::set_##propName##(const LL &val) {                              \
         LOCK_CURR_PLAYER;                                                       \
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, #propName, val)) {    \
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",               \
+            bsoncxx::builder::stream::document{} << #propName << val            \
+            << bsoncxx::builder::stream::finalize)) {                           \
+                                                                                \
             this->##propName## = val;                                           \
             this->##propName##_cache = true;                                    \
             return true;                                                        \
