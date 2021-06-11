@@ -22,6 +22,7 @@
 #define DEFAULT_DB_URI      "mongodb://127.0.0.1:27017/dreamy"
 #define DB_NAME             "bingy"
 #define DB_COLL_USERDATA    "userdata"
+#define DB_COLL_SIGNIN      "signin"
 
 // 指定数据库 URI 和库名, 可以在调用 dbInit 前修改
 extern std::string dbUri;
@@ -33,8 +34,8 @@ mongocxx::database dbGetDatabase(const char *name);
 mongocxx::collection dbGetCollection(const char *dbName, const char *collName);
 bool dbInsertDocument(const char *collName, const bsoncxx::document::value &value);
 
-template <typename T>
-std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, const std::string rtnField = "");
+template <typename T, typename ... Args>
+std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields);
 
 template <typename T1, typename T2>
 bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &filterVal,
@@ -48,19 +49,14 @@ mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields);
 
 // ===========================================================================
 
-template <typename T>
-std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, const std::string rtnField) {
+template <typename T, typename ... Args>
+std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields) {
     try {
         mongocxx::options::find opts{};
-        if (rtnField.empty())
-            opts.projection(bsoncxx::builder::basic::make_document(
-                bsoncxx::builder::basic::kvp("_id", 0)
-            ));
-        else
-            opts.projection(bsoncxx::builder::basic::make_document(
-                bsoncxx::builder::basic::kvp(rtnField, 1),
-                bsoncxx::builder::basic::kvp("_id", 0)
-            ));
+        bsoncxx::builder::basic::document doc;
+        ((doc.append(bsoncxx::builder::basic::kvp(rtnFields, 1))), ...);
+        doc.append(bsoncxx::builder::basic::kvp("_id", 0));
+        opts.projection(doc.extract());
 
         bsoncxx::document::value filter = bsoncxx::builder::stream::document{}
             << key << value
@@ -88,7 +84,7 @@ bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &f
         );
 
         if (result.has_value())
-            return result->modified_count() == 1;
+            return result->matched_count() == 1;
         else
             return false;
     }

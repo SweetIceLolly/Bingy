@@ -112,6 +112,44 @@ LL rndRange(const LL &max) {
 
 // --------------------------------------------------------------
 
+bool is_leap_year(const int &year) {
+    if (year % 4 == 0) {
+        if (year % 100 == 0)
+            return (year % 400 == 0);
+        else
+            return true;
+    }
+    else
+        return false;
+}
+
+bool is_day_sequential(const dateTime &a, const dateTime &b) {
+    const int year_a = a.get_year(), month_a = a.get_month(), day_a = a.get_day(),
+        year_b = b.get_year(), month_b = b.get_month(), day_b = b.get_day();
+
+    if (day_b == 1) {
+        // 如果 b 的天数是 1, 那么检查 a 是否为上一个月的最后一天
+
+        if (month_b == 1) {
+            // 如果 b 的月份是 1, 那么检查 a 是否为上一年的 12 月 31 日
+            return (year_b == year_a + 1 && month_a == 12 && day_a == 31);
+        }
+        else {
+            // 如果 b 的月份不是 1, 那么检查 a 是否为上一月的最后一天
+            unsigned char month_days[] = { 0, 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            month_days[2] = is_leap_year(year_a) ? 29 : 28;             // 处理润年的二月天数
+
+            return (year_b == year_a && month_b == month_a + 1 && day_a == static_cast<int>(month_days[month_a]));
+        }
+    }
+    else {
+        // 如果 b 的天数不是 1, 那么检查 a 是否为这个月对应的上一天
+        return (year_b == year_a && month_b == month_a && day_b == day_a + 1);
+    }
+}
+
+// --------------------------------------------------------------
+
 void luckyDraw::insertItem(const LL &itemId, const LL &weight) {
     std::lock_guard<std::mutex> lock(mutexItems);
     maxIndex = currIndex + weight;

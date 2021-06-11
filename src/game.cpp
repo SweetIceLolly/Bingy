@@ -7,6 +7,7 @@
 #include "game.hpp"
 #include "player.hpp"
 #include "utils.hpp"
+#include "signin_event.hpp"
 #include <mongocxx/exception/exception.hpp>
 
 std::unordered_set<LL>  blacklist;          // 黑名单 (修改项目前记得加锁)
@@ -43,7 +44,7 @@ bool accountCheck(const cq::MessageEvent &ev) {
 // 注册前检查
 bool preRegisterCallback(const cq::MessageEvent &ev) {
     if (bg_player_exist(USER_ID)) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "你已经注册过了!");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "你已经注册过啦!");
         return false;
     }
     return true;
@@ -74,7 +75,7 @@ bool preViewCoinsCallback(const cq::MessageEvent &ev) {
 void postViewCoinsCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "硬币数: " +
-            std::to_string(allPlayers.at(USER_ID).get_coins())
+            std::to_string(PLAYER.get_coins())
         );
     }
     catch (mongocxx::exception e) {
@@ -91,36 +92,117 @@ bool preSignInCallback(const cq::MessageEvent &ev) {
         return false;
 
     // 如果玩家上次签到日期跟今天一样则拒绝签到
-    dateTime signInDate = dateTime((time_t)allPlayers.at(USER_ID).get_lastSignIn());
+    dateTime signInDate = dateTime(static_cast<time_t>(PLAYER.get_lastSignIn()));
     dateTime today = dateTime();
 
     if (signInDate.get_year() == today.get_year() && signInDate.get_month() == today.get_month() && signInDate.get_day() == today.get_day()) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "你今天已经签到过了哦!");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "你今天已经签到过啦!");
         return false;
     }
+    return true;
 }
 
 // 签到
 void postSignInCallback(const cq::MessageEvent &ev) {
     try {
-        if (!allPlayers.at(USER_ID).set_lastSignIn((LL)dateTime().get_timestamp())) {
+        dateTime now;
+
+        // 检查连续签到
+        if (is_day_sequential(dateTime(static_cast<time_t>(PLAYER.get_lastFight())), now)) {
+            if (!PLAYER.inc_signInCountCont(1)) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 设置连续签到天数失败"));
+                return;
+            }
+        }
+        else {
+            if (!PLAYER.set_signInCountCont(1)) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 设置连续签到天数失败"));
+                return;
+            }
+        }
+
+        // 首先设置签到时间, 免得真的出了漏洞给玩家不断签到
+        if (!PLAYER.set_lastSignIn(static_cast<LL>(dateTime().get_timestamp()))) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 设置签到时间失败"));
             return;
         }
 
-        LL deltaCoins = 0;
-        LL deltaEnergy = 0;
-        LL deltaExp = 0;
-        if (!allPlayers.at(USER_ID).inc_coins(1000)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
+        // 设置玩家签到次数
+        if (!PLAYER.inc_signInCount(1)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加签到次数失败"));
             return;
         }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到成功"));
+
+        // 签到获得硬币 = 500 + 25 * 连续签到天数 + 10 * 总签到天数 + rnd(20 * 总签到天数)
+        // 签到*之后的*体力 = 15 * 连续签到天数 + 5 * 总签到天数
+        // 签到获得经验 = 15 * 连续签到次数 + 5 * 总签到天数
+        LL deltaCoins = 500 + 25 * PLAYER.get_signInCountCont() + 10 * PLAYER.get_signInCount() + rndRange(20 * PLAYER.get_signInCount());
+        LL deltaEnergy = 150 + 5 * PLAYER.get_level();
+        LL deltaExp = 15 * PLAYER.get_signInCountCont() + 5 * PLAYER.get_signInCount();
+
+        // 检查签到活动
+        std::string eventMsg = "";              // 活动消息
+        std::vector<LL> eventItems;             // 活动赠送物品
+        bg_match_sign_in_event(now, deltaCoins, deltaEnergy, eventItems, eventMsg);
+        // todo: 添加物品给玩家
+
+        if (!PLAYER.inc_coins(deltaCoins)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
+        }
+        if (!PLAYER.set_energy(static_cast<LL>(PLAYER.get_energy() * 0.75) + deltaEnergy)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加体力失败"));
+        }
+        if (!PLAYER.inc_exp(deltaExp)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加经验失败"));
+        }
+
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string(
+            "签到成功, 连续签到" + std::to_string(PLAYER.get_signInCountCont()) + "天, 总共签到" + std::to_string(PLAYER.get_signInCount()) + "天\n"
+            "获得硬币: " + std::to_string(deltaCoins) + "   拥有硬币: " + std::to_string(PLAYER.get_coins()) + "\n"
+            "获得体力: " + std::to_string(deltaEnergy) + "  获得经验: " + std::to_string(deltaExp) + (eventMsg.empty() ? "" : eventMsg)
+        ));
     }
     catch (mongocxx::exception e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: ") + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "签到发生错误!");
+    }
+}
+
+// 查看背包前检查
+bool preViewInventoryCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 通用查看背包函数
+std::string getInventoryStr(const LL &id) {
+    auto tmp = allPlayers.at(id).get_inventory();
+    if (tmp.size() == 0) {
+        return "背包空空如也, 快去获取装备吧!";
+    }
+    else {
+        std::string msg = "背包 (" + std::to_string(tmp.size()) + "/" + std::to_string(allPlayers.at(id).get_invCapacity()) + ")\n";
+        LL index = 1;
+        for (const auto &item : tmp) {
+            msg += std::to_string(index) + "." + allEquipments.at(item.id).name + "+" + std::to_string(item.level) + " ";
+            ++index;
+        }
+        if (!msg.empty())
+            msg.pop_back();
+        return msg;
+    }
+}
+
+// 查看背包
+void postViewInventoryCallback(const cq::MessageEvent &ev) {
+    try {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + getInventoryStr(USER_ID));
+    }
+    catch (mongocxx::exception e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("查看背包发生错误: ") + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看背包发生错误!");
     }
 }

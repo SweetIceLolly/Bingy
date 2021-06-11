@@ -67,7 +67,7 @@ public:
         _date = dt._date;
     }
 
-    int get_year() {
+    int get_year() const {
         return _date.tm_year + 1900;
     }
 
@@ -76,7 +76,7 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    int get_month() {
+    int get_month() const {
         return _date.tm_mon + 1;
     }
 
@@ -85,7 +85,7 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    int get_day() {
+    int get_day() const {
         return _date.tm_mday;
     }
 
@@ -94,7 +94,7 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    int get_hour() {
+    int get_hour() const {
         return _date.tm_hour;
     }
 
@@ -103,7 +103,7 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    int get_minute() {
+    int get_minute() const {
         return _date.tm_min;
     }
 
@@ -112,7 +112,7 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    int get_second() {
+    int get_second() const {
         return _date.tm_sec;
     }
 
@@ -122,12 +122,12 @@ public:
     }
 
     // 假若当前类所代表的是本地时间, 返回当前时间戳所对应的 UTC 时间戳
-    time_t get_utc_timestamp() {
+    time_t get_utc_timestamp() const {
         return std::mktime(std::gmtime(&_timestamp));
     }
 
     // 直接获取当前类所代表的时间戳
-    time_t get_timestamp() {
+    time_t get_timestamp() const {
         return _timestamp;
     }
 
@@ -155,6 +155,9 @@ public:
         return dateTime(dateTime().get_utc_timestamp());
     }
 };
+
+// 检查两个 dateTime 是否为连续日期. b 所代表的日期必须在 a 之后
+bool is_day_sequential(const dateTime &a, const dateTime &b);
 
 // 线程安全地获取一个 [min, max] 内的随机数
 LL rndRange(const LL &min, const LL &max);

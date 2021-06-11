@@ -22,20 +22,35 @@ player::player() {
 player::player(const player &p) {
     this->id = p.id;
     this->nickname = p.nickname;
+	this->nickname_cache = p.nickname_cache;
     this->signInCount = p.signInCount;
+	this->signInCount_cache = p.signInCount_cache;
     this->signInCountCont = p.signInCountCont;
+	this->signInCountCont_cache = p.signInCountCont_cache;
     this->lastFight = p.lastFight;
+	this->lastFight_cache = p.lastFight_cache;
     this->lastSignIn = p.lastSignIn;
+	this->lastSignIn_cache = p.lastSignIn_cache;
     this->coins = p.coins;
+	this->coins_cache = p.coins_cache;
     this->heroCoin = p.heroCoin;
+	this->heroCoin_cache = p.heroCoin_cache;
     this->level = p.level;
+	this->level_cache = p.level_cache;
     this->energy = p.energy;
+	this->energy_cache = p.energy_cache;
     this->exp = p.exp;
+	this->exp_cache = p.exp_cache;
     this->invCapacity = p.invCapacity;
-    //this->inventory = p.inventory;
+	this->invCapacity_cache = p.invCapacity_cache;
+    this->inventory = p.inventory;
+    this->inventory_cache = p.inventory_cache;
     this->vip = p.vip;
-    //this.equipments = p.equipments;
-    //this.equipItems = p.equipItems;
+	this->vip_cache = p.vip_cache;
+    this->equipments = p.equipments;
+    this->equipments_cache = p.equipments_cache;
+    this->equipItems = p.equipItems;
+    this->equipItems_cache = p.equipItems_cache;
 }
 
 player::player(const LL &qq) {
@@ -147,6 +162,7 @@ bool bg_get_allplayers_from_db() {
             SET_LL_PROP(exp);
             SET_LL_PROP(invCapacity);
             SET_LL_PROP(vip);
+            // todo
             //p.inventory
             //p.equipments
             //p.equipItems
@@ -168,11 +184,11 @@ bool bg_get_allplayers_from_db() {
 // 方便编写 LL 类型属性的 getter 和 setter. 其中包括:
 // 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
 #define LL_GET_SET_INC(propName)                                                \
-    LL player::get_##propName##(bool use_cache) {                               \
+    LL player::get_##propName##(const bool &use_cache) {                        \
         if (##propName##_cache && use_cache)                                    \
             return this->##propName##;                                          \
                                                                                 \
-        auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id);              \
+        auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, #propName);   \
         if (!result)                                                            \
             throw "找不到对应的玩家 ID";                                         \
         auto field = result->view()[#propName];                                 \
@@ -206,7 +222,6 @@ bool bg_get_allplayers_from_db() {
             << bsoncxx::builder::stream::finalize)) {                           \
                                                                                 \
             this->##propName## += val;                                          \
-            this->##propName##_cache = true;                                    \
             return true;                                                        \
         }                                                                       \
         return false;                                                           \
@@ -230,11 +245,11 @@ LL player::get_id() {
 }
 
 // 获取昵称
-std::string player::get_nickname(bool use_cache) {
+std::string player::get_nickname(const bool &use_cache) {
     if (nickname_cache && use_cache)
         return this->nickname;
 
-    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id);
+    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "nickname");
     if (!result)
         throw "找不到对应的玩家 ID";
     auto field = result->view()["nickname"];
@@ -258,3 +273,116 @@ bool player::set_nickname(const std::string &val) {
     }
     return false;
 }
+
+// 获取整个背包列表
+std::list<inventoryData> player::get_inventory(const bool &use_cache) {
+    if (inventory_cache && use_cache)
+        return inventory;
+
+    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "inventory");
+    if (!result)
+        throw "找不到对应玩家 ID";
+    auto field = result->view()["inventory"];
+    if (!field.raw())
+        throw "没有找到 inventory field";
+    bsoncxx::array::view tmpArray{ field.get_array().value };
+
+    LOCK_CURR_PLAYER;
+    std::list<inventoryData> rtn;
+    inventoryData invItem;
+    for (const auto &item : tmpArray) {
+        auto tmpObj = item.get_document().view();
+
+        invItem.id = tmpObj["id"].get_int64().value;
+        invItem.level = tmpObj["level"].get_int64().value;
+        invItem.wear = tmpObj["wear"].get_int64().value;
+        rtn.push_back(invItem);
+    }
+    return rtn;
+}
+
+// 按照指定序号获取背包物品. 如果指定序号无效, 则返回 false
+bool player::get_inventory_item(const LL &index, inventoryData &item, const bool &use_cache) {
+    return false;
+}
+
+// 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
+bool player::remove_at_inventory(const LL &index) {
+    return false;
+}
+
+// 添加新物品到背包末尾
+bool player::add_inventory_item(const inventoryData &item) {
+    return false;
+}
+
+// 设置整个背包列表
+bool player::set_inventory(const std::list<inventoryData> &val) {
+    return false;
+}
+
+// 获取整个购买次数表
+std::unordered_map<LL, LL> player::get_buyCount(const bool &use_cache) {
+    return buyCount;
+}
+
+// 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
+LL player::get_buyCount_item(const LL &id, const bool &use_cache) {
+    return 0;
+}
+
+// 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
+bool player::set_buyCount_item(const LL &id, const LL &count) {
+    return false;
+}
+
+// 设置整个购买次数表
+bool player::set_buyCount(const std::unordered_map<LL, LL> &val) {
+    return false;
+}
+
+// 获取整个已装备的装备表
+std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &use_cache) {
+    return equipments;
+}
+
+// 获取某个类型的装备
+inventoryData player::get_equipments_item(const EqiType &type, const bool &use_cache) {
+    return equipments[type];
+}
+
+// 设置某个类型的装备. 如果要移除, 则把 item 的 id 设置为 -1
+bool player::set_equipments_item(const EqiType &type, const inventoryData &item) {
+    return false;
+}
+
+// 设置整个已装备的装备表
+bool player::set_equipments(const std::unordered_map<EqiType, inventoryData> &val) {
+    return false;
+}
+
+// 获取整个已装备的一次性物品表
+std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
+    return equipItems;
+}
+
+// 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+bool player::get_equipItems_item(const LL &index, const bool &use_cache) {
+    return false;
+}
+
+// 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+bool player::get_equipItems_item(const LL &index, inventoryData &item, const bool &use_cache) {
+    return false;
+}
+
+// 添加新物品到已装备的一次性物品列表末尾
+bool player::add_equipItems_item(const inventoryData &item) {
+    return false;
+}
+
+// 设置整个已装备的一次性物品列表
+bool player::set_equipItems(const std::list<inventoryData> &val) {
+    return false;
+}
+

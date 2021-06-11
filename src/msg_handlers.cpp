@@ -38,3 +38,8 @@ CMD(view_coins) {
 CMD(sign_in) {
     MATCH("签到", SignIn);
 }
+
+// 查看背包
+CMD(view_inventory) {
+    MATCH("查看背包", ViewInventory);
+}

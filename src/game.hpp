@@ -26,7 +26,9 @@ bool accountCheck(const cq::MessageEvent &ev);
 // 懒人宏
 #define GROUP_ID    ev.target.group_id.value()      // 从 ev 获取群号
 #define USER_ID     ev.target.user_id.value()       // 从 ev 获取玩家 QQ 号
+#define PLAYER      allPlayers.at(USER_ID)          // 线程安全地获取 QQ 号对应的玩家
 
 PRE_POST(Register);
 PRE_POST(ViewCoins);
 PRE_POST(SignIn);
+PRE_POST(ViewInventory);

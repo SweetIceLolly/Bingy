@@ -31,6 +31,6 @@ public:
     std::vector<monsterDrop>    drop;                   // 掉落
 };
 
-extern std::unordered_map<LL, monsterData> allMonsters;
+extern std::unordered_map<LL, monsterData> allMonsters; // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
 
 bool bg_load_monster_config();

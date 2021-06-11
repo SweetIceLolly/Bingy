@@ -78,6 +78,28 @@ bool bg_init() {
     return true;
 }
 
+// 注册所有命令
+inline void bg_msgrouter_init() {
+    // 注册群聊相关命令
+    bg_groupmsg_router_add("bg", bg_cmd_bg);
+    bg_groupmsg_router_add("bg 注册", bg_cmd_register);
+    bg_groupmsg_router_add("bg 查看硬币", bg_cmd_view_coins);
+    bg_groupmsg_router_add("bg 查看背包", bg_cmd_view_inventory);
+    bg_groupmsg_router_add("bg 查看属性", nullptr);
+    bg_groupmsg_router_add("bg 签到", bg_cmd_sign_in);
+    bg_groupmsg_router_add("bg 交易场", nullptr);
+    bg_groupmsg_router_add("bg 合成", nullptr);
+    bg_groupmsg_router_add("bg 挑战", nullptr);
+    bg_groupmsg_router_add("bg 挑战森林", nullptr);
+    bg_groupmsg_router_add("bg pvp", nullptr);
+    bg_groupmsg_router_add("bg 查看装备", nullptr);
+    bg_groupmsg_router_add("bg 购买", nullptr);
+    bg_groupmsg_router_add("bg vip", nullptr);
+
+    // 注册私聊相关命令
+
+}
+
 // 读取游戏配置
 inline bool bg_load_config() {
     configParser parser(CONFIG_FILE_PATH);
@@ -128,7 +150,9 @@ inline bool bg_load_config() {
             // 处理签到活动
             else if (state == 1) {                                          // 配置
                 try {
-                    if (propName == "year")
+                    if (propName == "id")
+                        signInEv->id = std::stoll(propValue);
+                    else if (propName == "year")
                         signInEv->year = std::stoi(propValue);
                     else if (propName == "month")
                         signInEv->month = std::stoi(propValue);
@@ -138,12 +162,12 @@ inline bool bg_load_config() {
                         signInEv->hour = (char)std::stoi(propValue);
                     else if (propName == "minute")
                         signInEv->minute = (char)std::stoi(propValue);
-                    else if (propName == "first")
-                        signInEv->firstN = std::stoll(propValue);
                     else if (propName == "coinfactor")
                         signInEv->coinFactor = std::stod(propValue);
                     else if (propName == "energyfactor")
                         signInEv->energyFactor = std::stod(propValue);
+                    else if (propName == "first")
+                        signInEv->firstN = std::stoll(propValue);
                     else if (propName == "items") {
                         for (const auto &item : str_split(propValue, ',')) {
                             auto itemId = std::stoll(item);
@@ -212,25 +236,4 @@ inline bool bg_load_config() {
             return true;
         }
     );
-}
-
-// 注册所有命令
-inline void bg_msgrouter_init() {
-    // 注册群聊相关命令
-    bg_groupmsg_router_add("bg", bg_cmd_bg);
-    bg_groupmsg_router_add("bg 注册", bg_cmd_register);
-    bg_groupmsg_router_add("bg 查看硬币", bg_cmd_view_coins);
-    bg_groupmsg_router_add("bg 查看属性", nullptr);
-    bg_groupmsg_router_add("bg 签到", bg_cmd_sign_in);
-    bg_groupmsg_router_add("bg 交易场", nullptr);
-    bg_groupmsg_router_add("bg 合成", nullptr);
-    bg_groupmsg_router_add("bg 挑战", nullptr);
-    bg_groupmsg_router_add("bg 挑战森林", nullptr);
-    bg_groupmsg_router_add("bg pvp", nullptr);
-    bg_groupmsg_router_add("bg 查看装备", nullptr);
-    bg_groupmsg_router_add("bg 购买", nullptr);
-    bg_groupmsg_router_add("bg vip", nullptr);
-
-    // 注册私聊相关命令
-    
 }

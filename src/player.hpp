@@ -15,10 +15,10 @@
 
 #define INV_DEFAULT_CAPACITY 50
 
-#define DEF_LL_GET_SET_INC(propName)                        \
-    LL player::get_##propName##(bool use_cache = true);     \
-    bool player::set_##propName##(const LL &val);           \
-    bool player::inc_##propName##(const LL &val);           \
+#define DEF_LL_GET_SET_INC(propName)                            \
+    LL player::get_##propName##(const bool &use_cache = true);  \
+    bool player::set_##propName##(const LL &val);               \
+    bool player::inc_##propName##(const LL &val);               \
 
 using LL = long long;
 
@@ -49,7 +49,7 @@ public:
 
     // ---------------------------------------------------------
 
-    // 不允许使用默认构造函数
+    // 默认构造函数
     player();
 
     // 复制构造函数
@@ -62,7 +62,7 @@ public:
 
     LL get_id();
 
-    std::string get_nickname(bool use_cache = true);
+    std::string get_nickname(const bool &use_cache = true);
     bool player::set_nickname(const std::string &val);
 
     DEF_LL_GET_SET_INC(signInCount);
@@ -76,6 +76,46 @@ public:
     DEF_LL_GET_SET_INC(exp);
     DEF_LL_GET_SET_INC(invCapacity);
     DEF_LL_GET_SET_INC(vip);
+
+    // 获取整个背包列表
+    std::list<inventoryData> get_inventory(const bool &use_cache = true);
+    // 按照指定序号获取背包物品. 如果指定序号无效, 则返回 false
+    bool get_inventory_item(const LL &index, inventoryData &item, const bool &use_cache = true);
+    // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
+    bool remove_at_inventory(const LL &index);
+    // 添加新物品到背包末尾
+    bool add_inventory_item(const inventoryData &item);
+    // 设置整个背包列表
+    bool set_inventory(const std::list<inventoryData> &val);
+
+    // 获取整个购买次数表
+    std::unordered_map<LL, LL> get_buyCount(const bool &use_cache = true);
+    // 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
+    LL get_buyCount_item(const LL &id, const bool &use_cache = true);
+    // 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
+    bool set_buyCount_item(const LL &id, const LL &count);
+    // 设置整个购买次数表
+    bool set_buyCount(const std::unordered_map<LL, LL> &val);
+
+    // 获取整个已装备的装备表
+    std::unordered_map<EqiType, inventoryData> get_equipments(const bool &use_cache = true);
+    // 获取某个类型的装备
+    inventoryData get_equipments_item(const EqiType &type, const bool &use_cache = true);
+    // 设置某个类型的装备. 如果要移除, 则把 item 的 id 设置为 -1
+    bool set_equipments_item(const EqiType &type, const inventoryData &item);
+    // 设置整个已装备的装备表
+    bool set_equipments(const std::unordered_map<EqiType, inventoryData> &val);
+
+    // 获取整个已装备的一次性物品表
+    std::list<inventoryData> get_equipItems(const bool &use_cache = true);
+    // 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+    bool get_equipItems_item(const LL &index,  const bool &use_cache = true);
+    // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+    bool get_equipItems_item(const LL &index, inventoryData &item, const bool &use_cache = true);
+    // 添加新物品到已装备的一次性物品列表末尾
+    bool add_equipItems_item(const inventoryData &item);
+    // 设置整个已装备的一次性物品列表
+    bool set_equipItems(const std::list<inventoryData> &val);
 };
 
 extern std::unordered_map<long long, player>   allPlayers;
