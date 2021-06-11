@@ -6,6 +6,7 @@
 
 #include "msg_handlers.hpp"
 #include "game.hpp"
+#include "utils.hpp"
 
 // 懒人宏
 // 命令必须要全字匹配才呼叫对应的 pre 和 post 回调函数
@@ -42,4 +43,21 @@ CMD(sign_in) {
 // 查看背包
 CMD(view_inventory) {
     MATCH("查看背包", ViewInventory);
+}
+
+// 出售
+CMD(pawn) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
+        return;
+    }
+    auto params = str_split(ev.message.substr(10), ' ');         // 去掉命令字符串, 然后以空格分隔开参数
+    if (params.size() > 0) {
+        std::vector<LL> items;                                  // prePawnCallback 返回的处理之后的序号列表
+        if (prePawnCallback(ev, params, items))
+            postPawnCallback(ev, items);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
+    }
 }

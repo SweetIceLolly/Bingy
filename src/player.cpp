@@ -285,29 +285,103 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     auto field = result->view()["inventory"];
     if (!field.raw())
         throw "没有找到 inventory field";
-    bsoncxx::array::view tmpArray{ field.get_array().value };
+    bsoncxx::array::view tmpArray{ field.get_array().value };   // 处理 BSON 数组
 
-    LOCK_CURR_PLAYER;
+    // 数组格式: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
     std::list<inventoryData> rtn;
     inventoryData invItem;
     for (const auto &item : tmpArray) {
         auto tmpObj = item.get_document().view();
 
-        invItem.id = tmpObj["id"].get_int64().value;
-        invItem.level = tmpObj["level"].get_int64().value;
-        invItem.wear = tmpObj["wear"].get_int64().value;
+        invItem.id = tmpObj["id"].get_int64().value;            // 装备 ID
+        invItem.level = tmpObj["level"].get_int64().value;      // 装备等级
+        invItem.wear = tmpObj["wear"].get_int64().value;        // 装备磨损度
         rtn.push_back(invItem);
     }
+
+    LOCK_CURR_PLAYER;
+    this->inventory = rtn;
+    this->inventory_cache = true;
     return rtn;
 }
 
-// 按照指定序号获取背包物品. 如果指定序号无效, 则返回 false
-bool player::get_inventory_item(const LL &index, inventoryData &item, const bool &use_cache) {
-    return false;
+// 获取背包装备数量
+LL player::get_inventory_size(const bool &use_cache) {
+    if (inventory_cache && use_cache)
+        return inventory.size();
+    return get_inventory().size();
 }
 
 // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
 bool player::remove_at_inventory(const LL &index) {
+    // 必须有缓存才能继续
+    if (!inventory_cache)
+        get_inventory();
+    if (!inventory_cache)
+        return false;
+
+    // 检查序号是否有效
+    if (index >= inventory.size())
+        return false;
+
+    // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
+        bsoncxx::builder::stream::document{} << "inventory." + std::to_string(index) << bsoncxx::types::b_null()
+        << bsoncxx::builder::stream::finalize)) {
+
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+            bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
+            << bsoncxx::builder::stream::finalize)) {
+
+            auto it = this->inventory.begin();
+            std::advance(it, index);
+            this->inventory.erase(it);
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+// 按照指定的序号列表移除背包物品. 指定的序号不得重复. 如果指定序号无效, 则返回 false
+bool player::remove_at_inventory(const std::vector<LL> &indexes) {
+    // 必须有缓存才能继续
+    if (!inventory_cache)
+        get_inventory();
+    if (!inventory_cache)
+        return false;
+
+    // 检查序号是否有效, 并添加到 document 中
+    bsoncxx::builder::basic::document doc;
+    for (const auto &index : indexes) {
+        if (index >= inventory.size())
+            return false;
+        doc.append(bsoncxx::builder::basic::kvp("inventory." + std::to_string(index), bsoncxx::types::b_null()));
+    }
+
+    // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set", doc)) {
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+            bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
+            << bsoncxx::builder::stream::finalize)) {
+
+            auto sortedIndexes = indexes;
+            std::sort(sortedIndexes.rbegin(), sortedIndexes.rend());    // 把序号从大到小排序
+
+            LL      prevIndex = static_cast<LL>(this->inventory.size()) - 1;
+            auto    it = this->inventory.end();
+            --it;
+            for (const auto &index : indexes) {
+                std::advance(it, index - prevIndex);
+                this->inventory.erase(it++);
+                prevIndex = index;
+            }
+            return true;
+        }
+        return false;
+    }
     return false;
 }
 

@@ -17,3 +17,4 @@ CMD(register);
 CMD(view_coins);
 CMD(sign_in);
 CMD(view_inventory);
+CMD(pawn);

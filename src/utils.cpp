@@ -99,13 +99,13 @@ void str_lcase(std::string &str) {
 // --------------------------------------------------------------
 
 LL rndRange(const LL &min, const LL &max) {
-    std::lock_guard<std::mutex> lock(mutexRndGen);
+    std::scoped_lock<std::mutex> lock(mutexRndGen);
     std::uniform_int_distribution<std::mt19937_64::result_type> rnd(min, max);
     return rnd(rndGen);
 }
 
 LL rndRange(const LL &max) {
-    std::lock_guard<std::mutex> lock(mutexRndGen);
+    std::scoped_lock<std::mutex> lock(mutexRndGen);
     std::uniform_int_distribution<std::mt19937_64::result_type> rnd(0, max);
     return rnd(rndGen);
 }
@@ -151,14 +151,14 @@ bool is_day_sequential(const dateTime &a, const dateTime &b) {
 // --------------------------------------------------------------
 
 void luckyDraw::insertItem(const LL &itemId, const LL &weight) {
-    std::lock_guard<std::mutex> lock(mutexItems);
+    std::scoped_lock<std::mutex> lock(mutexItems);
     maxIndex = currIndex + weight;
     items.push_back(std::make_pair(itemId, std::make_pair(currIndex, maxIndex)));
     currIndex = maxIndex;
 }
 
 bool luckyDraw::removeItem(const LL &itemId) {
-    std::lock_guard<std::mutex> lock(mutexItems);
+    std::scoped_lock<std::mutex> lock(mutexItems);
     for (auto it = items.begin(); it != items.end(); ++it) {
         if (it->first == itemId) {
             // 把后面条目的序号前移

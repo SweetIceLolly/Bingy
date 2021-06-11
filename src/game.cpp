@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "signin_event.hpp"
 #include <mongocxx/exception/exception.hpp>
+#include <unordered_set>
 
 std::unordered_set<LL>  blacklist;          // 黑名单 (修改项目前记得加锁)
 std::unordered_set<LL>  allAdmins;          // 管理员 (修改项目前记得加锁)
@@ -204,5 +205,61 @@ void postViewInventoryCallback(const cq::MessageEvent &ev) {
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查看背包发生错误!");
+    }
+}
+
+// 出售前检查
+bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::vector<LL> &rtnItems) {
+    if (!accountCheck(ev))
+        return false;
+
+    try {
+        std::unordered_set<LL> sellList;
+        for (const auto &item : args) {
+            auto tmp = std::stoll(item);                                        // 字符串转成整数
+            if (tmp < 1 || tmp > PLAYER.get_inventory_size()) {                 // 检查是否超出背包范围
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + item + "\"超出了背包范围!");
+                return false;
+            }
+            if (sellList.find(tmp) == sellList.end()) {                         // 检查是否有重复项目
+                rtnItems.push_back(tmp - 1);                                    // 最后添加到返回列表 (注意内部列表以 0 为开头)
+                sellList.insert(tmp);                                           // 记录该项目
+            }
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + item + "\"重复了!");
+                return false;
+            }
+        }
+        return true;
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
+        return false;
+    }
+}
+
+// 出售
+void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
+    std::sort(items.rbegin(), items.rend());            // 从大到小排序序号. 从后面往前删才不会出错
+
+    try {
+        double  price = 0;
+        auto    inv = PLAYER.get_inventory();
+        LL      prevIndex = static_cast<LL>(inv.size()) - 1;
+        auto    it = inv.rbegin();
+        for (const auto &index : items) {
+            std::advance(it, prevIndex - index);
+            price += allEquipments.at(it->id).price;
+            prevIndex = index;
+        }
+
+        PLAYER.remove_at_inventory(items);
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功出售" + std::to_string(items.size()) + "个物品, 获得" + std::to_string(static_cast<LL>(price)) + "硬币");
+    }
+    catch (std::exception ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败!");
     }
 }

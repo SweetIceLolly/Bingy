@@ -48,6 +48,7 @@ LL signInEvent::get_signInCount(bool use_cache) {
     if (signInCount_cache && use_cache)
         return this->signInCount;
 
+    std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     auto result = dbFindOne(DB_COLL_SIGNIN, "id", this->id, "signInCount");
     if (!result) {
         bsoncxx::document::value doc = bsoncxx::builder::stream::document{}
@@ -64,15 +65,13 @@ LL signInEvent::get_signInCount(bool use_cache) {
         return 0;
     }
     auto tmp = field.get_int64().value;
-
-    std::lock_guard<std::mutex> lock(this->mutexSignInCount);
     this->signInCount = tmp;
     this->signInCount_cache = true;
     return tmp;
 }
 
 bool signInEvent::inc_signInCount(const LL &val) {
-    std::lock_guard<std::mutex> lock(this->mutexSignInCount);
+    std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$inc",
         bsoncxx::builder::stream::document{} << "signInCount" << val
         << bsoncxx::builder::stream::finalize)) {
@@ -84,7 +83,7 @@ bool signInEvent::inc_signInCount(const LL &val) {
 }
 
 bool signInEvent::set_signInCount(const LL &val) {
-    std::lock_guard<std::mutex> lock(this->mutexSignInCount);
+    std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "signInCount" << val
         << bsoncxx::builder::stream::finalize)) {
@@ -100,6 +99,7 @@ LL signInEvent::get_prevActiveTime(bool use_cache) {
     if (prevActiveTime_cache && use_cache)
         return this->prevActiveTime;
 
+    std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     auto result = dbFindOne(DB_COLL_SIGNIN, "id", this->id, "prevActiveTime");
     if (!result) {
         bsoncxx::document::value doc = bsoncxx::builder::stream::document{}
@@ -115,16 +115,15 @@ LL signInEvent::get_prevActiveTime(bool use_cache) {
         set_prevActiveTime(0);
         return 0;
     }
-    auto tmp = field.get_int64().value;
 
-    std::lock_guard<std::mutex> lock(this->mutexSignInCount);
+    auto tmp = field.get_int64().value;
     this->prevActiveTime = tmp;
     this->prevActiveTime_cache = true;
     return tmp;
 }
 
 bool signInEvent::set_prevActiveTime(const LL &val) {
-    std::lock_guard<std::mutex> lock(this->mutexSignInCount);
+    std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "prevActiveTime" << val
         << bsoncxx::builder::stream::finalize)) {

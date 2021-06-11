@@ -79,10 +79,12 @@ public:
 
     // 获取整个背包列表
     std::list<inventoryData> get_inventory(const bool &use_cache = true);
-    // 按照指定序号获取背包物品. 如果指定序号无效, 则返回 false
-    bool get_inventory_item(const LL &index, inventoryData &item, const bool &use_cache = true);
-    // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
+    // 获取背包装备数量
+    LL get_inventory_size(const bool &use_cache = true);
+    // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_inventory(const LL &index);
+    // 按照指定的序号列表移除背包物品. 指定的序号不得重复. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
+    bool remove_at_inventory(const std::vector<LL> &indexes);
     // 添加新物品到背包末尾
     bool add_inventory_item(const inventoryData &item);
     // 设置整个背包列表
@@ -108,9 +110,9 @@ public:
 
     // 获取整个已装备的一次性物品表
     std::list<inventoryData> get_equipItems(const bool &use_cache = true);
-    // 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+    // 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool get_equipItems_item(const LL &index,  const bool &use_cache = true);
-    // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false
+    // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool get_equipItems_item(const LL &index, inventoryData &item, const bool &use_cache = true);
     // 添加新物品到已装备的一次性物品列表末尾
     bool add_equipItems_item(const inventoryData &item);
