@@ -58,8 +58,11 @@ void postRegisterCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "注册成功!");
         else
             cq::send_group_message(GROUP_ID, bg_at(ev) + "注册期间发生错误!");
+
+        std::list<inventoryData> tmp = { {1, 2, 3}, {2, 3, 4}, {3, 4, 5}, {4, 5, 6} };
+        PLAYER.set_inventory(tmp);
     }
-    catch (mongocxx::exception e) {
+    catch (mongocxx::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("注册期间发生错误: ") + e.what());
     }
     catch (...) {
@@ -79,7 +82,7 @@ void postViewCoinsCallback(const cq::MessageEvent &ev) {
             std::to_string(PLAYER.get_coins())
         );
     }
-    catch (mongocxx::exception e) {
+    catch (mongocxx::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("查看硬币发生错误: ") + e.what());
     }
     catch (...) {
@@ -145,7 +148,15 @@ void postSignInCallback(const cq::MessageEvent &ev) {
         std::string eventMsg = "";              // 活动消息
         std::vector<LL> eventItems;             // 活动赠送物品
         bg_match_sign_in_event(now, deltaCoins, deltaEnergy, eventItems, eventMsg);
-        // todo: 添加物品给玩家
+        for (const auto &item : eventItems) {   // 为玩家添加物品
+            inventoryData itemData;
+            itemData.id = item;
+            itemData.level = 0;
+            itemData.wear = allEquipments.at(item).wear;
+            if (!PLAYER.add_inventory_item(itemData)) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加物品\"" + allEquipments.at(item).name + "\"失败"));
+            }
+        }
 
         if (!PLAYER.inc_coins(deltaCoins)) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: 添加硬币失败"));
@@ -163,7 +174,7 @@ void postSignInCallback(const cq::MessageEvent &ev) {
             "获得体力: " + std::to_string(deltaEnergy) + "  获得经验: " + std::to_string(deltaExp) + (eventMsg.empty() ? "" : eventMsg)
         ));
     }
-    catch (mongocxx::exception e) {
+    catch (mongocxx::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: ") + e.what());
     }
     catch (...) {
@@ -200,7 +211,7 @@ void postViewInventoryCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + getInventoryStr(USER_ID));
     }
-    catch (mongocxx::exception e) {
+    catch (mongocxx::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("查看背包发生错误: ") + e.what());
     }
     catch (...) {
@@ -256,7 +267,7 @@ void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
         PLAYER.remove_at_inventory(items);
         cq::send_group_message(GROUP_ID, bg_at(ev) + "成功出售" + std::to_string(items.size()) + "个物品, 获得" + std::to_string(static_cast<LL>(price)) + "硬币");
     }
-    catch (std::exception ex) {
+    catch (std::exception &ex) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败! 错误原因: " + ex.what());
     }
     catch (...) {

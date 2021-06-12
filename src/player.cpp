@@ -12,6 +12,8 @@
 std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
 std::mutex                      mutexAllPlayers;
 
+template <typename T> void invListFromBson(const bsoncxx::document::element &elem, T &container);
+
 // --------------------------------------------------
 // 构造函数
 
@@ -22,31 +24,31 @@ player::player() {
 player::player(const player &p) {
     this->id = p.id;
     this->nickname = p.nickname;
-	this->nickname_cache = p.nickname_cache;
+    this->nickname_cache = p.nickname_cache;
     this->signInCount = p.signInCount;
-	this->signInCount_cache = p.signInCount_cache;
+    this->signInCount_cache = p.signInCount_cache;
     this->signInCountCont = p.signInCountCont;
-	this->signInCountCont_cache = p.signInCountCont_cache;
+    this->signInCountCont_cache = p.signInCountCont_cache;
     this->lastFight = p.lastFight;
-	this->lastFight_cache = p.lastFight_cache;
+    this->lastFight_cache = p.lastFight_cache;
     this->lastSignIn = p.lastSignIn;
-	this->lastSignIn_cache = p.lastSignIn_cache;
+    this->lastSignIn_cache = p.lastSignIn_cache;
     this->coins = p.coins;
-	this->coins_cache = p.coins_cache;
+    this->coins_cache = p.coins_cache;
     this->heroCoin = p.heroCoin;
-	this->heroCoin_cache = p.heroCoin_cache;
+    this->heroCoin_cache = p.heroCoin_cache;
     this->level = p.level;
-	this->level_cache = p.level_cache;
+    this->level_cache = p.level_cache;
     this->energy = p.energy;
-	this->energy_cache = p.energy_cache;
+    this->energy_cache = p.energy_cache;
     this->exp = p.exp;
-	this->exp_cache = p.exp_cache;
+    this->exp_cache = p.exp_cache;
     this->invCapacity = p.invCapacity;
-	this->invCapacity_cache = p.invCapacity_cache;
+    this->invCapacity_cache = p.invCapacity_cache;
     this->inventory = p.inventory;
     this->inventory_cache = p.inventory_cache;
     this->vip = p.vip;
-	this->vip_cache = p.vip_cache;
+    this->vip_cache = p.vip_cache;
     this->equipments = p.equipments;
     this->equipments_cache = p.equipments_cache;
     this->equipItems = p.equipItems;
@@ -162,8 +164,15 @@ bool bg_get_allplayers_from_db() {
             SET_LL_PROP(exp);
             SET_LL_PROP(invCapacity);
             SET_LL_PROP(vip);
+
+            // 读取背包内容
+            tmp = doc["inventory"];
+            if (tmp)
+                invListFromBson(tmp, p.inventory);
+            else
+                throw std::string("获取玩家") + std::to_string(id) + "的 inventory 属性失败";
+
             // todo
-            //p.inventory
             //p.equipments
             //p.equipItems
             //p.buyCount
@@ -274,6 +283,24 @@ bool player::set_nickname(const std::string &val) {
     return false;
 }
 
+// 处理背包的 BSON 数组, 并把内容添加到指定的容器中
+// 注意, 该函数假设 elem 是合法的且存有装备数据
+template <typename T>
+void invListFromBson(const bsoncxx::document::element &elem, T &container) {
+    bsoncxx::array::view tmpArray{ elem.get_array().value };   // 处理 BSON 数组
+
+    // 数组格式: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
+    inventoryData invItem;
+    for (const auto &item : tmpArray) {
+        auto tmpObj = item.get_document().view();
+
+        invItem.id = tmpObj["id"].get_int64().value;            // 装备 ID
+        invItem.level = tmpObj["level"].get_int64().value;      // 装备等级
+        invItem.wear = tmpObj["wear"].get_int64().value;        // 装备磨损度
+        container.push_back(invItem);
+    }
+}
+
 // 获取整个背包列表
 std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     if (inventory_cache && use_cache)
@@ -285,20 +312,9 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     auto field = result->view()["inventory"];
     if (!field.raw())
         throw "没有找到 inventory field";
-    bsoncxx::array::view tmpArray{ field.get_array().value };   // 处理 BSON 数组
 
-    // 数组格式: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
     std::list<inventoryData> rtn;
-    inventoryData invItem;
-    for (const auto &item : tmpArray) {
-        auto tmpObj = item.get_document().view();
-
-        invItem.id = tmpObj["id"].get_int64().value;            // 装备 ID
-        invItem.level = tmpObj["level"].get_int64().value;      // 装备等级
-        invItem.wear = tmpObj["wear"].get_int64().value;        // 装备磨损度
-        rtn.push_back(invItem);
-    }
-
+    invListFromBson(field, rtn);
     LOCK_CURR_PLAYER;
     this->inventory = rtn;
     this->inventory_cache = true;
@@ -387,11 +403,54 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
 
 // 添加新物品到背包末尾
 bool player::add_inventory_item(const inventoryData &item) {
+    // 必须有缓存才能继续
+    if (!inventory_cache)
+        get_inventory();
+    if (!inventory_cache)
+        return false;
+
+    // 更新数据库, 成功后再更新本地缓存
+    // inventory: [{id: id, level: level, wear: wear}, ...]
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$push",
+        bsoncxx::builder::stream::document{} << "inventory"
+        << bsoncxx::builder::stream::open_document
+        << "id" << item.id
+        << "level" << item.level
+        << "wear" << item.wear
+        << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize)) {
+
+        this->inventory.push_back(item);
+        return true;
+    }
     return false;
 }
 
 // 设置整个背包列表
 bool player::set_inventory(const std::list<inventoryData> &val) {
+    // 把背包内容添加到 document 中
+    auto doc = bsoncxx::builder::basic::array{};
+    for (const auto &item : val) {
+        doc.append(
+            bsoncxx::builder::stream::document{}
+            << "id" << item.id
+            << "level" << item.level
+            << "wear" << item.wear
+            << bsoncxx::builder::stream::finalize
+        );
+    }
+    
+    // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
+        bsoncxx::builder::stream::document{} << "inventory" << doc
+        << bsoncxx::builder::stream::finalize)) {
+
+        this->inventory = val;
+        this->inventory_cache = true;
+        return true;
+    }
     return false;
 }
 

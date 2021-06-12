@@ -136,7 +136,7 @@ bool signInEvent::set_prevActiveTime(const LL &val) {
 }
 
 // 根据指定时间自动匹配对应的活动, 然后修改 coin 和 energy 对应的数值
-void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vector<LL> items, std::string &msg) {
+void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vector<LL> &items, std::string &msg) {
     for (auto &item : allSignInEvents) {
         // 检查年份: 如果年份不为 -1, 则必须匹配年份
         if (item.year != -1 && item.year != time.get_year())
@@ -188,6 +188,6 @@ void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vec
             items.push_back(eqi);
 
         msg += "\n" + item.message + (item.firstN == -1 ? "" :
-            "(已领取" + std::to_string(item.get_signInCount()) + ", 共" + std::to_string(item.firstN) + "玩家能领取)");
+            "(只有前" + std::to_string(item.firstN) + "个签到的玩家能领取, 已领取" + std::to_string(item.get_signInCount()) + "个)");
     }
 }

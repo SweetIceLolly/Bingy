@@ -44,4 +44,4 @@ public:
 
 extern std::vector<signInEvent> allSignInEvents;
 
-void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vector<LL> items, std::string &msg);
+void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vector<LL> &items, std::string &msg);
