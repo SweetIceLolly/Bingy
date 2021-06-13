@@ -73,7 +73,9 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
                 break;
         }
         else if (ev.message[pos] != ' ') {
-            if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
+            if (ev.message[pos] >= '0' && ev.message[pos] <= '9')       // 是数字就马上截断. 因为命令中不可以有数字
+                break;
+            else if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
                 cmd += ev.message[pos] | 32;    // 转换为小写字母
             else
                 cmd += ev.message[pos];

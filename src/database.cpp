@@ -31,8 +31,8 @@ mongocxx::collection dbGetCollection(const char *dbName, const char *collName) {
 // 初始化数据库连接. 如果初始化时发生错误 (包括但不限于 URI无效, 连接超时等), 则返回false
 bool dbInit() {
     try {
-        auto mongoUri = mongocxx::uri(dbUri);       // 处理 URI
-        static mongocxx::pool pool{ mongoUri };     // 创建连接池
+        auto mongoUri = mongocxx::uri(dbUri.c_str());   // 处理 URI
+        static mongocxx::pool pool{ mongoUri };         // 创建连接池
         mongoPool = &pool;
 
         // 列出可用数据库以检察连接及权限
@@ -50,7 +50,7 @@ bool dbInit() {
     }
 }
 
-// 检查连接. 如果连接有效, 则返回true
+// 检查连接. 如果连接有效, 则返回 true
 bool dbPing() {
     try {
         dbGetDatabase(dbName.c_str()).run_command(make_document(kvp("ping", 1)));

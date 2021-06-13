@@ -47,11 +47,11 @@ CMD(view_inventory) {
 
 // 出售
 CMD(pawn) {
-    if (ev.message.length() < 10) {
+    if (ev.message.length() < 9) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
         return;
     }
-    auto params = str_split(ev.message.substr(10), ' ');         // 去掉命令字符串, 然后以空格分隔开参数
+    auto params = str_split(ev.message.substr(9), ' ');         // 去掉命令字符串, 然后以空格分隔开参数
     if (params.size() > 0) {
         std::vector<LL> items;                                  // prePawnCallback 返回的处理之后的序号列表
         if (prePawnCallback(ev, params, items))
@@ -60,4 +60,26 @@ CMD(pawn) {
     else {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
     }
+}
+
+// 查看属性
+CMD(view_properties) {
+    MATCH("查看属性", ViewProperties);
+}
+
+// 查看装备
+CMD(view_equipments) {
+    MATCH("查看装备", ViewEquipments);
+}
+
+// 装备
+CMD(equip) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 装备指令格式为: \"bg 装备 背包序号\"");
+        return;
+    }
+    auto param = ev.message.substr(9);                          // 去掉命令字符串, 只保留参数
+    LL item = -1;
+    if (preEquipCallback(ev, param, item))
+        postEquipCallback(ev, item);
 }

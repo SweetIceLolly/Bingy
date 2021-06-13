@@ -34,3 +34,7 @@ PRE_POST(SignIn);
 PRE_POST(ViewInventory);
 bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::vector<LL> &rtnItems);
 void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items);
+PRE_POST(ViewProperties);
+PRE_POST(ViewEquipments);
+bool preEquipCallback(const cq::MessageEvent &ev, const std::string arg, LL &equipItem);
+void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem);

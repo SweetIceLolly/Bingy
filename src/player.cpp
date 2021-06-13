@@ -86,6 +86,17 @@ bool bg_player_exist(const LL &id) {
 
 // 无条件添加玩家到数据库和字典中. 抛出的异常需要由外部处理
 bool bg_player_add(const LL &id) {
+    // 把所有装备都设置为 -1 (空)
+    auto equipments = bsoncxx::builder::stream::document{};
+    for (LL i = 0; i <= 9; ++i) {
+        equipments << std::to_string(i) << bsoncxx::builder::stream::open_document
+            << "id" << (LL)-1
+            << "level" << (LL)-1
+            << "wear" << (LL)-1
+            << bsoncxx::builder::stream::close_document;
+    }
+    equipments << "10" << bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array;
+
     bsoncxx::document::value doc = bsoncxx::builder::stream::document{}
         << "id" << id
         << "nickname" << ""
@@ -100,9 +111,10 @@ bool bg_player_add(const LL &id) {
         << "exp" << (LL)0
         << "invCapacity" << (LL)INV_DEFAULT_CAPACITY
         << "inventory" << bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
+        << "buyCount" << bsoncxx::builder::stream::open_document << bsoncxx::builder::stream::close_document
+        << "equipments" << equipments
+        << "equipItems" << bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
         << "vip" << (LL)0
-        << "equipments" << bsoncxx::builder::stream::open_document << bsoncxx::builder::stream::close_document
-        << "equipItems" << bsoncxx::builder::stream::open_document << bsoncxx::builder::stream::close_document
         << bsoncxx::builder::stream::finalize;
 
     if (!dbInsertDocument(DB_COLL_USERDATA, doc))
@@ -383,7 +395,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
             bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
-            auto sortedIndexes = indexes;
+            std::vector<LL> sortedIndexes = indexes;
             std::sort(sortedIndexes.rbegin(), sortedIndexes.rend());    // 把序号从大到小排序
 
             LL      prevIndex = static_cast<LL>(this->inventory.size()) - 1;
@@ -474,18 +486,70 @@ bool player::set_buyCount(const std::unordered_map<LL, LL> &val) {
     return false;
 }
 
+// 处理装备的 BSON 数据, 并把内容添加到指定的容器中
+// 注意, 该函数假设 elem 是合法的且存有已装备的装备数据. 本函数不会获取已装备的一次性装备
+void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container) {
+    // 数据格式: equipments: {1: {id: x, level: x, wear: x}, ...}
+    auto tmp = elem.get_document().view();
+    for (const auto &it : tmp) {
+        if (it.type() == bsoncxx::type::k_document) {         // 只处理 object 类型的元素
+            inventoryData invData;
+            invData.id = it.get_document().value["id"].get_int64().value;
+            invData.level = it.get_document().value["level"].get_int64().value;
+            invData.wear = it.get_document().value["wear"].get_int64().value;
+            container.insert({ static_cast<EqiType>(std::stoll(it.key().data())), invData });
+        }
+    }
+}
+
 // 获取整个已装备的装备表
 std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &use_cache) {
-    return equipments;
+    if (equipments_cache && use_cache)
+        return equipments;
+
+    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipments");
+    if (!result)
+        throw "找不到对应玩家 ID";
+    auto field = result->view()["equipments"];
+    if (!field.raw())
+        throw "没有找到 equipments field";
+
+    std::unordered_map<EqiType, inventoryData> rtn;
+    eqiMapFromBson(field, rtn);
+    LOCK_CURR_PLAYER;
+    this->equipments = rtn;
+    this->equipments_cache = true;
+    return rtn;
 }
 
 // 获取某个类型的装备
 inventoryData player::get_equipments_item(const EqiType &type, const bool &use_cache) {
-    return equipments[type];
+    return get_equipments(use_cache)[type];
 }
 
-// 设置某个类型的装备. 如果要移除, 则把 item 的 id 设置为 -1
+// 设置某个类型的装备. 如果想要移除某个类型的装备, 则把 item 的 id 设置为 -1
 bool player::set_equipments_item(const EqiType &type, const inventoryData &item) {
+    // 必须有缓存才能继续
+    if (!equipments_cache)
+        get_equipments();
+    if (!equipments_cache)
+        return false;
+
+    // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
+        bsoncxx::builder::stream::document{}
+        << "equipments." + std::to_string(static_cast<LL>(type))
+        << bsoncxx::builder::stream::open_document
+            << "id" << item.id
+            << "level" << item.level
+            << "wear" << item.wear
+        << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize)) {
+
+        this->equipments[type] = item;
+        return true;
+    }
     return false;
 }
 

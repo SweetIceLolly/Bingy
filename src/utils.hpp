@@ -12,6 +12,7 @@
 #include <ctime>
 #include <random>
 #include <mutex>
+#include "equipment.hpp"
 
 using LL = long long;
 
@@ -190,3 +191,9 @@ public:
     // 不建议对于少量物品 (例如一百个) 和次数少 (例如十次) 的抽奖使用这个函数, 因为二分搜索对于少量物品的性能不如线性搜索
     LL massive_draw();
 };
+
+// 检查一个字符串是否为整数
+LL str_to_ll(const std::string &str);
+
+// 获取 type 所对应的装备类型的名称
+std::string eqiType_to_str(const EqiType &type);

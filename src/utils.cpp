@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cqcppsdk/cqcppsdk.hpp>
 #include <mutex>
+#include <equipment.hpp>
 
 #ifdef WIN32
 #ifndef WIN32_MEAN_AND_LEAN
@@ -215,4 +216,26 @@ LL luckyDraw::massive_draw() {
         }
     }
     return LLONG_MIN;       // 希望不会来到这里吧...
+}
+
+LL str_to_ll(const std::string &str) {
+    bool numStarted = false;
+    auto start = str.find_first_not_of(' ');
+    auto i = start;
+
+    for (i; i <= str.find_last_not_of(' '); ++i) {
+        if (str[i] < '0' || str[i] > '9') {
+            if (str[i] == '-' && !numStarted)
+                continue;
+            else
+                throw "无效的字符串";
+        }
+        numStarted = true;
+    }
+    return std::stoll(str.substr(start, i - start + 1));
+}
+
+std::string eqiType_to_str(const EqiType &type) {
+    const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石" };
+    return names[static_cast<LL>(type)];
 }

@@ -58,9 +58,6 @@ void postRegisterCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "注册成功!");
         else
             cq::send_group_message(GROUP_ID, bg_at(ev) + "注册期间发生错误!");
-
-        std::list<inventoryData> tmp = { {1, 2, 3}, {2, 3, 4}, {3, 4, 5}, {4, 5, 6} };
-        PLAYER.set_inventory(tmp);
     }
     catch (mongocxx::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("注册期间发生错误: ") + e.what());
@@ -227,7 +224,9 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
     try {
         std::unordered_set<LL> sellList;
         for (const auto &item : args) {
-            auto tmp = std::stoll(item);                                        // 字符串转成整数
+            if (item.empty())
+                continue;
+            auto tmp = str_to_ll(item);                                         // 字符串转成整数
             if (tmp < 1 || tmp > PLAYER.get_inventory_size()) {                 // 检查是否超出背包范围
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + item + "\"超出了背包范围!");
                 return false;
@@ -251,20 +250,27 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
 
 // 出售
 void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
-    std::sort(items.rbegin(), items.rend());            // 从大到小排序序号. 从后面往前删才不会出错
-
     try {
+        std::sort(items.rbegin(), items.rend());            // 从大到小排序序号. 从后面往前删才不会出错
+
         double  price = 0;
         auto    inv = PLAYER.get_inventory();
         LL      prevIndex = static_cast<LL>(inv.size()) - 1;
         auto    it = inv.rbegin();
-        for (const auto &index : items) {
+        for (const auto &index : items) {                   // 计算出售总价
             std::advance(it, prevIndex - index);
             price += allEquipments.at(it->id).price;
             prevIndex = index;
         }
 
-        PLAYER.remove_at_inventory(items);
+        if (!PLAYER.remove_at_inventory(items)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败: 移除背包物品时发生错误!");
+            return;
+        }
+        if (!PLAYER.inc_coins(static_cast<LL>(price))) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败: 添加硬币时发生错误!");
+            return;
+        }
         cq::send_group_message(GROUP_ID, bg_at(ev) + "成功出售" + std::to_string(items.size()) + "个物品, 获得" + std::to_string(static_cast<LL>(price)) + "硬币");
     }
     catch (std::exception &ex) {
@@ -272,5 +278,153 @@ void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败!");
+    }
+}
+
+// 查看属性前检查
+bool preViewPropertiesCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 通用查看属性函数
+std::string getPropertiesStr(const LL &id) {
+    std::string msg =
+        "账号: " + std::to_string(id) + "\n"
+        "等级: " + std::to_string(allPlayers.at(id).level) + ", 经验值: " + std::to_string(allPlayers.at(id).exp) + "\n"
+        "体力: " + std::to_string(allPlayers.at(id).energy) + " 硬币: " + std::to_string(allPlayers.at(id).coins) + "\n"
+        "英雄币: " + std::to_string(allPlayers.at(id).heroCoin);
+    return msg;
+}
+
+// 查看属性
+void postViewPropertiesCallback(const cq::MessageEvent &ev) {
+    try {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + getPropertiesStr(USER_ID));
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看属性失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看属性失败!");
+    }
+}
+
+// 查看装备前检查
+bool preViewEquipmentsCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 懒人宏
+// 生成对应类型的装备的字符串. 若 ID = -1, 则显示"未装备"; 否则显示 装备名称+等级 (磨损/原始磨损)
+#define GET_EQI_STR(eqitype)   \
+    (##eqitype##.id == -1 ? "未装备" : allEquipments.at(##eqitype##.id).name + "+" + std::to_string(##eqitype##.level) +    \
+    " (" + std::to_string(##eqitype##.wear) + "/" + std::to_string(allEquipments.at(##eqitype##.id).wear) + ")")
+
+// 通用查看装备函数
+std::string getEquipmentsStr(const LL &id) {
+    const auto& eqi = allPlayers.at(id).get_equipments();
+    const auto& singleUseEqi = allPlayers.at(id).get_equipItems();
+    
+    const auto& armor_helmet = eqi.at(EqiType::armor_helmet);
+    const auto& armor_body = eqi.at(EqiType::armor_body);
+    const auto& armor_leg = eqi.at(EqiType::armor_leg);
+    const auto& armor_boot = eqi.at(EqiType::armor_boot);
+    const auto& weapon_primary = eqi.at(EqiType::weapon_primary);
+    const auto& weapon_secondary = eqi.at(EqiType::weapon_secondary);
+    const auto& ornament_earrings = eqi.at(EqiType::ornament_earrings);
+    const auto& ornament_rings = eqi.at(EqiType::ornament_rings);
+    const auto& ornament_necklace = eqi.at(EqiType::ornament_necklace);
+    const auto& ornament_jewelry = eqi.at(EqiType::ornament_jewelry);
+
+    std::string eqiStr =
+        "---护甲---\n"
+        "头盔: " + GET_EQI_STR(armor_helmet) + ", " +
+        "战甲: " + GET_EQI_STR(armor_body) + "\n" +
+        "护腿: " + GET_EQI_STR(armor_leg) + ", " +
+        "战靴: " + GET_EQI_STR(armor_boot) + "\n" +
+        "---武器---\n"
+        "主武器: " + GET_EQI_STR(weapon_primary) + ", " +
+        "副武器: " + GET_EQI_STR(weapon_secondary) + "\n" +
+        "---饰品---\n"
+        "耳环: " + GET_EQI_STR(ornament_earrings) + ", " +
+        "戒指: " + GET_EQI_STR(ornament_rings) + "\n" +
+        "项链: " + GET_EQI_STR(ornament_necklace) + ", " +
+        "宝石: " + GET_EQI_STR(ornament_jewelry);
+
+    // 显示已装备的一次性物品
+    if (!singleUseEqi.empty()) {
+        LL index = 1;
+        eqiStr += "\n------一次性------\n";
+        for (const auto &item : singleUseEqi) {
+            eqiStr += std::to_string(index) + "." + allEquipments[item.id].name + " ";
+        }
+        if (!eqiStr.empty())
+            eqiStr.pop_back();
+    }
+    return eqiStr;
+}
+
+// 查看装备
+void postViewEquipmentsCallback(const cq::MessageEvent &ev) {
+    try {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + getEquipmentsStr(USER_ID));
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备失败!");
+    }
+}
+
+// 装备前检查
+bool preEquipCallback(const cq::MessageEvent &ev, const std::string arg, LL &equipItem) {
+    if (!accountCheck(ev))
+        return false;
+
+    try {
+        equipItem = str_to_ll(arg) - 1;                                         // 字符串转成整数. 注意内部的存储序号由 0 开始
+        if (equipItem > PLAYER.get_inventory_size()) {                          // 检查是否超出背包范围
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + arg + "\"超出了背包范围!");
+            return false;
+        }
+        return true;
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
+        return false;
+    }
+}
+
+// 装备
+void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
+    // 获取背包里该序号的对应物品
+    auto invItems = PLAYER.get_inventory();
+    auto it = invItems.begin();
+    std::advance(it, equipItem);
+    
+    // 设置玩家的装备
+    auto eqiType = allEquipments.at((*it).id).type;
+    if (eqiType != EqiType::single_use) {
+        auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
+        if (!PLAYER.remove_at_inventory({ equipItem })) {               // 把装备上去了的装备从背包移除
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把将要装备的装备从背包中移除时发生错误!");
+            return;
+        }
+        if (!PLAYER.set_equipments_item(eqiType, *it)) {                // 把新装备装备上去
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 修改玩家装备时发生错误!");
+            return;
+        }
+        if (prevEquipItem.id != -1) {                                   // 如果玩家之前的装备不为空, 就放回背包中
+            if (!PLAYER.add_inventory_item(prevEquipItem)) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 把之前的装备放回背包时发生错误!");
+                return;
+            }
+        }
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + eqiType_to_str(eqiType) + ": " + allEquipments.at((*it).id).name + "+" +
+            std::to_string((*it).level) + ", 磨损" + std::to_string((*it).wear) + "/" + std::to_string(allEquipments.at((*it).id).wear));
+    }
+    else {
+        // todo: 一次性物品就得换个方式
     }
 }
