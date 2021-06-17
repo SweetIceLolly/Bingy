@@ -28,7 +28,7 @@ mongocxx::collection dbGetCollection(const char *dbName, const char *collName) {
     return (*client)[dbName][collName];
 }
 
-// 初始化数据库连接. 如果初始化时发生错误 (包括但不限于 URI无效, 连接超时等), 则返回false
+// 初始化数据库连接. 如果初始化时发生错误 (包括但不限于 URI 无效, 连接超时等), 则返回false
 bool dbInit() {
     try {
         auto mongoUri = mongocxx::uri(dbUri.c_str());   // 处理 URI

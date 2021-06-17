@@ -13,6 +13,7 @@ std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候�
 std::mutex                      mutexAllPlayers;
 
 template <typename T> void invListFromBson(const bsoncxx::document::element &elem, T &container);
+void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container);
 
 // --------------------------------------------------
 // 构造函数
@@ -39,6 +40,8 @@ player::player(const player &p) {
     this->heroCoin_cache = p.heroCoin_cache;
     this->level = p.level;
     this->level_cache = p.level_cache;
+    this->blessing = p.blessing;
+    this->blessing_cache = p.blessing_cache;
     this->energy = p.energy;
     this->energy_cache = p.energy_cache;
     this->exp = p.exp;
@@ -65,6 +68,7 @@ player::player(const LL &qq) {
     this->coins = 0;
     this->heroCoin = 0;
     this->level = 1;
+    this->blessing = 0;
     this->energy = 0;
     this->exp = 0;
     this->invCapacity = INV_DEFAULT_CAPACITY;
@@ -106,7 +110,8 @@ bool bg_player_add(const LL &id) {
         << "lastSignIn" << (LL)0
         << "coins" << (LL)0
         << "heroCoin" << (LL)0
-        << "level" << (LL)0
+        << "level" << (LL)1
+        << "blessing" << (LL)0
         << "energy" << (LL)0
         << "exp" << (LL)0
         << "invCapacity" << (LL)INV_DEFAULT_CAPACITY
@@ -129,6 +134,7 @@ bool bg_player_add(const LL &id) {
     SET_LL_PROP_ZERO(coins);
     SET_LL_PROP_ZERO(heroCoin);
     SET_LL_PROP_ZERO(level);
+    SET_LL_PROP_ZERO(blessing);
     SET_LL_PROP_ZERO(energy);
     SET_LL_PROP_ZERO(exp);
     p.invCapacity = INV_DEFAULT_CAPACITY;   p.invCapacity_cache = true;
@@ -171,7 +177,8 @@ bool bg_get_allplayers_from_db() {
             SET_LL_PROP(lastSignIn);
             SET_LL_PROP(coins);
             SET_LL_PROP(heroCoin);
-            SET_LL_PROP(level);;
+            SET_LL_PROP(level);
+            SET_LL_PROP(blessing);
             SET_LL_PROP(energy);
             SET_LL_PROP(exp);
             SET_LL_PROP(invCapacity);
@@ -184,8 +191,14 @@ bool bg_get_allplayers_from_db() {
             else
                 throw std::string("获取玩家") + std::to_string(id) + "的 inventory 属性失败";
 
+            // 读取玩家装备
+            tmp = doc["equipments"];
+            if (tmp)
+                eqiMapFromBson(tmp, p.equipments);
+            else
+                throw std::string("获取玩家") + std::to_string(id) + "的 equipments 属性失败";
+
             // todo
-            //p.equipments
             //p.equipItems
             //p.buyCount
 
@@ -255,6 +268,7 @@ LL_GET_SET_INC(lastSignIn);
 LL_GET_SET_INC(coins);
 LL_GET_SET_INC(heroCoin);
 LL_GET_SET_INC(level);
+LL_GET_SET_INC(blessing);
 LL_GET_SET_INC(energy);
 LL_GET_SET_INC(exp);
 LL_GET_SET_INC(invCapacity);
@@ -343,10 +357,11 @@ LL player::get_inventory_size(const bool &use_cache) {
 // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
 bool player::remove_at_inventory(const LL &index) {
     // 必须有缓存才能继续
-    if (!inventory_cache)
+    if (!inventory_cache) {
         get_inventory();
-    if (!inventory_cache)
-        return false;
+        if (!inventory_cache)
+            return false;
+    }
 
     // 检查序号是否有效
     if (index >= inventory.size())
@@ -375,10 +390,11 @@ bool player::remove_at_inventory(const LL &index) {
 // 按照指定的序号列表移除背包物品. 指定的序号不得重复. 如果指定序号无效, 则返回 false
 bool player::remove_at_inventory(const std::vector<LL> &indexes) {
     // 必须有缓存才能继续
-    if (!inventory_cache)
+    if (!inventory_cache) {
         get_inventory();
-    if (!inventory_cache)
-        return false;
+        if (!inventory_cache)
+            return false;
+    }
 
     // 检查序号是否有效, 并添加到 document 中
     bsoncxx::builder::basic::document doc;
@@ -416,10 +432,11 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
 // 添加新物品到背包末尾
 bool player::add_inventory_item(const inventoryData &item) {
     // 必须有缓存才能继续
-    if (!inventory_cache)
+    if (!inventory_cache) {
         get_inventory();
-    if (!inventory_cache)
-        return false;
+        if (!inventory_cache)
+            return false;
+    }
 
     // 更新数据库, 成功后再更新本地缓存
     // inventory: [{id: id, level: level, wear: wear}, ...]
@@ -481,11 +498,6 @@ bool player::set_buyCount_item(const LL &id, const LL &count) {
     return false;
 }
 
-// 设置整个购买次数表
-bool player::set_buyCount(const std::unordered_map<LL, LL> &val) {
-    return false;
-}
-
 // 处理装备的 BSON 数据, 并把内容添加到指定的容器中
 // 注意, 该函数假设 elem 是合法的且存有已装备的装备数据. 本函数不会获取已装备的一次性装备
 void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container) {
@@ -530,10 +542,11 @@ inventoryData player::get_equipments_item(const EqiType &type, const bool &use_c
 // 设置某个类型的装备. 如果想要移除某个类型的装备, 则把 item 的 id 设置为 -1
 bool player::set_equipments_item(const EqiType &type, const inventoryData &item) {
     // 必须有缓存才能继续
-    if (!equipments_cache)
+    if (!equipments_cache) {
         get_equipments();
-    if (!equipments_cache)
-        return false;
+        if (!equipments_cache)
+            return false;
+    }
 
     // 更新数据库, 成功后再更新本地缓存
     LOCK_CURR_PLAYER;
@@ -553,33 +566,249 @@ bool player::set_equipments_item(const EqiType &type, const inventoryData &item)
     return false;
 }
 
-// 设置整个已装备的装备表
-bool player::set_equipments(const std::unordered_map<EqiType, inventoryData> &val) {
-    return false;
-}
-
 // 获取整个已装备的一次性物品表
 std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
-    return equipItems;
+    if (equipItems_cache && use_cache)
+        return equipItems;
+
+    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipItems");
+    if (!result)
+        throw "找不到对应玩家 ID";
+    auto field = result->view()["equipItems"];
+    if (!field.raw())
+        throw "没有找到 equipItems field";
+
+    std::list<inventoryData> rtn;
+    invListFromBson(field, rtn);
+    LOCK_CURR_PLAYER;
+    this->equipItems = rtn;
+    this->equipItems_cache = true;
+    return rtn;
 }
 
-// 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false
-bool player::get_equipItems_item(const LL &index, const bool &use_cache) {
-    return false;
+// 获取已装备的一次性物品数量
+LL player::get_equipItems_item(const bool &use_cache) {
+    if (equipItems_cache && use_cache)
+        return equipItems.size();
+    return get_equipItems().size();
 }
 
 // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false
-bool player::get_equipItems_item(const LL &index, inventoryData &item, const bool &use_cache) {
+bool player::remove_at_equipItems(const LL &index) {
+    // 必须有缓存才能继续
+    if (!equipItems_cache) {
+        get_equipItems();
+        if (!equipItems_cache)
+            return false;
+    }
+
+    // 检查序号是否有效
+    if (index >= equipItems.size())
+        return false;
+
+    // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
+        bsoncxx::builder::stream::document{} << "equipItems." + std::to_string(index) << bsoncxx::types::b_null()
+        << bsoncxx::builder::stream::finalize)) {
+
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+            bsoncxx::builder::stream::document{} << "equipItems" << bsoncxx::types::b_null()
+            << bsoncxx::builder::stream::finalize)) {
+
+            auto it = this->equipItems.begin();
+            std::advance(it, index);
+            this->equipItems.erase(it);
+            return true;
+        }
+        return false;
+    }
     return false;
 }
 
 // 添加新物品到已装备的一次性物品列表末尾
 bool player::add_equipItems_item(const inventoryData &item) {
+    // 必须有缓存才能继续
+    if (!equipItems_cache) {
+        get_equipItems();
+        if (!equipItems_cache)
+            return false;
+    }
+
+    // 更新数据库, 成功后再更新本地缓存
+    // equipItems: [{id: id, level: level, wear: wear}, ...]
+    LOCK_CURR_PLAYER;
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$push",
+        bsoncxx::builder::stream::document{} << "equipItems"
+        << bsoncxx::builder::stream::open_document
+        << "id" << item.id
+        << "level" << item.level
+        << "wear" << item.wear
+        << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize)) {
+
+        this->equipItems.push_back(item);
+        return true;
+    }
     return false;
 }
 
-// 设置整个已装备的一次性物品列表
-bool player::set_equipItems(const std::list<inventoryData> &val) {
-    return false;
+// --------------------------------------------------
+// 玩家战斗属性
+
+// 攻 = 20 + 所有装备攻总和 + 等级 * 1.1 + 祝福 * 2
+double player::get_atk() {
+    static double calc_result = 20;
+    if (!atk_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 20;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_atk();
+            }
+        }
+        calc_result += level * 1.1 + blessing * 2;
+        // -----------------------------------
+        atk_cache = true;
+    }
+    return calc_result;
 }
 
+// 防 = 20 + 所有装备防总和 + 等级 * 0.6 + 祝福 * 1.5
+double player::get_def() {
+    static double calc_result = 20;
+    if (!def_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 20;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_def();
+            }
+        }
+        calc_result += level * 0.6 + blessing * 1.5;
+        // -----------------------------------
+        def_cache = true;
+    }
+    return calc_result;
+}
+
+// 破 = 所有武器破总和
+double player::get_brk() {
+    static double calc_result = 0;
+    if (!brk_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 0;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_brk();
+            }
+        }
+        // -----------------------------------
+        brk_cache = true;
+    }
+    return calc_result;
+}
+
+// 敏 = 10 + 所有装备敏总和 + 祝福 * 0.2
+double player::get_agi() {
+    static double calc_result = 0;
+    if (!agi_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 10;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_agi();
+            }
+        }
+        calc_result += blessing * 0.2;
+        // -----------------------------------
+        agi_cache = true;
+    }
+    return calc_result;
+}
+
+// 血 = 100 + 所有装备血总和 + 玩家等级 * 祝福 / 10 + 祝福
+double player::get_hp() {
+    static double calc_result = 0;
+    if (!hp_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 100;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_hp();
+            }
+        }
+        calc_result += level * blessing / 10.0 + blessing;
+        // -----------------------------------
+        hp_cache = true;
+    }
+    return calc_result;
+}
+
+// 魔 = 所有装备魔总和 + 祝福 * 1.7 + 玩家等级 * 1.7
+double player::get_mp() {
+    static double calc_result = 0;
+    if (!mp_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 0;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_mp();
+            }
+        }
+        calc_result += blessing * 1.7 + level * 1.7;
+        // -----------------------------------
+        mp_cache = true;
+    }
+    return calc_result;
+}
+
+// 暴 = 所有装备暴总和 * (1 + 玩家等级 / 170)
+double player::get_crt() {
+    static double calc_result = 0;
+    if (!crt_cache) {
+        // -----------------------------------
+        // 重新计算
+        calc_result = 0;
+        for (auto &item : equipments) {
+            if (item.first != EqiType::single_use) {
+                calc_result += item.second.calc_crt();
+            }
+        }
+        calc_result *= (1.0 + level / 170.0);
+        // -----------------------------------
+        crt_cache = true;
+    }
+    return calc_result;
+}
+
+// 升级所需经验 = 100 + 玩家等级 * 10 + 8 * 1.18 ^ 玩家等级
+double player::get_exp_needed() {
+    return 100.0 + level * 10.0 + 8 * pow(1.18, level);
+}
+
+// 冷却时间 = Min(200 - 玩家等级 * 1.2, 40)
+LL player::get_cd() {
+    LL cd = (LL)(200.0 - level * 1.2);
+    if (cd < 40)
+        return 40;
+    else
+        return cd;
+}
+
+// 清空计算缓存
+void player::resetCache() {
+    bool atk_cache = false;
+    bool def_cache = false;
+    bool brl_cache = false;
+    bool agi_cache = false;
+    bool hp_cache = false;
+    bool mp_cache = false;
+    bool crt_cache = false;
+}

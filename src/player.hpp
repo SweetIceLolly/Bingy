@@ -13,8 +13,10 @@
 #include "inventory.hpp"
 #include "equipment.hpp"
 
-#define INV_DEFAULT_CAPACITY 50
+#define INV_DEFAULT_CAPACITY 50                                                     // 默认背包容量
 
+// 懒人宏
+// 定义 LL 类型的属性的 getter, setter, 和 inc (增加数值)的函数原型
 #define DEF_LL_GET_SET_INC(propName)                            \
     LL player::get_##propName##(const bool &use_cache = true);  \
     bool player::set_##propName##(const LL &val);               \
@@ -37,6 +39,7 @@ public:
     LL coins;                               bool coins_cache = false;               // 硬币数 (请使用对应的 getter 或 setter)
     LL heroCoin;                            bool heroCoin_cache = false;            // 英雄币数 (请使用对应的 getter 或 setter)
     LL level;                               bool level_cache = false;               // 等级 (请使用对应的 getter 或 setter)
+    LL blessing;                            bool blessing_cache = false;            // 祝福 (请使用对应的 getter 或 setter)
     LL energy;                              bool energy_cache = false;              // 体力 (请使用对应的 getter 或 setter)
     LL exp;                                 bool exp_cache = false;                 // 经验数 (请使用对应的 getter 或 setter)
     LL invCapacity;                         bool invCapacity_cache = false;         // 背包容量 (请使用对应的 getter 或 setter)
@@ -72,10 +75,38 @@ public:
     DEF_LL_GET_SET_INC(coins);
     DEF_LL_GET_SET_INC(heroCoin);
     DEF_LL_GET_SET_INC(level);
+    DEF_LL_GET_SET_INC(blessing);
     DEF_LL_GET_SET_INC(energy);
     DEF_LL_GET_SET_INC(exp);
     DEF_LL_GET_SET_INC(invCapacity);
     DEF_LL_GET_SET_INC(vip);
+
+    // 获取玩家属性
+    bool atk_cache = false;
+    double get_atk();           // 攻
+
+    bool def_cache = false;
+    double get_def();           // 防
+
+    bool brk_cache = false;
+    double get_brk();           // 破
+
+    bool agi_cache = false;
+    double get_agi();           // 敏
+
+    bool hp_cache = false;
+    double get_hp();            // 血
+
+    bool mp_cache = false;
+    double get_mp();            // 魔
+
+    bool crt_cache = false;
+    double get_crt();           // 暴
+
+    double get_exp_needed();    // 升级所需经验
+    LL get_cd();            // 冷却时间
+
+    void resetCache();
 
     // 获取整个背包列表
     std::list<inventoryData> get_inventory(const bool &use_cache = true);
@@ -96,8 +127,6 @@ public:
     LL get_buyCount_item(const LL &id, const bool &use_cache = true);
     // 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
     bool set_buyCount_item(const LL &id, const LL &count);
-    // 设置整个购买次数表
-    bool set_buyCount(const std::unordered_map<LL, LL> &val);
 
     // 获取整个已装备的装备表
     std::unordered_map<EqiType, inventoryData> get_equipments(const bool &use_cache = true);
@@ -105,19 +134,15 @@ public:
     inventoryData get_equipments_item(const EqiType &type, const bool &use_cache = true);
     // 设置某个类型的装备. 如果要移除, 则把 item 的 id 设置为 -1
     bool set_equipments_item(const EqiType &type, const inventoryData &item);
-    // 设置整个已装备的装备表
-    bool set_equipments(const std::unordered_map<EqiType, inventoryData> &val);
 
     // 获取整个已装备的一次性物品表
     std::list<inventoryData> get_equipItems(const bool &use_cache = true);
-    // 获取某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
-    bool get_equipItems_item(const LL &index,  const bool &use_cache = true);
+    // 获取已装备的一次性物品数量
+    LL player::get_equipItems_item(const bool &use_cache);
     // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
-    bool get_equipItems_item(const LL &index, inventoryData &item, const bool &use_cache = true);
+    bool remove_at_equipItems(const LL &index);
     // 添加新物品到已装备的一次性物品列表末尾
     bool add_equipItems_item(const inventoryData &item);
-    // 设置整个已装备的一次性物品列表
-    bool set_equipItems(const std::list<inventoryData> &val);
 };
 
 extern std::unordered_map<long long, player>   allPlayers;
