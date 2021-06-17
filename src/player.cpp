@@ -125,6 +125,7 @@ bool bg_player_add(const LL &id) {
     if (!dbInsertDocument(DB_COLL_USERDATA, doc))
         return false;
 
+    // 初始化玩家属性
     player p(id);
     p.nickname = "";                        p.nickname_cache = true;
     SET_LL_PROP_ZERO(signInCount);
@@ -139,6 +140,22 @@ bool bg_player_add(const LL &id) {
     SET_LL_PROP_ZERO(exp);
     p.invCapacity = INV_DEFAULT_CAPACITY;   p.invCapacity_cache = true;
     SET_LL_PROP_ZERO(vip);
+    p.inventory_cache = true;
+    p.buyCount_cache = true;
+    p.equipItems_cache = true;
+    
+    // 初始化玩家装备
+    p.equipments[EqiType::armor_helmet] = { -1, -1, -1 };
+    p.equipments[EqiType::armor_body] = { -1, -1, -1 };
+    p.equipments[EqiType::armor_leg] = { -1, -1, -1 };
+    p.equipments[EqiType::armor_boot] = { -1, -1, -1 };
+    p.equipments[EqiType::weapon_primary] = { -1, -1, -1 };
+    p.equipments[EqiType::weapon_secondary] = { -1, -1, -1 };
+    p.equipments[EqiType::ornament_earrings] = { -1, -1, -1 };
+    p.equipments[EqiType::ornament_rings] = { -1, -1, -1 };
+    p.equipments[EqiType::ornament_necklace] = { -1, -1, -1 };
+    p.equipments[EqiType::ornament_jewelry] = { -1, -1, -1 };
+    p.equipments_cache = true;
 
     std::scoped_lock<std::mutex> lock(mutexAllPlayers);
     allPlayers.insert(std::make_pair(id, p));
@@ -795,8 +812,8 @@ double player::get_crt() {
 }
 
 // 升级所需经验 = 100 + 玩家等级 * 10 + 8 * 1.18 ^ 玩家等级
-double player::get_exp_needed() {
-    return 100.0 + level * 10.0 + 8 * pow(1.18, level);
+LL player::get_exp_needed() {
+    return (LL)(100.0 + level * 10.0 + 8 * pow(1.18, level));
 }
 
 // 冷却时间 = Min(200 - 玩家等级 * 1.2, 40)

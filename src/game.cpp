@@ -287,18 +287,43 @@ bool preViewPropertiesCallback(const cq::MessageEvent &ev) {
     return accountCheck(ev);
 }
 
+// 懒人宏
+// 获取某个属性的字符串. 比如获取攻击 (atk), 则字符串为 攻击值 (武器攻击 + 护甲攻击 + 饰品攻击)
+#define GET_EQI_PROP_STR(prop)                                                  \
+    std::setprecision(1) <<                                                     \
+    allPlayers.at(id).get_##prop##() << " (" <<                                 \
+    std::setprecision(0) <<                                                     \
+    eqi.at(EqiType::weapon_primary).calc_##prop##() +      /* 武器属性总和*/     \
+    eqi.at(EqiType::weapon_secondary).calc_##prop##()                           \
+    << "+" <<                                                                   \
+    eqi.at(EqiType::armor_helmet).calc_##prop##() +        /* 护甲属性总和*/    \
+    eqi.at(EqiType::armor_body).calc_##prop##() +                              \
+    eqi.at(EqiType::armor_leg).calc_##prop##() +                               \
+    eqi.at(EqiType::armor_boot).calc_##prop##()                                \
+    << "+" <<                                                                  \
+    eqi.at(EqiType::ornament_earrings).calc_##prop##() +   /* 饰品属性总和*/    \
+    eqi.at(EqiType::ornament_rings).calc_##prop##() +                          \
+    eqi.at(EqiType::ornament_necklace).calc_##prop##() +                       \
+    eqi.at(EqiType::ornament_jewelry).calc_##prop##()                          \
+    << ")"
+
 // 通用查看属性函数
 std::string getPropertiesStr(const LL &id) {
     std::stringstream msg;
-    msg << "账号: " << id << "\n"
-        << "攻击: " << std::fixed << std::setprecision(1) << allPlayers.at(id).get_atk() << "\n"
-        << "防护: " << allPlayers.at(id).get_atk() << "\n"
-        << "破甲: " << allPlayers.at(id).get_atk() << "\n"
-        << "敏捷: " << allPlayers.at(id).get_atk() << "\n"
-        << "血: " << allPlayers.at(id).get_atk() << "\n"
-        << "魔: " << allPlayers.at(id).get_atk() << "\n"
-        << "暴击: " << allPlayers.at(id).get_atk() << "\n"
-        << "等级: " << allPlayers.at(id).level << ", 经验值: " << allPlayers.at(id).exp << "\n"
+    auto eqi = allPlayers.at(id).get_equipments();
+
+    msg << std::fixed << std::setprecision(1)
+        << "账号: " << id << "\n"
+        << "等级: " << allPlayers.at(id).level << ", 祝福: " << allPlayers.at(id).blessing << "\n"
+        << "经验: " << allPlayers.at(id).exp << "/" << allPlayers.at(id).get_exp_needed()
+            << " (" << (double)allPlayers.at(id).exp / (double)allPlayers.at(id).get_exp_needed() * 100.0 << "%)" << "\n"
+        << "生命: " << GET_EQI_PROP_STR(hp) << "\n"
+        << "攻击: " << GET_EQI_PROP_STR(atk) << "\n"
+        << "防护: " << GET_EQI_PROP_STR(def) << "\n"
+        << "魔力: " << GET_EQI_PROP_STR(mp) << "\n"
+        << "暴击: " << GET_EQI_PROP_STR(crt) << "\n"
+        << "破甲: " << GET_EQI_PROP_STR(brk) << "\n"
+        << "敏捷: " << GET_EQI_PROP_STR(agi) << "\n"
         << "体力: " << allPlayers.at(id).energy << " 硬币: " << allPlayers.at(id).coins << "\n"
         << "英雄币: " << allPlayers.at(id).heroCoin;
     return msg.str();

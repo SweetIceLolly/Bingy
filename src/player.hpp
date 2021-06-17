@@ -103,8 +103,8 @@ public:
     bool crt_cache = false;
     double get_crt();           // 暴
 
-    double get_exp_needed();    // 升级所需经验
-    LL get_cd();            // 冷却时间
+    LL get_exp_needed();        // 升级所需经验
+    LL get_cd();                // 冷却时间
 
     void resetCache();
 
