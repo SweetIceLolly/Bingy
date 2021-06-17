@@ -133,7 +133,7 @@ bool bg_player_add(const LL &id) {
     SET_LL_PROP_ZERO(lastSignIn);
     SET_LL_PROP_ZERO(coins);
     SET_LL_PROP_ZERO(heroCoin);
-    SET_LL_PROP_ZERO(level);
+    p.level = 1;                            p.level_cache = true;
     SET_LL_PROP_ZERO(blessing);
     SET_LL_PROP_ZERO(energy);
     SET_LL_PROP_ZERO(exp);
@@ -198,8 +198,14 @@ bool bg_get_allplayers_from_db() {
             else
                 throw std::string("获取玩家") + std::to_string(id) + "的 equipments 属性失败";
 
+            // 读取一次性装备
+            tmp = doc["equipItems"];
+            if (tmp)
+                invListFromBson(tmp, p.equipItems);
+            else
+                throw std::string("获取玩家") + std::to_string(id) + "的 equipItems 属性失败";
+
             // todo
-            //p.equipItems
             //p.buyCount
 
             allPlayers.insert(std::make_pair(id, p));
@@ -804,11 +810,17 @@ LL player::get_cd() {
 
 // 清空计算缓存
 void player::resetCache() {
-    bool atk_cache = false;
-    bool def_cache = false;
-    bool brl_cache = false;
-    bool agi_cache = false;
-    bool hp_cache = false;
-    bool mp_cache = false;
-    bool crt_cache = false;
+    atk_cache = false;
+    def_cache = false;
+    brk_cache = false;
+    agi_cache = false;
+    hp_cache = false;
+    mp_cache = false;
+    crt_cache = false;
+
+    for (auto &item : equipments) {
+        if (item.first != EqiType::single_use) {
+            item.second.resetCache();
+        }
+    }
 }

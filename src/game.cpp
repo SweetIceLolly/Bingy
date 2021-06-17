@@ -10,6 +10,7 @@
 #include "signin_event.hpp"
 #include <mongocxx/exception/exception.hpp>
 #include <unordered_set>
+#include <sstream>
 
 std::unordered_set<LL>  blacklist;          // 黑名单 (修改项目前记得加锁)
 std::unordered_set<LL>  allAdmins;          // 管理员 (修改项目前记得加锁)
@@ -288,12 +289,19 @@ bool preViewPropertiesCallback(const cq::MessageEvent &ev) {
 
 // 通用查看属性函数
 std::string getPropertiesStr(const LL &id) {
-    std::string msg =
-        "账号: " + std::to_string(id) + "\n"
-        "等级: " + std::to_string(allPlayers.at(id).level) + ", 经验值: " + std::to_string(allPlayers.at(id).exp) + "\n"
-        "体力: " + std::to_string(allPlayers.at(id).energy) + " 硬币: " + std::to_string(allPlayers.at(id).coins) + "\n"
-        "英雄币: " + std::to_string(allPlayers.at(id).heroCoin);
-    return msg;
+    std::stringstream msg;
+    msg << "账号: " << id << "\n"
+        << "攻击: " << std::fixed << std::setprecision(1) << allPlayers.at(id).get_atk() << "\n"
+        << "防护: " << allPlayers.at(id).get_atk() << "\n"
+        << "破甲: " << allPlayers.at(id).get_atk() << "\n"
+        << "敏捷: " << allPlayers.at(id).get_atk() << "\n"
+        << "血: " << allPlayers.at(id).get_atk() << "\n"
+        << "魔: " << allPlayers.at(id).get_atk() << "\n"
+        << "暴击: " << allPlayers.at(id).get_atk() << "\n"
+        << "等级: " << allPlayers.at(id).level << ", 经验值: " << allPlayers.at(id).exp << "\n"
+        << "体力: " << allPlayers.at(id).energy << " 硬币: " << allPlayers.at(id).coins << "\n"
+        << "英雄币: " << allPlayers.at(id).heroCoin;
+    return msg.str();
 }
 
 // 查看属性
@@ -407,6 +415,7 @@ void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
     auto eqiType = allEquipments.at((*it).id).type;
     if (eqiType != EqiType::single_use) {
         auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
+        PLAYER.resetCache();                                            // 重算玩家属性
         if (!PLAYER.remove_at_inventory({ equipItem })) {               // 把装备上去了的装备从背包移除
             cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把将要装备的装备从背包中移除时发生错误!");
             return;
