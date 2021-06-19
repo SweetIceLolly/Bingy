@@ -137,6 +137,6 @@ mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields) {
         throw e;
     }
     catch (...) {
-        throw "dbFindAll 发生错误!";
+        throw std::exception("dbFindAll 发生错误!");
     }
 }

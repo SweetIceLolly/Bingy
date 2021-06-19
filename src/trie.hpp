@@ -45,7 +45,7 @@ private:
 template <typename T>
 void bg_trie<T>::addMsg(const std::string &str, const T &handler) {
     if (!root)
-        throw "Trie root is NULL!";     // 希望不会发生这种事吧
+        throw std::exception("Trie root is NULL!");         // 希望不会发生这种事吧
     if (str.empty())
         return;
 
@@ -72,7 +72,7 @@ void bg_trie<T>::addMsg(const std::string &str, const T &handler) {
 template <typename T>
 T bg_trie<T>::getMsgHandler(const std::string &str) const {
     if (!root)
-        throw "Trie root is NULL!";     // 希望不会发生这种事吧
+        throw std::exception("Trie root is NULL!");         // 希望不会发生这种事吧
     if (str.empty())
         return nullptr;
 

@@ -19,7 +19,7 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
 // 构造函数
 
 player::player() {
-    throw "创建 player 对象时必须指定 QQ 号!";
+    throw std::exception("创建 player 对象时必须指定 QQ 号!");
 }
 
 player::player(const player &p) {
@@ -172,7 +172,7 @@ bool bg_player_add(const LL &id) {
         p.##prop##_cache = true;                \
     }                                           \
     else                                        \
-        throw std::string("获取玩家") + std::to_string(id) + "的 " + #prop + std::string(" 属性失败");
+        throw std::exception(("获取玩家" + std::to_string(id) + "的 " + #prop + " 属性失败").c_str());
 
 // 从数据库读取所有玩家
 bool bg_get_allplayers_from_db() {
@@ -206,21 +206,21 @@ bool bg_get_allplayers_from_db() {
             if (tmp)
                 invListFromBson(tmp, p.inventory);
             else
-                throw std::string("获取玩家") + std::to_string(id) + "的 inventory 属性失败";
+                throw std::exception(("获取玩家" + std::to_string(id) + "的 inventory 属性失败").c_str());
 
             // 读取玩家装备
             tmp = doc["equipments"];
             if (tmp)
                 eqiMapFromBson(tmp, p.equipments);
             else
-                throw std::string("获取玩家") + std::to_string(id) + "的 equipments 属性失败";
+                throw std::exception(("获取玩家" + std::to_string(id) + "的 equipments 属性失败").c_str());
 
             // 读取一次性装备
             tmp = doc["equipItems"];
             if (tmp)
                 invListFromBson(tmp, p.equipItems);
             else
-                throw std::string("获取玩家") + std::to_string(id) + "的 equipItems 属性失败";
+                throw std::exception(("获取玩家" + std::to_string(id) + "的 equipItems 属性失败").c_str());
 
             // todo
             //p.buyCount
@@ -247,10 +247,10 @@ bool bg_get_allplayers_from_db() {
                                                                                 \
         auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, #propName);   \
         if (!result)                                                            \
-            throw "找不到对应的玩家 ID";                                         \
+            throw std::exception("找不到对应的玩家 ID");                         \
         auto field = result->view()[#propName];                                 \
         if (!field.raw())                                                       \
-            throw "没有找到 " #propName " field";                               \
+            throw std::exception("没有找到 " #propName " field");                \
         auto tmp = field.get_int64().value;                                     \
                                                                                 \
         LOCK_CURR_PLAYER;                                                       \
@@ -309,10 +309,10 @@ std::string player::get_nickname(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "nickname");
     if (!result)
-        throw "找不到对应的玩家 ID";
+        throw std::exception("找不到对应的玩家 ID");
     auto field = result->view()["nickname"];
     if (!field.raw())
-        throw "没有找到 nickname field";
+        throw std::exception("没有找到 nickname field");
     auto tmp = std::string(result->view()["nickname"].get_utf8().value);
 
     LOCK_CURR_PLAYER;
@@ -357,10 +357,10 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "inventory");
     if (!result)
-        throw "找不到对应玩家 ID";
+        throw std::exception("找不到对应玩家 ID");
     auto field = result->view()["inventory"];
     if (!field.raw())
-        throw "没有找到 inventory field";
+        throw std::exception("没有找到 inventory field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
@@ -544,10 +544,10 @@ std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &us
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipments");
     if (!result)
-        throw "找不到对应玩家 ID";
+        throw std::exception("找不到对应玩家 ID");
     auto field = result->view()["equipments"];
     if (!field.raw())
-        throw "没有找到 equipments field";
+        throw std::exception("没有找到 equipments field");
 
     std::unordered_map<EqiType, inventoryData> rtn;
     eqiMapFromBson(field, rtn);
@@ -596,10 +596,10 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipItems");
     if (!result)
-        throw "找不到对应玩家 ID";
+        throw std::exception("找不到对应玩家 ID");
     auto field = result->view()["equipItems"];
     if (!field.raw())
-        throw "没有找到 equipItems field";
+        throw std::exception("没有找到 equipItems field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);

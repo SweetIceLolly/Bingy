@@ -289,34 +289,33 @@ bool preViewPropertiesCallback(const cq::MessageEvent &ev) {
 
 // 懒人宏
 // 获取某个属性的字符串. 比如获取攻击 (atk), 则字符串为 攻击值 (武器攻击 + 护甲攻击 + 饰品攻击)
-#define GET_EQI_PROP_STR(prop)                                                  \
-    std::setprecision(1) <<                                                     \
-    allPlayers.at(id).get_##prop##() << " (" <<                                 \
-    std::setprecision(0) <<                                                     \
-    eqi.at(EqiType::weapon_primary).calc_##prop##() +      /* 武器属性总和*/     \
-    eqi.at(EqiType::weapon_secondary).calc_##prop##()                           \
-    << "+" <<                                                                   \
-    eqi.at(EqiType::armor_helmet).calc_##prop##() +        /* 护甲属性总和*/    \
-    eqi.at(EqiType::armor_body).calc_##prop##() +                              \
-    eqi.at(EqiType::armor_leg).calc_##prop##() +                               \
-    eqi.at(EqiType::armor_boot).calc_##prop##()                                \
-    << "+" <<                                                                  \
-    eqi.at(EqiType::ornament_earrings).calc_##prop##() +   /* 饰品属性总和*/    \
-    eqi.at(EqiType::ornament_rings).calc_##prop##() +                          \
-    eqi.at(EqiType::ornament_necklace).calc_##prop##() +                       \
-    eqi.at(EqiType::ornament_jewelry).calc_##prop##()                          \
+#define GET_EQI_PROP_STR(prop)                                                                                  \
+    std::setprecision(1) <<                                                                                     \
+    allPlayers.at(id).get_##prop##() << " (" <<                                                                 \
+    std::setprecision(0) <<                                                                                     \
+    allPlayers.at(id).get_equipments().at(EqiType::weapon_primary).calc_##prop##() +      /* 武器属性总和*/      \
+    allPlayers.at(id).get_equipments().at(EqiType::weapon_secondary).calc_##prop##()                            \
+    << "+" <<                                                                                                   \
+    allPlayers.at(id).get_equipments().at(EqiType::armor_helmet).calc_##prop##() +        /* 护甲属性总和*/      \
+    allPlayers.at(id).get_equipments().at(EqiType::armor_body).calc_##prop##() +                                \
+    allPlayers.at(id).get_equipments().at(EqiType::armor_leg).calc_##prop##() +                                 \
+    allPlayers.at(id).get_equipments().at(EqiType::armor_boot).calc_##prop##()                                  \
+    << "+" <<                                                                                                   \
+    allPlayers.at(id).get_equipments().at(EqiType::ornament_earrings).calc_##prop##() +   /* 饰品属性总和*/      \
+    allPlayers.at(id).get_equipments().at(EqiType::ornament_rings).calc_##prop##() +                            \
+    allPlayers.at(id).get_equipments().at(EqiType::ornament_necklace).calc_##prop##() +                         \
+    allPlayers.at(id).get_equipments().at(EqiType::ornament_jewelry).calc_##prop##()                            \
     << ")"
 
 // 通用查看属性函数
 std::string getPropertiesStr(const LL &id) {
     std::stringstream msg;
-    auto eqi = allPlayers.at(id).get_equipments();
 
     msg << std::fixed << std::setprecision(1)
         << "账号: " << id << "\n"
-        << "等级: " << allPlayers.at(id).level << ", 祝福: " << allPlayers.at(id).blessing << "\n"
-        << "经验: " << allPlayers.at(id).exp << "/" << allPlayers.at(id).get_exp_needed()
-            << " (" << (double)allPlayers.at(id).exp / (double)allPlayers.at(id).get_exp_needed() * 100.0 << "%)" << "\n"
+        << "等级: " << allPlayers.at(id).get_level() << ", 祝福: " << allPlayers.at(id).get_blessing() << "\n"
+        << "经验: " << allPlayers.at(id).get_exp() << "/" << allPlayers.at(id).get_exp_needed()
+            << " (" << (double)allPlayers.at(id).get_exp() / (double)allPlayers.at(id).get_exp_needed() * 100.0 << "%)" << "\n"
         << "生命: " << GET_EQI_PROP_STR(hp) << "\n"
         << "攻击: " << GET_EQI_PROP_STR(atk) << "\n"
         << "防护: " << GET_EQI_PROP_STR(def) << "\n"
@@ -324,8 +323,8 @@ std::string getPropertiesStr(const LL &id) {
         << "暴击: " << GET_EQI_PROP_STR(crt) << "\n"
         << "破甲: " << GET_EQI_PROP_STR(brk) << "\n"
         << "敏捷: " << GET_EQI_PROP_STR(agi) << "\n"
-        << "体力: " << allPlayers.at(id).energy << " 硬币: " << allPlayers.at(id).coins << "\n"
-        << "英雄币: " << allPlayers.at(id).heroCoin;
+        << "体力: " << allPlayers.at(id).get_energy() << " 硬币: " << allPlayers.at(id).get_coins() << "\n"
+        << "英雄币: " << allPlayers.at(id).get_heroCoin();
     return msg.str();
 }
 
@@ -455,10 +454,215 @@ void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
                 return;
             }
         }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + eqiType_to_str(eqiType) + ": " + allEquipments.at((*it).id).name + "+" +
-            std::to_string((*it).level) + ", 磨损" + std::to_string((*it).wear) + "/" + std::to_string(allEquipments.at((*it).id).wear));
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + eqiType_to_str(eqiType) + ": " + allEquipments.at(it->id).name + "+" +
+            std::to_string(it->level) + ", 磨损" + std::to_string(it->wear) + "/" + std::to_string(allEquipments.at(it->id).wear));
     }
     else {
         // todo: 一次性物品就得换个方式
     }
+}
+
+// 把指定玩家的指定类型的装备卸下并放回包里.
+// 如果卸下了装备, 则返回对应的名称; 否则返回空字符串
+// 注意, 该函数不能处理卸下一次性物品
+std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
+    auto &p = allPlayers.at(qq);
+    inventoryData eqi = p.get_equipments().at(eqiType);
+
+    if (eqi.id == -1)
+        return "";
+    else {
+        if (!p.set_equipments_item(eqiType, { -1, -1, -1 })) {
+            throw std::exception("设置玩家装备时失败!");
+        }
+        if (!p.add_inventory_item(eqi)) {
+            throw std::exception("为玩家添加装备到背包时失败!");
+        }
+
+        return allEquipments.at(eqi.id).name + "+" + std::to_string(eqi.level);
+    }
+}
+
+// 懒人宏
+// 处理卸下指定装备
+// 首先检查玩家是否有对应类型的装备, 然后卸下
+// name: 回调函数名称, 如 Helmet; type: 装备类型, 如 armor_helmet; typestr: 装备类型的字串, 如 "头盔"
+#define CALLBACK_UNEQUIP(name, type, typestr)                                                       \
+    bool preUnequip ##name## Callback(const cq::MessageEvent &ev) {                                 \
+        if (!accountCheck(ev))                                                                      \
+            return false;                                                                           \
+        if (PLAYER.get_equipments().at(EqiType::##type##).id == -1) {                               \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备" + typestr + "哦!");          \
+            return false;                                                                           \
+        }                                                                                           \
+        return true;                                                                                \
+    }                                                                                               \
+                                                                                                    \
+    void postUnequip##name##Callback(const cq::MessageEvent &ev) {                                  \
+        try {                                                                                       \
+            auto rtn = unequipPlayer(USER_ID, EqiType::##type##);                                   \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + rtn);                           \
+        }                                                                                           \
+        catch (std::exception &ex) {                                                                \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());    \
+        }                                                                                           \
+        catch (...) {                                                                               \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");                           \
+        }                                                                                           \
+    }
+
+CALLBACK_UNEQUIP(Helmet,    armor_helmet,       "头盔");
+CALLBACK_UNEQUIP(Body,      armor_body,         "战甲");
+CALLBACK_UNEQUIP(Leg,       armor_leg,          "护腿");
+CALLBACK_UNEQUIP(Boot,      armor_boot,         "战靴");
+CALLBACK_UNEQUIP(Primary,   weapon_primary,     "主武器");
+CALLBACK_UNEQUIP(Secondary, weapon_secondary,   "副武器");
+CALLBACK_UNEQUIP(Earrings,  ornament_earrings,  "耳环");
+CALLBACK_UNEQUIP(Rings,     ornament_rings,     "戒指");
+CALLBACK_UNEQUIP(Necklace,  ornament_necklace,  "项链");
+CALLBACK_UNEQUIP(Jewelry,   ornament_jewelry,   "宝石");
+
+// 懒人宏
+// 生成卸下装备的字符串
+#define UNEQUIP(type)                                       \
+    rtn = unequipPlayer(USER_ID, EqiType::##type##);        \
+    if (!rtn.empty())                                       \
+        msg += rtn + ", ";
+
+// 卸下护甲前检查
+bool preUnequipArmorCallback(const cq::MessageEvent & ev) {
+    return accountCheck(ev);
+}
+
+// 卸下护甲
+void postUnequipArmorCallback(const cq::MessageEvent &ev) {
+    try {
+        std::string msg = "";
+        auto UNEQUIP(armor_body);
+        UNEQUIP(armor_boot);
+        UNEQUIP(armor_helmet);
+        UNEQUIP(armor_leg);
+
+        if (msg.empty()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何护甲");
+        }
+        else {
+            msg.pop_back();                     // 去掉结尾的 ", "
+            msg.pop_back();
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
+        }
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
+    }
+}
+
+// 卸下武器前检查
+bool preUnequipWeaponCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 卸下武器
+void postUnequipWeaponCallback(const cq::MessageEvent &ev) {
+    try {
+        std::string msg = "";
+        auto UNEQUIP(weapon_primary);
+        UNEQUIP(weapon_secondary);
+
+        if (msg.empty()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何武器");
+        }
+        else {
+            msg.pop_back();                     // 去掉结尾的 ", "
+            msg.pop_back();
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
+        }
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
+    }
+}
+
+// 卸下饰品前检查
+bool preUnequipOrnamentCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 卸下饰品
+void postUnequipOrnamentCallback(const cq::MessageEvent &ev) {
+    try {
+        std::string msg = "";
+        auto UNEQUIP(ornament_earrings);
+        UNEQUIP(ornament_jewelry);
+        UNEQUIP(ornament_necklace);
+        UNEQUIP(ornament_rings);
+
+        if (msg.empty()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何饰品");
+        }
+        else {
+            msg.pop_back();                     // 去掉结尾的 ", "
+            msg.pop_back();
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
+        }
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
+    }
+}
+
+// 卸下所有装备前检查
+bool preUnequipAllCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 卸下所有装备
+void postUnequipAllCallback(const cq::MessageEvent &ev) {
+    try {
+        std::string msg = "";
+        auto UNEQUIP(armor_body);
+        UNEQUIP(armor_boot);
+        UNEQUIP(armor_helmet);
+        UNEQUIP(armor_leg);
+        UNEQUIP(weapon_primary);
+        UNEQUIP(weapon_secondary);
+        UNEQUIP(ornament_earrings);
+        UNEQUIP(ornament_jewelry);
+        UNEQUIP(ornament_necklace);
+        UNEQUIP(ornament_rings);
+
+        if (msg.empty()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何饰品");
+        }
+        else {
+            msg.pop_back();                     // 去掉结尾的 ", "
+            msg.pop_back();
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
+        }
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
+    }
+}
+
+// 卸下指定物品前检查
+bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string arg, LL &unequipItem) {
+    return false;
+}
+
+// 卸下指定物品
+void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem) {
+
 }

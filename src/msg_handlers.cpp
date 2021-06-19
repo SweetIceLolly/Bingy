@@ -83,3 +83,99 @@ CMD(equip) {
     if (preEquipCallback(ev, param, item))
         postEquipCallback(ev, item);
 }
+
+// 卸下头盔
+CMD(unequip_helmet) {
+    MATCH("卸下头盔", UnequipHelmet);
+}
+
+// 卸下战甲
+CMD(unequip_body) {
+    MATCH("卸下战甲", UnequipBody);
+}
+
+// 卸下护腿
+CMD(unequip_leg) {
+    MATCH("卸下护腿", UnequipLeg);
+}
+
+// 卸下战靴
+CMD(unequip_boot) {
+    MATCH("卸下战靴", UnequipBoot);
+}
+
+// 卸下护甲
+CMD(unequip_armor) {
+    MATCH("卸下护甲", UnequipArmor);
+}
+
+// 卸下主武器
+CMD(unequip_primary) {
+    MATCH("卸下主武器", UnequipPrimary);
+}
+
+// 卸下副武器
+CMD(unequip_secondary) {
+    MATCH("卸下副武器", UnequipSecondary);
+}
+
+// 卸下武器
+CMD(unequip_weapon) {
+    MATCH("卸下武器", UnequipWeapon);
+}
+
+// 卸下耳环
+CMD(unequip_earrings) {
+    MATCH("卸下耳环", UnequipEarrings);
+}
+
+// 卸下戒指
+CMD(unequip_rings) {
+    MATCH("卸下戒指", UnequipRings);
+}
+
+// 卸下项链
+CMD(unequip_necklace) {
+    MATCH("卸下项链", UnequipNecklace);
+}
+
+// 卸下宝石
+CMD(unequip_jewelry) {
+    MATCH("卸下宝石", UnequipJewelry);
+}
+
+// 卸下饰品
+CMD(unequip_ornament) {
+    MATCH("卸下饰品", UnequipOrnament);
+}
+
+// 卸下一次性物品
+CMD(unequip_item) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 卸下一次性物品指令格式为: \"bg 卸下 背包序号\"\n"
+            "或者卸下指定类型的物品: 例如: bg 卸下头盔 (只卸下头盔); bg 卸下饰品 (卸下所有饰品); bg 卸下所有 (卸下所有装备)");
+        return;
+    }
+    auto param = ev.message.substr(9);                          // 去掉命令字符串, 只保留参数
+    LL item = -1;
+    if (preUnequipSingleCallback(ev, param, item))
+        postUnequipSingleCallback(ev, item);
+}
+
+// 卸下一次性物品 (另一命令)
+CMD(unequip_item_2) {
+    if (ev.message.length() < 14) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 卸下一次性物品指令格式为: \"bg 卸下 背包序号\"\n"
+            "或者卸下指定类型的物品: 例如: bg 卸下头盔 (只卸下头盔); bg 卸下饰品 (卸下所有饰品); bg 卸下所有 (卸下所有装备)");
+        return;
+    }
+    auto param = ev.message.substr(13);                         // 去掉命令字符串, 只保留参数
+    LL item = -1;
+    if (preUnequipSingleCallback(ev, param, item))
+        postUnequipSingleCallback(ev, item);
+}
+
+// 卸下所有
+CMD(unequip_all) {
+    MATCH("卸下所有", UnequipAll);
+}

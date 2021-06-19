@@ -228,7 +228,7 @@ LL str_to_ll(const std::string &str) {
             if (str[i] == '-' && !numStarted)
                 continue;
             else
-                throw "无效的字符串";
+                throw std::exception("无效的字符串");
         }
         numStarted = true;
     }

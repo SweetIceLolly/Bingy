@@ -84,11 +84,36 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg", bg_cmd_bg);
     bg_groupmsg_router_add("bg 注册", bg_cmd_register);
     bg_groupmsg_router_add("bg 签到", bg_cmd_sign_in);
+
     bg_groupmsg_router_add("bg 查看硬币", bg_cmd_view_coins);
     bg_groupmsg_router_add("bg 查看背包", bg_cmd_view_inventory);
     bg_groupmsg_router_add("bg 查看属性", bg_cmd_view_properties);
+
     bg_groupmsg_router_add("bg 查看装备", bg_cmd_view_equipments);
     bg_groupmsg_router_add("bg 装备", bg_cmd_equip);
+
+    bg_groupmsg_router_add("bg 卸下头盔", bg_cmd_unequip_helmet);
+    bg_groupmsg_router_add("bg 卸下战甲", bg_cmd_unequip_body);
+    bg_groupmsg_router_add("bg 卸下护腿", bg_cmd_unequip_leg);
+    bg_groupmsg_router_add("bg 卸下战靴", bg_cmd_unequip_boot);
+    bg_groupmsg_router_add("bg 卸下护甲", bg_cmd_unequip_armor);
+
+    bg_groupmsg_router_add("bg 卸下主武器", bg_cmd_unequip_primary);
+    bg_groupmsg_router_add("bg 卸下副武器", bg_cmd_unequip_secondary);
+    bg_groupmsg_router_add("bg 卸下武器", bg_cmd_unequip_weapon);
+
+    bg_groupmsg_router_add("bg 卸下耳环", bg_cmd_unequip_earrings);
+    bg_groupmsg_router_add("bg 卸下戒指", bg_cmd_unequip_rings);
+    bg_groupmsg_router_add("bg 卸下项链", bg_cmd_unequip_necklace);
+    bg_groupmsg_router_add("bg 卸下宝石", bg_cmd_unequip_jewelry);
+    bg_groupmsg_router_add("bg 卸下饰品", bg_cmd_unequip_ornament);
+
+    bg_groupmsg_router_add("bg 卸下", bg_cmd_unequip_item);
+    bg_groupmsg_router_add("bg 卸下装备", bg_cmd_unequip_item_2);
+    bg_groupmsg_router_add("bg 卸下所有", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg 卸下所有装备", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg 卸下全部", bg_cmd_unequip_all);
+
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
     bg_groupmsg_router_add("bg 交易场", nullptr);
     bg_groupmsg_router_add("bg 合成", nullptr);
