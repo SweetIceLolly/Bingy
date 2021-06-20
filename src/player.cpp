@@ -610,7 +610,7 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 }
 
 // 获取已装备的一次性物品数量
-LL player::get_equipItems_item(const bool &use_cache) {
+LL player::get_equipItems_size(const bool &use_cache) {
     if (equipItems_cache && use_cache)
         return equipItems.size();
     return get_equipItems().size();
@@ -645,6 +645,27 @@ bool player::remove_at_equipItems(const LL &index) {
             return true;
         }
         return false;
+    }
+    return false;
+}
+
+// 清空已装备的一次性物品
+bool player::clear_equipItems() {
+    // 必须有缓存才能继续
+    if (!equipItems_cache) {
+        get_equipItems();
+        if (!equipItems_cache)
+            return false;
+    }
+
+    // 更新数据库, 成功后再更新本地缓存
+    if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
+        bsoncxx::builder::stream::document{} << "equipItems" <<
+        bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
+        << bsoncxx::builder::stream::finalize)) {
+
+        this->equipItems.clear();
+        return true;
     }
     return false;
 }

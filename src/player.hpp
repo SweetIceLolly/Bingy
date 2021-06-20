@@ -138,9 +138,11 @@ public:
     // 获取整个已装备的一次性物品表
     std::list<inventoryData> get_equipItems(const bool &use_cache = true);
     // 获取已装备的一次性物品数量
-    LL player::get_equipItems_item(const bool &use_cache);
+    LL player::get_equipItems_size(const bool &use_cache = true);
     // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_equipItems(const LL &index);
+    // 清空已装备的一次性物品
+    bool clear_equipItems();
     // 添加新物品到已装备的一次性物品列表末尾
     bool add_equipItems_item(const inventoryData &item);
 };

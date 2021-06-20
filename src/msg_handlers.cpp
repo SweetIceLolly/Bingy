@@ -177,5 +177,13 @@ CMD(unequip_item_2) {
 
 // 卸下所有
 CMD(unequip_all) {
-    MATCH("卸下所有", UnequipAll);
+    if (ev.message == "bg 卸下所有" || ev.message == "bg 卸下全部" || ev.message == "bg 卸下所有装备" || ev.message == "bg 卸下全部装备") {
+        if (preUnequipAllCallback(ev))
+            postUnequipAllCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) +
+            "命令格式不对哦! 要卸下所有装备的话可以发送: \"bg 卸下所有\"");
+    }
 }
+

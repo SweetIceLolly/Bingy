@@ -195,7 +195,10 @@ std::string getInventoryStr(const LL &id) {
         std::string msg = "背包 (" + std::to_string(tmp.size()) + "/" + std::to_string(allPlayers.at(id).get_invCapacity()) + ")\n";
         LL index = 1;
         for (const auto &item : tmp) {
-            msg += std::to_string(index) + "." + allEquipments.at(item.id).name + "+" + std::to_string(item.level) + " ";
+            if (allEquipments.at(item.id).type != EqiType::single_use)              // 非一次性物品
+                msg += std::to_string(index) + "." + allEquipments.at(item.id).name + "+" + std::to_string(item.level) + " ";
+            else                                                                    // 一次性物品
+                msg += std::to_string(index) + ".[" + allEquipments.at(item.id).name + "] ";
             ++index;
         }
         if (!msg.empty())
@@ -386,9 +389,10 @@ std::string getEquipmentsStr(const LL &id) {
     // 显示已装备的一次性物品
     if (!singleUseEqi.empty()) {
         LL index = 1;
-        eqiStr += "\n------一次性------\n";
+        eqiStr += "\n---一次性---\n";
         for (const auto &item : singleUseEqi) {
             eqiStr += std::to_string(index) + "." + allEquipments[item.id].name + " ";
+            ++index;
         }
         if (!eqiStr.empty())
             eqiStr.pop_back();
@@ -430,35 +434,45 @@ bool preEquipCallback(const cq::MessageEvent &ev, const std::string arg, LL &equ
 
 // 装备
 void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
+    PLAYER.resetCache();                                            // 重算玩家属性
+
     // 获取背包里该序号的对应物品
     auto invItems = PLAYER.get_inventory();
     auto it = invItems.begin();
     std::advance(it, equipItem);
     
-    // 设置玩家的装备
+    // 把装备上去了的装备从背包移除
+    if (!PLAYER.remove_at_inventory({ equipItem })) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把将要装备的装备从背包中移除时发生错误!");
+        return;
+    }
+
+    // 根据装备类型来装备
     auto eqiType = allEquipments.at((*it).id).type;
-    if (eqiType != EqiType::single_use) {
+    if (eqiType != EqiType::single_use) {                               // 不是一次性物品
+        // 把新装备装备上去
+        if (!PLAYER.set_equipments_item(eqiType, *it)) { 
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 修改玩家装备时发生错误!");
+            return;
+        }
+
         auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
-        PLAYER.resetCache();                                            // 重算玩家属性
-        if (!PLAYER.remove_at_inventory({ equipItem })) {               // 把装备上去了的装备从背包移除
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把将要装备的装备从背包中移除时发生错误!");
-            return;
-        }
-        if (!PLAYER.set_equipments_item(eqiType, *it)) {                // 把新装备装备上去
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 修改玩家装备时发生错误!");
-            return;
-        }
         if (prevEquipItem.id != -1) {                                   // 如果玩家之前的装备不为空, 就放回背包中
             if (!PLAYER.add_inventory_item(prevEquipItem)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 把之前的装备放回背包时发生错误!");
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把之前的装备放回背包时发生错误!");
                 return;
             }
         }
         cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + eqiType_to_str(eqiType) + ": " + allEquipments.at(it->id).name + "+" +
             std::to_string(it->level) + ", 磨损" + std::to_string(it->wear) + "/" + std::to_string(allEquipments.at(it->id).wear));
     }
-    else {
-        // todo: 一次性物品就得换个方式
+    else {                                                              // 是一次性物品
+        // 把物品添加到一次性列表
+        if (!PLAYER.add_equipItems_item(*it)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 修改玩家装备时发生错误!");
+            return;
+        }
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备一次性物品: " + allEquipments.at(it->id).name);
     }
 }
 
@@ -472,6 +486,7 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
     if (eqi.id == -1)
         return "";
     else {
+        p.resetCache();
         if (!p.set_equipments_item(eqiType, { -1, -1, -1 })) {
             throw std::exception("设置玩家装备时失败!");
         }
@@ -500,6 +515,7 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
                                                                                                     \
     void postUnequip##name##Callback(const cq::MessageEvent &ev) {                                  \
         try {                                                                                       \
+            PLAYER.resetCache();                                                                    \
             auto rtn = unequipPlayer(USER_ID, EqiType::##type##);                                   \
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + rtn);                           \
         }                                                                                           \
@@ -537,6 +553,8 @@ bool preUnequipArmorCallback(const cq::MessageEvent & ev) {
 // 卸下护甲
 void postUnequipArmorCallback(const cq::MessageEvent &ev) {
     try {
+        PLAYER.resetCache();                    // 重算玩家属性
+
         std::string msg = "";
         auto UNEQUIP(armor_body);
         UNEQUIP(armor_boot);
@@ -568,6 +586,8 @@ bool preUnequipWeaponCallback(const cq::MessageEvent &ev) {
 // 卸下武器
 void postUnequipWeaponCallback(const cq::MessageEvent &ev) {
     try {
+        PLAYER.resetCache();                    // 重算玩家属性
+
         std::string msg = "";
         auto UNEQUIP(weapon_primary);
         UNEQUIP(weapon_secondary);
@@ -597,6 +617,8 @@ bool preUnequipOrnamentCallback(const cq::MessageEvent &ev) {
 // 卸下饰品
 void postUnequipOrnamentCallback(const cq::MessageEvent &ev) {
     try {
+        PLAYER.resetCache();                    // 重算玩家属性
+
         std::string msg = "";
         auto UNEQUIP(ornament_earrings);
         UNEQUIP(ornament_jewelry);
@@ -628,6 +650,8 @@ bool preUnequipAllCallback(const cq::MessageEvent &ev) {
 // 卸下所有装备
 void postUnequipAllCallback(const cq::MessageEvent &ev) {
     try {
+        PLAYER.resetCache();                    // 重算玩家属性
+
         std::string msg = "";
         auto UNEQUIP(armor_body);
         UNEQUIP(armor_boot);
@@ -640,8 +664,21 @@ void postUnequipAllCallback(const cq::MessageEvent &ev) {
         UNEQUIP(ornament_necklace);
         UNEQUIP(ornament_rings);
 
+        auto items = PLAYER.get_equipItems();
+        if (!PLAYER.clear_equipItems()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败: 清空一次性装备时发生错误!");
+            return;
+        }
+        for (const auto &item : items) {
+            if (!PLAYER.add_inventory_item(item)) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败: 把一次性装备添加到背包时发生错误!");
+                return;
+            }
+            msg += allEquipments.at(item.id).name + ", ";
+        }
+
         if (msg.empty()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何饰品");
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备任何装备");
         }
         else {
             msg.pop_back();                     // 去掉结尾的 ", "
@@ -659,10 +696,48 @@ void postUnequipAllCallback(const cq::MessageEvent &ev) {
 
 // 卸下指定物品前检查
 bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string arg, LL &unequipItem) {
-    return false;
+    if (!accountCheck(ev))
+        return false;
+    
+    try {
+        auto tmp = str_to_ll(arg);                                              // 字符串转成整数
+        if (tmp < 1 || tmp > PLAYER.get_equipItems_size()) {                    // 检查序号是否超出装备范围
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "没有找到序号为\"" + std::to_string(tmp) + "\"的物品!");
+            return false;
+        }
+        unequipItem = tmp - 1;                                                  // 注意内部列表以 0 为开头
+        return true;
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
+        return false;
+    }
 }
 
 // 卸下指定物品
 void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem) {
+    try {
+        PLAYER.resetCache();                    // 重算玩家属性
 
+        // 先把要卸下的装备记录下来, 方便之后添加到背包
+        auto items = PLAYER.get_equipItems();
+        auto it = items.begin();
+        std::advance(it, unequipItem);
+
+        if (!PLAYER.remove_at_equipItems(unequipItem)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败: 移除装备时发生错误!");
+            return;
+        }
+        if (!PLAYER.add_inventory_item(*it)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败: 把装备添加到背包时发生错误!");
+            return;
+        }
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功卸下一次性物品: " + allEquipments.at(it->id).name);
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败!");
+    }
 }

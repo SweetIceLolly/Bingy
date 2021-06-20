@@ -113,6 +113,7 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 卸下所有", bg_cmd_unequip_all);
     bg_groupmsg_router_add("bg 卸下所有装备", bg_cmd_unequip_all);
     bg_groupmsg_router_add("bg 卸下全部", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg 卸下全部装备", bg_cmd_unequip_all);
 
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
     bg_groupmsg_router_add("bg 交易场", nullptr);
