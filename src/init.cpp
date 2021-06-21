@@ -115,6 +115,30 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 卸下全部", bg_cmd_unequip_all);
     bg_groupmsg_router_add("bg 卸下全部装备", bg_cmd_unequip_all);
 
+    bg_groupmsg_router_add("bg 强化头盔", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg 强化战甲", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg 强化护腿", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg 强化战靴", bg_cmd_upgrade_boot);
+    bg_groupmsg_router_add("bg 升级头盔", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg 升级战甲", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg 升级护腿", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg 升级战靴", bg_cmd_upgrade_boot);
+
+    bg_groupmsg_router_add("bg 强化主武器", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg 强化副武器", bg_cmd_upgrade_secondary);
+    bg_groupmsg_router_add("bg 升级主武器", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg 升级副武器", bg_cmd_upgrade_secondary);
+
+    bg_groupmsg_router_add("bg 强化耳环", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg 强化戒指", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg 强化项链", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg 强化宝石", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg 升级耳环", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg 升级戒指", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg 升级项链", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg 升级宝石", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg 确认", bg_cmd_confirm_upgrade);
+
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
     bg_groupmsg_router_add("bg 交易场", nullptr);
     bg_groupmsg_router_add("bg 合成", nullptr);

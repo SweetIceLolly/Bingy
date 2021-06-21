@@ -263,7 +263,10 @@ void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
         auto    it = inv.rbegin();
         for (const auto &index : items) {                   // 计算出售总价
             std::advance(it, prevIndex - index);
-            price += allEquipments.at(it->id).price;
+            if (allEquipments.at(it->id).type == EqiType::single_use)   // 一次性装备价格 = 原始价格
+                price += allEquipments.at(it->id).price;
+            else                                                        // 装备价格 = 原始价格 + 100 * (1.6 ^ 装备等级 - 1) / 0.6
+                price += allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6;
             prevIndex = index;
         }
 
@@ -414,7 +417,7 @@ void postViewEquipmentsCallback(const cq::MessageEvent &ev) {
 }
 
 // 装备前检查
-bool preEquipCallback(const cq::MessageEvent &ev, const std::string arg, LL &equipItem) {
+bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &equipItem) {
     if (!accountCheck(ev))
         return false;
 
@@ -448,16 +451,18 @@ void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
     }
 
     // 根据装备类型来装备
-    auto eqiType = allEquipments.at((*it).id).type;
+    auto eqiType = allEquipments.at(it->id).type;
     if (eqiType != EqiType::single_use) {                               // 不是一次性物品
+        auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
+
         // 把新装备装备上去
         if (!PLAYER.set_equipments_item(eqiType, *it)) { 
             cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 修改玩家装备时发生错误!");
             return;
         }
 
-        auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
-        if (prevEquipItem.id != -1) {                                   // 如果玩家之前的装备不为空, 就放回背包中
+        // 如果玩家之前的装备不为空, 就放回背包中
+        if (prevEquipItem.id != -1) {
             if (!PLAYER.add_inventory_item(prevEquipItem)) {
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "装备时发生错误: 把之前的装备放回背包时发生错误!");
                 return;
@@ -501,13 +506,13 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
 // 懒人宏
 // 处理卸下指定装备
 // 首先检查玩家是否有对应类型的装备, 然后卸下
-// name: 回调函数名称, 如 Helmet; type: 装备类型, 如 armor_helmet; typestr: 装备类型的字串, 如 "头盔"
-#define CALLBACK_UNEQUIP(name, type, typestr)                                                       \
+// name: 回调函数名称, 如 Helmet; type: 装备类型, 如 armor_helmet
+#define CALLBACK_UNEQUIP(name, type)                                                                \
     bool preUnequip ##name## Callback(const cq::MessageEvent &ev) {                                 \
         if (!accountCheck(ev))                                                                      \
             return false;                                                                           \
         if (PLAYER.get_equipments().at(EqiType::##type##).id == -1) {                               \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备" + typestr + "哦!");          \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备" + eqiType_to_str(EqiType::##type##) + "哦!");  \
             return false;                                                                           \
         }                                                                                           \
         return true;                                                                                \
@@ -527,16 +532,16 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
         }                                                                                           \
     }
 
-CALLBACK_UNEQUIP(Helmet,    armor_helmet,       "头盔");
-CALLBACK_UNEQUIP(Body,      armor_body,         "战甲");
-CALLBACK_UNEQUIP(Leg,       armor_leg,          "护腿");
-CALLBACK_UNEQUIP(Boot,      armor_boot,         "战靴");
-CALLBACK_UNEQUIP(Primary,   weapon_primary,     "主武器");
-CALLBACK_UNEQUIP(Secondary, weapon_secondary,   "副武器");
-CALLBACK_UNEQUIP(Earrings,  ornament_earrings,  "耳环");
-CALLBACK_UNEQUIP(Rings,     ornament_rings,     "戒指");
-CALLBACK_UNEQUIP(Necklace,  ornament_necklace,  "项链");
-CALLBACK_UNEQUIP(Jewelry,   ornament_jewelry,   "宝石");
+CALLBACK_UNEQUIP(Helmet,    armor_helmet);
+CALLBACK_UNEQUIP(Body,      armor_body);
+CALLBACK_UNEQUIP(Leg,       armor_leg);
+CALLBACK_UNEQUIP(Boot,      armor_boot);
+CALLBACK_UNEQUIP(Primary,   weapon_primary);
+CALLBACK_UNEQUIP(Secondary, weapon_secondary);
+CALLBACK_UNEQUIP(Earrings,  ornament_earrings);
+CALLBACK_UNEQUIP(Rings,     ornament_rings);
+CALLBACK_UNEQUIP(Necklace,  ornament_necklace);
+CALLBACK_UNEQUIP(Jewelry,   ornament_jewelry);
 
 // 懒人宏
 // 生成卸下装备的字符串
@@ -695,7 +700,7 @@ void postUnequipAllCallback(const cq::MessageEvent &ev) {
 }
 
 // 卸下指定物品前检查
-bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string arg, LL &unequipItem) {
+bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg, LL &unequipItem) {
     if (!accountCheck(ev))
         return false;
     
@@ -740,4 +745,110 @@ void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败!");
     }
+}
+
+// 强化装备之前检查
+bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg, LL &upgradeTimes, LL &coinsNeeded) {
+    if (!accountCheck(ev))
+        return false;
+
+    // 检查是否有装备对应类型的装备
+    if (PLAYER.get_equipments().at(eqiType).id == -1) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备" + eqiType_to_str(eqiType) + "哦!");
+        return false;
+    }
+
+    // 从字符串获取升级次数
+    try {
+        upgradeTimes = str_to_ll(arg);
+        if (upgradeTimes < 1) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "无效的升级次数");
+            return false;
+        }
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
+        return false;
+    }
+
+    // 计算升级所需硬币
+    double currEqiLevel = static_cast<double>(PLAYER.get_equipments().at(eqiType).level);
+    if (upgradeTimes == 1) {
+        // 装备升一级价格 = 210 * 1.61 ^ 当前装备等级
+        coinsNeeded = static_cast<LL>(210.0 * pow(1.61, currEqiLevel));
+        if (PLAYER.get_coins() < coinsNeeded) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "不够硬币哦! 还需要" + std::to_string(coinsNeeded - PLAYER.get_coins()) + "硬币");
+            return false;
+        }
+    }
+    else {
+        //   装备升 n 级价格
+        // = sum(210 * 1.61 ^ x, x, 当前等级, 当前等级 + n - 1)
+        // = 21000 * (1.61 ^ (当前等级 + n) - 1.61 ^ 当前等级) / 61
+        // ≈ -344.262295082 * exp(0.476234178996 * 当前等级) + 344.262295082 * exp(0.476234178996 * (当前等级 + n))
+        coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
+        LL currCoins = PLAYER.get_coins();
+        if (currCoins < coinsNeeded) {
+            // 如果不够硬币, 则计算用户可以升级多少级, 即对下列方程中的 n 求解:
+            // 21000 * (1.61 ^ (当前等级 + n) - 1.61 ^ 当前等级) / 61 = 当前硬币
+            // 解得:
+            // n = (当前等级 * ln(7) - 2 * 当前等级 * ln(10) + 当前等级 * ln(23) + ln(3) + ln(7) + 3 * ln(10) - ln(61 * 当前硬币 + 21000 * (161 / 100) ^ 当前等级)) / (-ln(7) + 2 * ln(10) - ln(23))
+            //   ≈ -2.09980728831 * (-ln(21000.0 * exp(0.476234178996 * 当前等级) + 61.0 * 当前硬币) + 0.476234178996 * 当前等级 + 9.95227771671)
+            // 再取 floor
+            upgradeTimes = static_cast<LL>(floor(
+                -2.09980728831 * (-log(21000.0 * exp(0.476234178996 * currEqiLevel) + 61.0 * currCoins) + 0.476234178996 * currEqiLevel + 9.95227771671)
+            ));
+
+            if (upgradeTimes < 1) {
+                // 玩家的钱一次都升级不了
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "不够硬币哦! 还需要" + std::to_string(coinsNeeded - currCoins) + "硬币");
+            }
+            else {
+                // 重算需要硬币
+                coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
+
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "不够硬币哦! 当前硬币只够升级" + std::to_string(upgradeTimes) + "次, 强化完之后还剩" + std::to_string(currCoins - coinsNeeded) + "硬币");
+            }
+            return false;
+        }
+        else {
+            // 够钱进行多次升级, 创建一个确认操作
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "你将要连续升级" + eqiType_to_str(eqiType) + std::to_string(upgradeTimes) + "次, "
+                "这会花费" + std::to_string(coinsNeeded) + "硬币。发送\"bg 确认\"继续, 若20秒后没有确认, 则操作取消。");
+
+            if (PLAYER.confirmInProgress) {
+                // 如果玩家当前有进行中的确认, 那么取消掉正在进行的确认, 并等待那个确认退出
+                PLAYER.abortUpgrade();
+                PLAYER.waitConfirmComplete();
+            }
+            bool confirm = PLAYER.waitUpgradeConfirm();     // 等待玩家进行确认
+            if (!confirm) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "取消了连续升级" + eqiType_to_str(eqiType) + std::to_string(upgradeTimes) + "次");
+            }
+            return confirm;
+        }
+    }
+    return true;
+}
+
+// 强化装备
+void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded) {
+    cq::send_group_message(GROUP_ID, bg_at(ev) + "确认了");
+}
+
+// 确认多次强化前检查
+bool preConfirmUpgradeCallback(const cq::MessageEvent &ev) {
+    if (!accountCheck(ev))
+        return false;
+
+    if (!PLAYER.confirmInProgress) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有需要确认的连续强化操作");
+        return false;
+    }
+    return true;
+}
+
+// 确认多次强化
+void postConfirmUpgradeCallback(const cq::MessageEvent &ev) {
+    PLAYER.confirmUpgrade();
 }

@@ -12,10 +12,12 @@
 
 using namespace cq;
 
-CQ_INIT {
+CQ_INIT{
     // 初始化 Bingy
+    auto startTime = std::chrono::high_resolution_clock::now();
     if (bg_init()) {
-        console_log("Bingy 启动成功");
+        std::chrono::duration<double> timeDiff = std::chrono::high_resolution_clock::now() - startTime;
+        console_log("Bingy 启动成功, 启动用时" + std::to_string(timeDiff.count() * 1000) + "ms");
     }
     else {
         console_log("Bingy 初始化失败!", LogType::error);

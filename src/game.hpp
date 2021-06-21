@@ -8,6 +8,7 @@
 
 #include <cqcppsdk/cqcppsdk.hpp>
 #include <unordered_set>
+#include "equipment.hpp"
 
 using LL = long long;
 
@@ -36,7 +37,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
 void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items);
 PRE_POST(ViewProperties);
 PRE_POST(ViewEquipments);
-bool preEquipCallback(const cq::MessageEvent &ev, const std::string arg, LL &equipItem);
+bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &equipItem);
 void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem);
 PRE_POST(UnequipHelmet);
 PRE_POST(UnequipBody);
@@ -51,6 +52,9 @@ PRE_POST(UnequipRings);
 PRE_POST(UnequipNecklace);
 PRE_POST(UnequipJewelry);
 PRE_POST(UnequipOrnament);
-bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string arg, LL &unequipItem);
+bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg, LL &unequipItem);
 void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem);
 PRE_POST(UnequipAll);
+bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg, LL &upgradeTimes, LL &coinsNeeded);
+void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded);
+PRE_POST(ConfirmUpgrade);

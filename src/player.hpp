@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <mutex>
+#include <condition_variable>
 #include <list>
 #include "inventory.hpp"
 #include "equipment.hpp"
@@ -28,6 +29,12 @@ class player {
 private:
     std::mutex mutexPlayer;                                                         // 玩家操作锁
     LL id;                                                                          // QQ 号
+
+    // 多次强化的确认状态
+    std::mutex mutexStatus;                                                         // 线程状态锁
+    bool upgrading;                                                                 // 玩家是否确认要强化
+    std::condition_variable cvStatusChange;                                         // 状态发生变化
+    std::condition_variable cvPrevConfirmCompleted;                                 // 上一次操作是否完成
 
 public:
     // [注意] 以下属性请使用对应的 getter 和 setter. 除非你知道你在做什么, 否则不要直接读写他们的值
@@ -145,6 +152,16 @@ public:
     bool clear_equipItems();
     // 添加新物品到已装备的一次性物品列表末尾
     bool add_equipItems_item(const inventoryData &item);
+
+    bool confirmInProgress = false;                                                 // 是否有待确认的强化
+    // 取消强化确认
+    void abortUpgrade();
+    // 确认强化确认
+    void confirmUpgrade();
+    // 等待强化确认. 如果玩家确认了强化, 就返回 true; 否则返回 false
+    bool waitUpgradeConfirm();
+    // 等待确认完成
+    void waitConfirmComplete();
 };
 
 extern std::unordered_map<long long, player>   allPlayers;

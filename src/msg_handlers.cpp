@@ -22,7 +22,8 @@
 
 // ping
 CMD(bg) {
-    cq::send_group_message(ev.target.group_id.value(), "我在呀!");
+    if (ev.message == "bg")
+        cq::send_group_message(ev.target.group_id.value(), "我在呀!");
 }
 
 // 注册
@@ -187,3 +188,36 @@ CMD(unequip_all) {
     }
 }
 
+// 懒人宏
+// 定义强化装备相关的命令规则, 并调用强化回调函数
+#define UPGRADE_CMD(name, type)                                                                         \
+    CMD(upgrade_##name##) {                                                                             \
+        LL upgradeTimes = 0;                        /* 强化次数 */                                      \
+        LL coinsNeeded = 0;                         /* 需要硬币 */                                      \
+                                                                                                        \
+        if (ev.message.length() < 16) {             /* 无参数 */                                        \
+            if (preUpgradeCallback(ev, EqiType::##type##, "1", upgradeTimes, coinsNeeded))              \
+                postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
+        }                                                                                               \
+        else {                                      /* 有参数 */                                        \
+            auto param = ev.message.substr(15);     /* 去掉命令字符串, 只保留参数 */                     \
+            if (preUpgradeCallback(ev, EqiType::##type##, param, upgradeTimes, coinsNeeded))            \
+                postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
+        }                                                                                               \
+    }
+
+UPGRADE_CMD(helmet, armor_helmet);
+UPGRADE_CMD(body, armor_body);
+UPGRADE_CMD(leg, armor_leg);
+UPGRADE_CMD(boot, armor_boot);
+UPGRADE_CMD(primary, weapon_primary);
+UPGRADE_CMD(secondary, weapon_secondary);
+UPGRADE_CMD(earrings, ornament_earrings);
+UPGRADE_CMD(rings, ornament_rings);
+UPGRADE_CMD(necklace, ornament_necklace);
+UPGRADE_CMD(jewelry, ornament_jewelry);
+
+// 确认强化
+CMD(confirm_upgrade) {
+    MATCH("确认", ConfirmUpgrade);
+}

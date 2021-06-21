@@ -192,7 +192,7 @@ public:
     LL massive_draw();
 };
 
-// 检查一个字符串是否为整数
+// 检查一个字符串是否为整数. 如果不是, 则抛出异常; 如果是, 则返回对应的整数
 LL str_to_ll(const std::string &str);
 
 // 获取 type 所对应的装备类型的名称

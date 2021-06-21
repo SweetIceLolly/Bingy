@@ -6,6 +6,7 @@
 
 #include "player.hpp"
 #include "database.hpp"
+#include <chrono>               // 用于确认线程超时
 
 #define LOCK_CURR_PLAYER std::scoped_lock<std::mutex> __lock(this->mutexPlayer);
 
@@ -861,4 +862,33 @@ void player::resetCache() {
             item.second.resetCache();
         }
     }
+}
+
+// 取消强化确认
+void player::abortUpgrade() {
+    upgrading = false;
+    cvStatusChange.notify_one();
+}
+
+// 确认强化确认
+void player::confirmUpgrade() {
+    upgrading = true;
+    cvStatusChange.notify_one();
+}
+
+// 等待强化确认. 如果玩家确认了强化, 就返回 true; 否则返回 false
+bool player::waitUpgradeConfirm() {
+    confirmInProgress = true;
+    upgrading = false;
+    std::unique_lock lock(this->mutexStatus);
+    cvStatusChange.wait_for(lock, std::chrono::seconds(20));    // 20 秒确认超时
+    confirmInProgress = false;
+    cvPrevConfirmCompleted.notify_one();
+    return this->upgrading;
+}
+
+// 等待确认完成
+void player::waitConfirmComplete() {
+    std::unique_lock lock(this->mutexStatus);
+    cvPrevConfirmCompleted.wait(lock);
 }
