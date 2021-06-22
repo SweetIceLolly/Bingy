@@ -97,6 +97,17 @@ void str_lcase(std::string &str) {
     }
 }
 
+LL qq_parse(const std::string &str) {
+    if (str[0] == '[') {
+        if (str.length() < 11)
+            throw std::exception("无效的 at 指令");
+        else
+            return std::stoll(str.substr(10));
+    }
+    else
+        return std::stoll(str);
+}
+
 // --------------------------------------------------------------
 
 LL rndRange(const LL &min, const LL &max) {

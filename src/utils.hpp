@@ -30,6 +30,7 @@ void console_log(const std::string &msg, const LogType &type = LogType::info);
 std::string str_trim(const std::string &str);
 std::vector<std::string> str_split(const std::string &str, const char &delimiter);
 void str_lcase(std::string &str);
+LL qq_parse(const std::string &str);
 
 // 时间日期类
 class dateTime {

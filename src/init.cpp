@@ -139,6 +139,17 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 升级宝石", bg_cmd_upgrade_jewelry);
     bg_groupmsg_router_add("bg 确认", bg_cmd_confirm_upgrade);
 
+    bg_groupmsg_router_add("bg 强化护甲", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 强化武器", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 强化饰品", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 强化装备", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 强化", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 升级护甲", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 升级武器", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 升级饰品", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 升级装备", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg 升级", bg_cmd_upgrade_help);
+
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
     bg_groupmsg_router_add("bg 交易场", nullptr);
     bg_groupmsg_router_add("bg 合成", nullptr);
@@ -147,6 +158,15 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg pvp", nullptr);
     bg_groupmsg_router_add("bg 购买", nullptr);
     bg_groupmsg_router_add("bg vip", nullptr);
+
+    bg_groupmsg_router_add("bg /addcoins", bg_cmd_admin_add_coins);
+    bg_groupmsg_router_add("bg /addherocoin", bg_cmd_admin_add_heroCoin);
+    bg_groupmsg_router_add("bg /addlevel", bg_cmd_admin_add_level);
+    bg_groupmsg_router_add("bg /addblessing", bg_cmd_admin_add_blessing);
+    bg_groupmsg_router_add("bg /addenergy", bg_cmd_admin_add_energy);
+    bg_groupmsg_router_add("bg /addexp", bg_cmd_admin_add_exp);
+    bg_groupmsg_router_add("bg /addinvcapacity", bg_cmd_admin_add_invCapacity);
+    bg_groupmsg_router_add("bg /addvip", bg_cmd_admin_add_vip);
 
     // 注册私聊相关命令
 

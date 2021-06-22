@@ -190,34 +190,62 @@ CMD(unequip_all) {
 
 // 懒人宏
 // 定义强化装备相关的命令规则, 并调用强化回调函数
-#define UPGRADE_CMD(name, type)                                                                         \
+#define UPGRADE_CMD(name, type, cmdLen)                                                                 \
     CMD(upgrade_##name##) {                                                                             \
-        LL upgradeTimes = 0;                        /* 强化次数 */                                      \
-        LL coinsNeeded = 0;                         /* 需要硬币 */                                      \
+        LL upgradeTimes = 0;                                /* 强化次数 */                              \
+        LL coinsNeeded = 0;                                 /* 需要硬币 */                              \
                                                                                                         \
-        if (ev.message.length() < 16) {             /* 无参数 */                                        \
+        if (ev.message.length() < cmdLen) {                 /* 无参数 */                                \
             if (preUpgradeCallback(ev, EqiType::##type##, "1", upgradeTimes, coinsNeeded))              \
                 postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
         }                                                                                               \
-        else {                                      /* 有参数 */                                        \
-            auto param = ev.message.substr(15);     /* 去掉命令字符串, 只保留参数 */                     \
+        else {                                              /* 有参数 */                                \
+            auto param = ev.message.substr(cmdLen - 1);     /* 去掉命令字符串, 只保留参数 */             \
             if (preUpgradeCallback(ev, EqiType::##type##, param, upgradeTimes, coinsNeeded))            \
                 postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
         }                                                                                               \
     }
 
-UPGRADE_CMD(helmet, armor_helmet);
-UPGRADE_CMD(body, armor_body);
-UPGRADE_CMD(leg, armor_leg);
-UPGRADE_CMD(boot, armor_boot);
-UPGRADE_CMD(primary, weapon_primary);
-UPGRADE_CMD(secondary, weapon_secondary);
-UPGRADE_CMD(earrings, ornament_earrings);
-UPGRADE_CMD(rings, ornament_rings);
-UPGRADE_CMD(necklace, ornament_necklace);
-UPGRADE_CMD(jewelry, ornament_jewelry);
+UPGRADE_CMD(helmet, armor_helmet, 16);
+UPGRADE_CMD(body, armor_body, 16);
+UPGRADE_CMD(leg, armor_leg, 16);
+UPGRADE_CMD(boot, armor_boot, 16);
+UPGRADE_CMD(primary, weapon_primary, 20);
+UPGRADE_CMD(secondary, weapon_secondary, 20);
+UPGRADE_CMD(earrings, ornament_earrings, 16);
+UPGRADE_CMD(rings, ornament_rings, 16);
+UPGRADE_CMD(necklace, ornament_necklace, 16);
+UPGRADE_CMD(jewelry, ornament_jewelry, 16);
 
 // 确认强化
 CMD(confirm_upgrade) {
     MATCH("确认", ConfirmUpgrade);
 }
+
+// 强化装备帮助
+CMD(upgrade_help) {
+    cq::send_group_message(ev.target.group_id.value(), "请指定需要强化的装备类型, 命令后面可以跟需要强化的次数。例如: \"bg 强化主武器\", \"bg 强化战甲 5\"");
+}
+
+// 懒人宏
+// 定义为指定玩家添加指定属性数值的管理指令
+#define CMD_ADMIN_INC_FIELD(funcName, commandStr, fieldStr, callbackFuncName)                               \
+    CMD(admin_add_##funcName##) {                                                                           \
+        if (allAdmins.find(USER_ID) == allAdmins.end())                                                     \
+            return;                                                                                         \
+        if (ev.message.length() < sizeof(commandStr)) {                                                     \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式: " commandStr " qq/all " fieldStr "数");  \
+            return;                                                                                         \
+        }                                                                                                   \
+        auto param = ev.message.substr(sizeof(commandStr) - 1);         /* 去掉命令字符串, 只保留参数 */     \
+        adminAdd##callbackFuncName##Callback(ev, param);                                                    \
+    }
+
+CMD_ADMIN_INC_FIELD(coins, "bg /addcoins", "硬币", Coins);
+CMD_ADMIN_INC_FIELD(heroCoin, "bg /addherocoin", "英雄币", HeroCoin);
+CMD_ADMIN_INC_FIELD(level, "bg /addlevel", "等级", Level);
+CMD_ADMIN_INC_FIELD(blessing, "bg /addblessing", "祝福", Blessing);
+CMD_ADMIN_INC_FIELD(energy, "bg /addenergy", "体力", Energy);
+CMD_ADMIN_INC_FIELD(exp, "bg /addexp", "经验", Exp);
+CMD_ADMIN_INC_FIELD(invCapacity, "bg /addinvcapacity", "背包容量", InvCapacity);
+CMD_ADMIN_INC_FIELD(vip, "bg /addvip", "VIP等级", Vip);

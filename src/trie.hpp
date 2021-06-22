@@ -8,8 +8,6 @@
 
 #include <unordered_map>
 #include <string>
-#include <functional>
-#include <cqcppsdk/cqcppsdk.hpp>
 
 // 字典树节点
 template <typename T>

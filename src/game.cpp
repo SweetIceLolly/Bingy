@@ -232,7 +232,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
                 continue;
             auto tmp = str_to_ll(item);                                         // 字符串转成整数
             if (tmp < 1 || tmp > PLAYER.get_inventory_size()) {                 // 检查是否超出背包范围
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + item + "\"超出了背包范围!");
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(item) + "\"超出了背包范围!");
                 return false;
             }
             if (sellList.find(tmp) == sellList.end()) {                         // 检查是否有重复项目
@@ -240,7 +240,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
                 sellList.insert(tmp);                                           // 记录该项目
             }
             else {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + item + "\"重复了!");
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(item) + "\"重复了!");
                 return false;
             }
         }
@@ -423,8 +423,8 @@ bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &eq
 
     try {
         equipItem = str_to_ll(arg) - 1;                                         // 字符串转成整数. 注意内部的存储序号由 0 开始
-        if (equipItem > PLAYER.get_inventory_size()) {                          // 检查是否超出背包范围
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + arg + "\"超出了背包范围!");
+        if (equipItem > PLAYER.get_inventory_size() || equipItem < 1) {         // 检查是否超出背包范围
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(arg) + "\"超出了背包范围!");
             return false;
         }
         return true;
@@ -770,6 +770,10 @@ bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, cons
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
         return false;
     }
+    if (upgradeTimes > 20) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "最多连续升级20次!");
+        return false;
+    }
 
     // 计算升级所需硬币
     double currEqiLevel = static_cast<double>(PLAYER.get_equipments().at(eqiType).level);
@@ -833,7 +837,33 @@ bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, cons
 
 // 强化装备
 void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded) {
-    cq::send_group_message(GROUP_ID, bg_at(ev) + "确认了");
+    try {
+        // 扣硬币
+        if (!PLAYER.inc_coins(-coinsNeeded)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误: 扣除玩家硬币的时候发生错误!");
+            return;
+        }
+
+        // 升级
+        auto currItem = PLAYER.get_equipments_item(eqiType);
+        currItem.level += upgradeTimes;
+        if (!PLAYER.set_equipments_item(eqiType, currItem)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误: 设置玩家装备时发生错误!");
+            return;
+        }
+
+        // 发送确认消息
+        cq::send_group_message(GROUP_ID, (std::stringstream() <<
+            "成功强化" << eqiType_to_str(eqiType) << upgradeTimes << "次: " << allEquipments.at(currItem.id).name << "+" <<
+            currItem.level << ", 花费" << coinsNeeded << "硬币, 还剩" << PLAYER.get_coins() << "硬币"
+        ).str());
+    }
+    catch (std::exception &ex) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误! 错误原因: " + ex.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误!");
+    }
 }
 
 // 确认多次强化前检查
@@ -852,3 +882,54 @@ bool preConfirmUpgradeCallback(const cq::MessageEvent &ev) {
 void postConfirmUpgradeCallback(const cq::MessageEvent &ev) {
     PLAYER.confirmUpgrade();
 }
+
+// =====================================================================================================
+// 管理指令
+// =====================================================================================================
+
+// 懒人宏
+// 为指定玩家添加指定属性的数值
+#define ADMIN_INC_FIELD(funcName, fieldStr, field)                                              \
+    void adminAdd##funcName##Callback(const cq::MessageEvent &ev, const std::string &arg) {     \
+        try {                                                                                   \
+            auto params = str_split(str_trim(arg), ' ');                                        \
+            if (params.size() != 2) {                                                           \
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式: bg /add" #field " qq/all " fieldStr "数");   \
+                return;                                                                         \
+            }                                                                                   \
+                                                                                                \
+            auto val = str_to_ll(params[1]);                                                    \
+            if (params[0] != "all") {                                                           \
+                /* 为单一玩家添加 */                                                            \
+                auto targetId = qq_parse(params[0]);                                            \
+                if (!allPlayers.at(targetId).inc_##field##(val)) {                              \
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误: 设置玩家" fieldStr "数时发生错误");   \
+                    return;                                                                     \
+                }                                                                               \
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功为玩家" + std::to_string(targetId) + "添加" + std::to_string(val) + fieldStr);   \
+            }                                                                                   \
+            else {                                                                              \
+                /* 为所有玩家添加 */                                                            \
+                if (!bg_all_player_inc_##field##(val)) {                                        \
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误: 设置所有玩家" fieldStr "数时发生错误"); \
+                    return;                                                                     \
+                }                                                                               \
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功为" + std::to_string(allPlayers.size()) + "位玩家添加" + std::to_string(val) + fieldStr); \
+            }                                                                                   \
+        }                                                                                       \
+        catch (std::exception &ex) {                                                            \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误! 错误原因: " + ex.what());   \
+        }                                                                                       \
+        catch (...) {                                                                           \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误!"); \
+        }                                                                                       \
+    }
+
+ADMIN_INC_FIELD(Coins, "硬币", coins);
+ADMIN_INC_FIELD(HeroCoin, "英雄币", heroCoin);
+ADMIN_INC_FIELD(Level, "等级", level);
+ADMIN_INC_FIELD(Blessing, "祝福", blessing);
+ADMIN_INC_FIELD(Energy, "体力", energy);
+ADMIN_INC_FIELD(Exp, "经验", exp);
+ADMIN_INC_FIELD(InvCapacity, "背包容量", invCapacity);
+ADMIN_INC_FIELD(Vip, "VIP等级", vip);

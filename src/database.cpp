@@ -16,19 +16,16 @@ std::string             dbName = DB_NAME;
 mongocxx::instance      mongoInst{};
 mongocxx::pool          *mongoPool;
 
-// 获取一个数据库对象. 该函数是线程安全的, 可以从不同线程同时调用
 mongocxx::database dbGetDatabase(const char *name) {
     auto client = mongoPool->acquire();
     return (*client)[name];
 }
 
-// 获取一个 Collection 对象. 该函数是线程安全的, 可以从不同线程同时调用
 mongocxx::collection dbGetCollection(const char *dbName, const char *collName) {
     auto client = mongoPool->acquire();
     return (*client)[dbName][collName];
 }
 
-// 初始化数据库连接. 如果初始化时发生错误 (包括但不限于 URI 无效, 连接超时等), 则返回false
 bool dbInit() {
     try {
         auto mongoUri = mongocxx::uri(dbUri.c_str());   // 处理 URI
@@ -50,7 +47,6 @@ bool dbInit() {
     }
 }
 
-// 检查连接. 如果连接有效, 则返回 true
 bool dbPing() {
     try {
         dbGetDatabase(dbName.c_str()).run_command(make_document(kvp("ping", 1)));
@@ -69,7 +65,6 @@ bool dbPing() {
     }
 }
 
-// 往指定 collection 新加一个文档
 bool dbInsertDocument(const char *collName, const bsoncxx::document::value &value) {
     try {
         auto result = dbGetCollection(dbName.c_str(), collName).insert_one(value.view());

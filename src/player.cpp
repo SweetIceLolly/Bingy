@@ -274,6 +274,13 @@ bool bg_get_allplayers_from_db() {
     }                                                                           \
                                                                                 \
     bool player::inc_##propName##(const LL &val) {                              \
+        if (!##propName##_cache) {                                              \
+            get_##propName##();                                                 \
+            if (!##propName##_cache) {                                          \
+                return false;                                                   \
+            }                                                                   \
+        }                                                                       \
+                                                                                \
         LOCK_CURR_PLAYER;                                                       \
         if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$inc",               \
             bsoncxx::builder::stream::document{} << #propName << val            \
@@ -892,3 +899,39 @@ void player::waitConfirmComplete() {
     std::unique_lock lock(this->mutexStatus);
     cvPrevConfirmCompleted.wait(lock);
 }
+
+// 懒人宏
+// 为所有玩家的指定属性增加指定数值
+#define ALL_PLAYER_INC(field)                                           \
+    bool bg_all_player_inc_##field##(const LL &val) {                   \
+        /* 更新数据库, 成功后再更新本地缓存 */                            \
+        if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
+            bsoncxx::builder::stream::document{} << #field << val       \
+            << bsoncxx::builder::stream::finalize)) {                   \
+                                                                        \
+            /* 为所有玩家添加硬币 */                                     \
+            for (auto &p : allPlayers) {                                \
+                if (!p.second.##field##_cache) {                        \
+                    p.second.get_##field##();                           \
+                    if (!p.second.##field##_cache) {                    \
+                        return false;                                   \
+                    }                                                   \
+                }                                                       \
+                                                                        \
+                std::unique_lock lock(p.second.mutexPlayer);            \
+                p.second.##field## += val;                              \
+                lock.unlock();                                          \
+            }                                                           \
+            return true;                                                \
+        }                                                               \
+        return false;                                                   \
+    }
+
+ALL_PLAYER_INC(coins);
+ALL_PLAYER_INC(heroCoin);
+ALL_PLAYER_INC(level);
+ALL_PLAYER_INC(blessing);
+ALL_PLAYER_INC(energy);
+ALL_PLAYER_INC(exp);
+ALL_PLAYER_INC(invCapacity);
+ALL_PLAYER_INC(vip);

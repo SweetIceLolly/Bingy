@@ -27,7 +27,6 @@ using LL = long long;
 
 class player {
 private:
-    std::mutex mutexPlayer;                                                         // 玩家操作锁
     LL id;                                                                          // QQ 号
 
     // 多次强化的确认状态
@@ -37,6 +36,8 @@ private:
     std::condition_variable cvPrevConfirmCompleted;                                 // 上一次操作是否完成
 
 public:
+    std::mutex mutexPlayer;                                                         // 玩家操作锁
+
     // [注意] 以下属性请使用对应的 getter 和 setter. 除非你知道你在做什么, 否则不要直接读写他们的值
     std::string nickname;                   bool nickname_cache = false;            // 昵称 (请使用对应的 getter 或 setter)
     LL signInCount;                         bool signInCount_cache = false;         // 签到次数 (请使用对应的 getter 或 setter)
@@ -170,3 +171,12 @@ extern std::mutex                              mutexAllPlayers;
 bool bg_player_exist(const LL &id);
 bool bg_player_add(const LL &id);
 bool bg_get_allplayers_from_db();
+
+bool bg_all_player_inc_coins(const LL &val);
+bool bg_all_player_inc_heroCoin(const LL &val);
+bool bg_all_player_inc_level(const LL &val);
+bool bg_all_player_inc_blessing(const LL &val);
+bool bg_all_player_inc_energy(const LL &val);
+bool bg_all_player_inc_exp(const LL &val);
+bool bg_all_player_inc_invCapacity(const LL &val);
+bool bg_all_player_inc_vip(const LL &val);

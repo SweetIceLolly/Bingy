@@ -14,12 +14,14 @@
 
 CMD(bg);
 CMD(register);
-CMD(view_coins);
 CMD(sign_in);
-CMD(view_inventory);
 CMD(pawn);
+
+CMD(view_coins);
+CMD(view_inventory);
 CMD(view_properties);
 CMD(view_equipments);
+
 CMD(equip);
 CMD(unequip_helmet);
 CMD(unequip_body);
@@ -37,6 +39,7 @@ CMD(unequip_ornament);
 CMD(unequip_item);
 CMD(unequip_item_2);
 CMD(unequip_all);
+
 CMD(upgrade_helmet);
 CMD(upgrade_body);
 CMD(upgrade_leg);
@@ -48,3 +51,13 @@ CMD(upgrade_rings);
 CMD(upgrade_necklace);
 CMD(upgrade_jewelry);
 CMD(confirm_upgrade);
+CMD(upgrade_help);
+
+CMD(admin_add_coins);
+CMD(admin_add_heroCoin);
+CMD(admin_add_level);
+CMD(admin_add_blessing);
+CMD(admin_add_energy);
+CMD(admin_add_exp);
+CMD(admin_add_invCapacity);
+CMD(admin_add_vip);
