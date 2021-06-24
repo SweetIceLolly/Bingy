@@ -53,6 +53,11 @@ CMD(upgrade_jewelry);
 CMD(confirm_upgrade);
 CMD(upgrade_help);
 
+CMD(view_trade);
+CMD(buy_trade);
+CMD(sell_trade);
+CMD(recall_trade);
+
 CMD(admin_add_coins);
 CMD(admin_add_heroCoin);
 CMD(admin_add_level);

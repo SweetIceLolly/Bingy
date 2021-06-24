@@ -52,6 +52,9 @@ bool bg_load_equipment_config() {
                 else if (propName == "price")
                     temp->price = std::stoll(propValue);
             }
+            catch (const std::exception &e) {
+                console_log("处理装备配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
+            }
             catch (...) {
                 console_log("处理装备配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);
             }

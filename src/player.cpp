@@ -230,6 +230,9 @@ bool bg_get_allplayers_from_db() {
         }
         return true;
     }
+    catch (const std::exception &e) {
+        console_log(e.what(), LogType::error);
+    }
     catch (...) {
         return false;
     }

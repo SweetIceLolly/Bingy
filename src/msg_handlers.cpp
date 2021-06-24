@@ -227,6 +227,59 @@ CMD(upgrade_help) {
     cq::send_group_message(ev.target.group_id.value(), "请指定需要强化的装备类型, 命令后面可以跟需要强化的次数。例如: \"bg 强化主武器\", \"bg 强化战甲 5\"");
 }
 
+// 查看交易场
+CMD(view_trade) {
+    if (ev.message == "bg 交易场" || ev.message == "bg 查看交易场" || ev.message == "bg 交易") {
+        if (preViewTradeCallback(ev))
+            postViewTradeCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 要查看交易场的话可以发送: \"bg 交易场\"");
+    }
+}
+
+// 购买交易场项目
+CMD(buy_trade) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 卸下一次性物品指令格式为: \"bg 卸下 背包序号\"\n"
+            "或者卸下指定类型的物品: 例如: bg 卸下头盔 (只卸下头盔); bg 卸下饰品 (卸下所有饰品); bg 卸下所有 (卸下所有装备)");
+        return;
+    }
+    auto param = ev.message.substr(9);                          // 去掉命令字符串, 只保留参数
+    LL item = -1;
+    if (preBuyTradeCallback(ev, param, item))
+        postBuyTradeCallback(ev, item);
+}
+
+// 交易场上架
+CMD(sell_trade) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 上架指令格式为: \"bg 上架 背包序号 价格\"。"
+            "若要指定为有密码的交易, 则在命令最后加个空格和\"私\"字: \"bg 上架 背包序号 私\"");
+        return;
+    }
+
+    auto param = ev.message.substr(9);                         // 去掉命令字符串, 只保留参数
+    LL invId = -1;
+    bool hasPassword = false;
+    LL tax = 0;
+    if (preSellTradeCallback(ev, param, invId, hasPassword, tax))
+        postSellTradeCallback(ev, invId, hasPassword, tax);
+}
+
+// 交易场下架
+CMD(recall_trade) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 下架指令格式为: \"bg 下架 交易ID\"");
+        return;
+    }
+    auto param = ev.message.substr(9);                         // 去掉命令字符串, 只保留参数
+    LL tradeId = -1;
+    if (preRecallTradeCallback(ev, param, tradeId))
+        postRecallTradeCallback(ev, tradeId);
+}
+
+
 // 懒人宏
 // 定义为指定玩家添加指定属性数值的管理指令
 #define CMD_ADMIN_INC_FIELD(funcName, commandStr, fieldStr, callbackFuncName)                               \

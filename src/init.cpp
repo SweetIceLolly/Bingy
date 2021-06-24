@@ -91,6 +91,7 @@ inline void bg_msgrouter_init() {
 
     bg_groupmsg_router_add("bg 查看装备", bg_cmd_view_equipments);
     bg_groupmsg_router_add("bg 装备", bg_cmd_equip);
+    bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
 
     bg_groupmsg_router_add("bg 卸下头盔", bg_cmd_unequip_helmet);
     bg_groupmsg_router_add("bg 卸下战甲", bg_cmd_unequip_body);
@@ -150,13 +151,17 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 升级装备", bg_cmd_upgrade_help);
     bg_groupmsg_router_add("bg 升级", bg_cmd_upgrade_help);
 
-    bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
-    bg_groupmsg_router_add("bg 交易场", nullptr);
+    bg_groupmsg_router_add("bg 交易场", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg 查看交易场", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg 交易", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg 购买", bg_cmd_buy_trade);
+    bg_groupmsg_router_add("bg 上架", bg_cmd_sell_trade);
+    bg_groupmsg_router_add("bg 下架", bg_cmd_recall_trade);
+    
     bg_groupmsg_router_add("bg 合成", nullptr);
     bg_groupmsg_router_add("bg 挑战", nullptr);
     bg_groupmsg_router_add("bg 挑战森林", nullptr);
     bg_groupmsg_router_add("bg pvp", nullptr);
-    bg_groupmsg_router_add("bg 购买", nullptr);
     bg_groupmsg_router_add("bg vip", nullptr);
 
     bg_groupmsg_router_add("bg /addcoins", bg_cmd_admin_add_coins);
@@ -212,7 +217,7 @@ inline bool bg_load_config() {
                             console_log("把管理员" + propValue + "添加到管理员列表时发生错误, 可能是因为重复了? 于行" + std::to_string(lineNo), LogType::warning);
                     }
                     catch (...) {
-                        console_log("无法把\"" + propValue + "\"添加到管理员列表, 勤检查是否为有效数值! 于行" + std::to_string(lineNo), LogType::warning);
+                        console_log("无法把\"" + propValue + "\"添加到管理员列表, 请检查是否为有效数值! 于行" + std::to_string(lineNo), LogType::warning);
                     }
                 }
                 else
@@ -254,6 +259,9 @@ inline bool bg_load_config() {
                     else
                         console_log(std::string("未知的配置名: \"") + propName + std::string("\", 于行") + std::to_string(lineNo), LogType::warning);
                 }
+                catch (const std::exception &e) {
+                    console_log("处理签到活动配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
+                }
                 catch (...) {
                     console_log("处理签到活动配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);
                 }
@@ -275,6 +283,9 @@ inline bool bg_load_config() {
                         synInfo->coins = std::stoll(propValue);
                     else if (propName == "target")
                         synInfo->targetId = std::stoll(propValue);
+                }
+                catch (const std::exception &e) {
+                    console_log("添加合成信息失败, 处理配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
                 }
                 catch (...) {
                     console_log("添加合成信息失败, 处理配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);

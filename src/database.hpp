@@ -23,6 +23,7 @@
 #define DB_NAME             "bingy"
 #define DB_COLL_USERDATA    "userdata"
 #define DB_COLL_SIGNIN      "signin"
+#define DB_COLL_TRADE       "trade"
 
 // 指定数据库 URI 和库名, 可以在调用 dbInit 前修改
 extern std::string dbUri;
@@ -50,7 +51,7 @@ bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &f
 
 // 更新指定 collection 中所有符合条件的文档
 template <typename T1, typename T2>
-bool dbUpdateAll(const char *collName, const std::string *filterKey, const T1 &filterVal,
+bool dbUpdateAll(const char *collName, const std::string &filterKey, const T1 &filterVal,
     const std::string &updateKey, const T2 &updateVal);
 
 // 更新指定 collection 中所有文档
@@ -68,6 +69,14 @@ mongocxx::cursor dbFindAll(const char *collName, const std::string &filterKey, c
 // 获取指定 collection 中所有文档
 template <typename ... Args>
 mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields);
+
+// 移除指定 collection 中一个符合条件的文档
+template <typename T>
+bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &filterVal);
+
+// 移除指定 collection 中所有符合条件的文档
+template <typename T>
+bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &filterVal);
 
 // ===========================================================================
 
@@ -90,13 +99,17 @@ bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &f
         console_log(e.what(), LogType::error);
         return false;
     }
+    catch (const std::exception &e) {
+        console_log(e.what(), LogType::error);
+        return false;
+    }
     catch (...) {
         return false;
     }
 }
 
 template <typename T1, typename T2>
-bool dbUpdateAll(const char *collName, const std::string *filterKey, const T1 &filterVal,
+bool dbUpdateAll(const char *collName, const std::string &filterKey, const T1 &filterVal,
     const std::string &updateKey, const T2 &updateVal) {
 
     try {
@@ -111,6 +124,10 @@ bool dbUpdateAll(const char *collName, const std::string *filterKey, const T1 &f
             return false;
     }
     catch (const mongocxx::exception &e) {
+        console_log(e.what(), LogType::error);
+        return false;
+    }
+    catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
         return false;
     }
@@ -132,6 +149,10 @@ bool dbUpdateAll(const char *collName, const std::string &updateKey, const T &up
             return false;
     }
     catch (const mongocxx::exception &e) {
+        console_log(e.what(), LogType::error);
+        return false;
+    }
+    catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
         return false;
     }
@@ -159,6 +180,10 @@ std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const st
         console_log(e.what(), LogType::error);
         return std::nullopt;
     }
+    catch (const std::exception &e) {
+        console_log(e.what(), LogType::error);
+        return std::nullopt;
+    }
     catch (...) {
         return std::nullopt;
     }
@@ -183,6 +208,10 @@ mongocxx::cursor dbFindAll(const char *collName, const std::string &filterKey, c
         console_log(e.what(), LogType::error);
         return std::nullopt;
     }
+    catch (const std::exception &e) {
+        console_log(e.what(), LogType::error);
+        return std::nullopt;
+    }
     catch (...) {
         return std::nullopt;
     }
@@ -203,7 +232,51 @@ mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields) {
         console_log(e.what(), LogType::error);
         throw e;
     }
+    catch (const std::exception &e) {
+        console_log(e.what(), LogType::error);
+        throw e;
+    }
     catch (...) {
         throw std::exception("dbFindAll 发生错误!");
+    }
+}
+
+template <typename T>
+bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &filterVal) {
+    try {
+        auto result = dbGetCollection(dbName.c_str(), collName).delete_one(
+            bsoncxx::builder::stream::document{} << filterKey << filterVal << bsoncxx::builder::stream::finalize
+        );
+        if (result.has_value())
+            return result->deleted_count() == 1;
+        else
+            return false;
+    }
+    catch (const mongocxx::exception &e) {
+        console_log(e.what(), LogType::error);
+        return false;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+template <typename T>
+bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &filterVal) {
+    try {
+        auto result = dbGetCollection(dbName.c_str(), collName).delete_many(
+            bsoncxx::builder::stream::document{} << filterKey << filterVal << bsoncxx::builder::stream::finalize
+        );
+        if (result.has_value())
+            return result->deleted_count() > 0;
+        else
+            return false;
+    }
+    catch (const mongocxx::exception &e) {
+        console_log(e.what(), LogType::error);
+        return false;
+    }
+    catch (...) {
+        return false;
     }
 }

@@ -60,7 +60,7 @@ void postRegisterCallback(const cq::MessageEvent &ev) {
         else
             cq::send_group_message(GROUP_ID, bg_at(ev) + "注册期间发生错误!");
     }
-    catch (mongocxx::exception &e) {
+    catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("注册期间发生错误: ") + e.what());
     }
     catch (...) {
@@ -80,7 +80,7 @@ void postViewCoinsCallback(const cq::MessageEvent &ev) {
             std::to_string(PLAYER.get_coins())
         );
     }
-    catch (mongocxx::exception &e) {
+    catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("查看硬币发生错误: ") + e.what());
     }
     catch (...) {
@@ -172,7 +172,8 @@ void postSignInCallback(const cq::MessageEvent &ev) {
             "获得体力: " + std::to_string(deltaEnergy) + "  获得经验: " + std::to_string(deltaExp) + (eventMsg.empty() ? "" : eventMsg)
         ));
     }
-    catch (mongocxx::exception &e) {
+
+    catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("签到发生错误: ") + e.what());
     }
     catch (...) {
@@ -212,7 +213,7 @@ void postViewInventoryCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + getInventoryStr(USER_ID));
     }
-    catch (mongocxx::exception &e) {
+    catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("查看背包发生错误: ") + e.what());
     }
     catch (...) {
@@ -231,7 +232,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
             if (item.empty())
                 continue;
             auto tmp = str_to_ll(item);                                         // 字符串转成整数
-            if (tmp < 1 || tmp > PLAYER.get_inventory_size()) {                 // 检查是否超出背包范围
+            if (tmp > PLAYER.get_inventory_size() || tmp < 0) {                 // 检查是否超出背包范围
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(item) + "\"超出了背包范围!");
                 return false;
             }
@@ -245,6 +246,9 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
             }
         }
         return true;
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("出售前检查发生错误: ") + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -280,8 +284,8 @@ void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
         }
         cq::send_group_message(GROUP_ID, bg_at(ev) + "成功出售" + std::to_string(items.size()) + "个物品, 获得" + std::to_string(static_cast<LL>(price)) + "硬币");
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "出售失败!");
@@ -339,8 +343,8 @@ void postViewPropertiesCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + getPropertiesStr(USER_ID));
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看属性失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看属性失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查看属性失败!");
@@ -408,8 +412,8 @@ void postViewEquipmentsCallback(const cq::MessageEvent &ev) {
     try {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + getEquipmentsStr(USER_ID));
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备失败!");
@@ -423,11 +427,14 @@ bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &eq
 
     try {
         equipItem = str_to_ll(arg) - 1;                                         // 字符串转成整数. 注意内部的存储序号由 0 开始
-        if (equipItem > PLAYER.get_inventory_size() || equipItem < 1) {         // 检查是否超出背包范围
+        if (equipItem >= PLAYER.get_inventory_size() || equipItem < 0) {        // 检查是否超出背包范围
             cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(arg) + "\"超出了背包范围!");
             return false;
         }
         return true;
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "装备前检查发生错误: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -524,8 +531,8 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
             auto rtn = unequipPlayer(USER_ID, EqiType::##type##);                                   \
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + rtn);                           \
         }                                                                                           \
-        catch (std::exception &ex) {                                                                \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());    \
+        catch (const std::exception &e) {                                                           \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + e.what());     \
         }                                                                                           \
         catch (...) {                                                                               \
             cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");                           \
@@ -575,8 +582,8 @@ void postUnequipArmorCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
         }
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
@@ -606,8 +613,8 @@ void postUnequipWeaponCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
         }
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
@@ -639,8 +646,8 @@ void postUnequipOrnamentCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
         }
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
@@ -691,8 +698,8 @@ void postUnequipAllCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
         }
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备失败!");
@@ -712,6 +719,10 @@ bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg
         }
         unequipItem = tmp - 1;                                                  // 注意内部列表以 0 为开头
         return true;
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误: " + e.what() + ", 请检查输入的都是有效的数字?");
+        return false;
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -739,8 +750,8 @@ void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem
         }
         cq::send_group_message(GROUP_ID, bg_at(ev) + "成功卸下一次性物品: " + allEquipments.at(it->id).name);
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下物品失败!");
@@ -765,6 +776,10 @@ bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, cons
             cq::send_group_message(GROUP_ID, bg_at(ev) + "无效的升级次数");
             return false;
         }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误: " + e.what() + ", 请检查输入的都是有效的数字?");
+        return false;
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -858,8 +873,8 @@ void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, con
             currItem.level << ", 花费" << coinsNeeded << "硬币, 还剩" << PLAYER.get_coins() << "硬币"
         ).str());
     }
-    catch (std::exception &ex) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误! 错误原因: " + ex.what());
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误! 错误原因: " + e.what());
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "强化期间出现错误!");
@@ -882,6 +897,53 @@ bool preConfirmUpgradeCallback(const cq::MessageEvent &ev) {
 void postConfirmUpgradeCallback(const cq::MessageEvent &ev) {
     PLAYER.confirmUpgrade();
 }
+
+// 查看交易场前检查
+bool preViewTradeCallback(const cq::MessageEvent &ev) {
+    return accountCheck(ev);
+}
+
+// 查看交易场
+void postViewTradeCallback(const cq::MessageEvent &ev) {
+    try {
+
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看交易场出现错误! 错误原因: " + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看交易场出现错误!");
+    }
+}
+
+// 购买交易场项目前检查
+bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId) {
+    return false;
+}
+
+// 购买交易场项目
+void postBuyTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
+
+}
+
+// 上架交易场项目前检查
+bool preSellTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &invId, bool &hasPassword, LL &tax) {
+    return false;
+}
+
+// 上架交易场项目
+void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &tax) {
+
+}
+
+bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId) {
+    return false;
+}
+
+void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
+
+}
+
 
 // =====================================================================================================
 // 管理指令
@@ -917,8 +979,8 @@ void postConfirmUpgradeCallback(const cq::MessageEvent &ev) {
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "成功为" + std::to_string(allPlayers.size()) + "位玩家添加" + std::to_string(val) + fieldStr); \
             }                                                                                   \
         }                                                                                       \
-        catch (std::exception &ex) {                                                            \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误! 错误原因: " + ex.what());   \
+        catch (const std::exception &e) {                                                      \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误! 错误原因: " + e.what());   \
         }                                                                                       \
         catch (...) {                                                                           \
             cq::send_group_message(GROUP_ID, bg_at(ev) + "管理指令: 添加" fieldStr "出现错误!"); \

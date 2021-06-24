@@ -57,6 +57,9 @@ bool bg_load_monster_config() {
                     }
                 }
             }
+            catch (const std::exception &e) {
+                console_log("处理怪物配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
+            }
             catch (...) {
                 console_log("处理怪物配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);
             }
