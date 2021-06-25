@@ -8,6 +8,7 @@
 #include "player.hpp"
 #include "utils.hpp"
 #include "signin_event.hpp"
+#include "trade.hpp"
 #include <mongocxx/exception/exception.hpp>
 #include <unordered_set>
 #include <sstream>
@@ -232,7 +233,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
             if (item.empty())
                 continue;
             auto tmp = str_to_ll(item);                                         // 字符串转成整数
-            if (tmp > PLAYER.get_inventory_size() || tmp < 0) {                 // 检查是否超出背包范围
+            if (tmp > PLAYER.get_inventory_size() || tmp < 1) {                 // 检查是否超出背包范围
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(item) + "\"超出了背包范围!");
                 return false;
             }
@@ -249,6 +250,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("出售前检查发生错误: ") + e.what());
+        return false;
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -435,6 +437,7 @@ bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &eq
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "装备前检查发生错误: " + e.what());
+        return false;
     }
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
@@ -906,7 +909,7 @@ bool preViewTradeCallback(const cq::MessageEvent &ev) {
 // 查看交易场
 void postViewTradeCallback(const cq::MessageEvent &ev) {
     try {
-
+        cq::send_group_message(GROUP_ID, bg_trade_get_string());
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查看交易场出现错误! 错误原因: " + e.what());
@@ -917,33 +920,236 @@ void postViewTradeCallback(const cq::MessageEvent &ev) {
 }
 
 // 购买交易场项目前检查
-bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId) {
-    return false;
+bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &tradeId) {
+    try {
+        if (!accountCheck(ev))
+            return false;
+
+        tradeId = str_to_ll(args[0]);
+
+        // 检查指定 ID 是否存在
+        if (allTradeItems.find(tradeId) == allTradeItems.end()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "交易ID" + std::to_string(tradeId) + "不在交易场中");
+            return false;
+        }
+
+        // 检查是否有密码
+        if (allTradeItems.at(tradeId).hasPassword) {
+            if (args.size() == 1) {
+                // 有密码但是玩家没有提供密码
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "该交易需要提供密码!");
+                return false;
+            }
+            else {
+                // 检查密码是否匹配
+                if (args[1] != allTradeItems.at(tradeId).password) {
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "密码不正确!");
+                    return false;
+                }
+            }
+        }
+        else {
+            if (args.size() == 2) {
+                // 没有密码但是玩家提供了密码
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "该交易不需要提供密码!");
+                return false;
+            }
+        }
+
+        // 检查是否够钱买
+        if (PLAYER.get_coins() < allTradeItems.at(tradeId).price) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "还不够钱买哦! 还差" +
+                std::to_string(allTradeItems.at(tradeId).price - PLAYER.get_coins()) + "硬币");
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "购买前检查时出现错误! 错误原因: " + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "购买前检查时出现错误!");
+    }
+    return true;
 }
 
 // 购买交易场项目
 void postBuyTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
+    try {
+        tradeData item = allTradeItems.at(tradeId);
 
+        // 交易场移除对应条目
+        if (!bg_trade_remove_item(tradeId)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "从交易场移除对应物品时出现错误!");
+            return;
+        }
+
+        // 买方扣钱
+        if (!PLAYER.inc_coins(-item.price)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "扣除玩家硬币时出现错误!");
+            return;
+        }
+
+        // 背包添加相应物品
+        if (!PLAYER.add_inventory_item(item.item)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "往玩家背包添加装备时出现错误!");
+            return;
+        }
+
+        // 卖方加钱
+        if (!allPlayers.at(item.sellerId).inc_coins(item.price)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "为卖方加钱的时候出现错误!");
+            return;
+        }
+
+        // 按照装备类型发送购买成功消息
+        if (allEquipments.at(item.item.id).type == EqiType::single_use) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功购买一次性物品: " + allEquipments.at(item.item.id).name +
+                ", 花费" + std::to_string(item.price) + "硬币");
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功购买装备: " + allEquipments.at(item.item.id).name +
+                "+" + std::to_string(item.item.level) + ", 磨损度" + std::to_string(item.item.wear) + "/" +
+                std::to_string(allEquipments.at(item.item.id).wear) + ", 花费" + std::to_string(item.price) + "硬币");
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "购买时出现错误! 错误原因: " + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "购买时出现错误!");
+    }
 }
 
 // 上架交易场项目前检查
-bool preSellTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &invId, bool &hasPassword, LL &tax) {
-    return false;
+bool preSellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &invId, bool &hasPassword, LL &price) {
+    try {
+        if (!accountCheck(ev))
+            return false;
+
+        invId = str_to_ll(args[0]) - 1;
+        price = str_to_ll(args[1]);
+
+        // 检查第二个参数是否正确
+        if (args.size() == 3) {
+            if (args[2] == "私") {
+                hasPassword = true;
+            }
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 上架指令格式为: \"bg 上架 背包序号 价格\"。"
+                    "若要指定为有密码的交易, 则在命令最后加个空格和\"私\"字: \"bg 上架 背包序号 私\"");
+                return false;
+            }
+        }
+        else
+            hasPassword = false;
+
+        // 检查背包序号是否超出范围
+        if (invId >= PLAYER.get_inventory_size() || invId < 0) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "序号\"" + str_trim(args[0]) + "\"超出了背包范围!");
+            return false;
+        }
+
+        // 检查价格是否合理
+        // 默认价格 * 0.25 <= 价格 <= 默认价格 * 10
+        auto playerInv = PLAYER.get_inventory();
+        auto it = playerInv.begin();
+        std::advance(it, invId);                                                                                    // 获取 ID 对应的背包物品
+        LL defPrice = static_cast<LL>(allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6);    // 获取该物品的默认出售价格
+        if (defPrice / 4 > price || price > defPrice * 10) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "上架价格过高或者过低: 价格不可低于出售价格的25% (" +
+                std::to_string(defPrice / 4) + "), 也不可高于出售价格的十倍 (" + std::to_string(defPrice * 10) + ")");
+            return false;
+        }
+
+        // 检查是否够钱交税
+        if (PLAYER.get_coins() < price * 0.05) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "不够钱交5%的税哦! 还需要" +
+                std::to_string(static_cast<LL>(price * 0.05 - PLAYER.get_coins())) + "硬币");
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "上架前检查时出现错误! 请检查输入的数值是否有效? 错误原因: " + e.what());
+        return false;
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "上架前检查时出现错误! 请检查输入的数值是否有效?");
+        return false;
+    }
+    return true;
 }
 
 // 上架交易场项目
-void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &tax) {
+void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &price) {
+    try {
+        // 如果是有密码的交易, 则随机生成一个密码
+        std::string password = "";
+        if (hasPassword) {
+            password = std::to_string(rndRange(100000, 999999));
+        }
 
+        // 从玩家背包移除指定项目
+        auto playerInv = PLAYER.get_inventory();
+        auto it = playerInv.begin();
+        std::advance(it, invId);                        // 获取 ID 对应的背包物品
+        if (!PLAYER.remove_at_inventory(invId)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误: 从玩家背包中移除物品失败!");
+            return;
+        }
+
+        // 扣除税款
+        LL tax = static_cast<LL>(price * 0.05);
+        if (tax < 1)
+            tax = 1;
+        if (!PLAYER.inc_coins(tax)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误: 从玩家背包中移除物品失败!");
+            return;
+        }
+
+        // 获取并更新交易场 ID
+        tradeData   item;
+        item.item = *it;
+        item.password = password;
+        item.hasPassword = hasPassword;
+        item.price = price;
+        item.sellerId = USER_ID;
+        item.tradeId = bg_get_tradeId();
+        item.addTime = dateTime().get_timestamp();
+        if (!bg_inc_tradeId()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误: 更新交易场ID失败!");
+            return;
+        }
+
+        // 添加物品到交易场
+        if (!bg_trade_insert_item(item)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误: 把物品添加到交易场时发生错误!");
+            return;
+        }
+
+        // 发送消息
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功上架, 交易ID为" + std::to_string(item.tradeId) +
+            ", 收取税款" + std::to_string(tax) + "硬币");
+        if (hasPassword) {
+            cq::send_private_message(USER_ID, "您的ID为" + std::to_string(item.tradeId) + "的交易的购买密码为: " + password);
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误! 错误原因: " + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "上架时出现错误!");
+    }
 }
 
+// 下架交易场项目前检查
 bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId) {
     return false;
 }
 
+// 下架交易场项目
 void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
 
 }
-
 
 // =====================================================================================================
 // 管理指令

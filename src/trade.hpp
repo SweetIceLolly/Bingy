@@ -47,3 +47,6 @@ bool bg_trade_remove_item(const LL &tradeId);
 
 // 从交易场移除一系列的项目
 bool bg_trade_remove_item(const std::vector<LL> &tradeIdList);
+
+// 获取交易场内容字符串
+std::string bg_trade_get_string(const bool &use_cache = true);

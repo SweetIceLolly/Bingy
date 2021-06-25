@@ -241,13 +241,16 @@ CMD(view_trade) {
 // 购买交易场项目
 CMD(buy_trade) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 卸下一次性物品指令格式为: \"bg 卸下 背包序号\"\n"
-            "或者卸下指定类型的物品: 例如: bg 卸下头盔 (只卸下头盔); bg 卸下饰品 (卸下所有饰品); bg 卸下所有 (卸下所有装备)");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 购买指令格式为: \"bg 购买 交易ID\"。如果交易有密码, 则为: \"bg 购买 交易ID 密码\"");
         return;
     }
-    auto param = ev.message.substr(9);                          // 去掉命令字符串, 只保留参数
+    auto params = str_split(str_trim(ev.message.substr(9)), ' ');
+    if (params.size() > 2) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 购买指令格式为: \"bg 购买 交易ID\"。如果交易有密码, 则为: \"bg 购买 交易ID 密码\"");
+        return;
+    }
     LL item = -1;
-    if (preBuyTradeCallback(ev, param, item))
+    if (preBuyTradeCallback(ev, params, item))
         postBuyTradeCallback(ev, item);
 }
 
@@ -259,12 +262,17 @@ CMD(sell_trade) {
         return;
     }
 
-    auto param = ev.message.substr(9);                         // 去掉命令字符串, 只保留参数
+    auto params = str_split(str_trim(ev.message.substr(9)), ' ');
+    if (params.size() != 1 && params.size() != 2) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 上架指令格式为: \"bg 上架 背包序号 价格\"。"
+            "若要指定为有密码的交易, 则在命令最后加个空格和\"私\"字: \"bg 上架 背包序号 价格 私\"");
+        return;
+    }
     LL invId = -1;
     bool hasPassword = false;
-    LL tax = 0;
-    if (preSellTradeCallback(ev, param, invId, hasPassword, tax))
-        postSellTradeCallback(ev, invId, hasPassword, tax);
+    LL price = 0;
+    if (preSellTradeCallback(ev, params, invId, hasPassword, price))
+        postSellTradeCallback(ev, invId, hasPassword, price);
 }
 
 // 交易场下架

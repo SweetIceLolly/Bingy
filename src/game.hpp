@@ -64,10 +64,10 @@ bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, cons
 void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded);
 PRE_POST(ConfirmUpgrade);
 PRE_POST(ViewTrade);
-bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId);
+bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &tradeId);
 void postBuyTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
-bool preSellTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &invId, bool &hasPassword, LL &tax);
-void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &tax);
+bool preSellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &invId, bool &hasPassword, LL &price);
+void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &price);
 bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId);
 void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
 
