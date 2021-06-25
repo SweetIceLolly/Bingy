@@ -132,7 +132,7 @@ bool bg_trade_insert_item(const tradeData &itemData) {
     }
 
     // 检查重复 ID
-    if (allTradeItems.count(itemData.tradeId) > 0)
+    if (allTradeItems.find(itemData.tradeId) != allTradeItems.end())
         return false;
 
     // 更新数据库, 成功后再更新本地缓存
@@ -171,7 +171,7 @@ bool bg_trade_remove_item(const LL &tradeId) {
     }
 
     // 检查 ID 是否存在
-    if (allTradeItems.count(tradeId) > 0)
+    if (allTradeItems.find(tradeId) == allTradeItems.end())
         return false;
 
     // 更新数据库, 成功后再更新本地缓存
@@ -198,7 +198,7 @@ bool bg_trade_remove_item(const std::vector<LL> &tradeIdList) {
     // 检查 ID 是否存在, 并生成过滤条件
     bsoncxx::builder::basic::array conditions;
     for (const auto &id : tradeIdList) {
-        if (allTradeItems.count(id) > 0)
+        if (allTradeItems.find(id) != allTradeItems.end())
             return false;
         conditions.append(bsoncxx::builder::stream::document{} << "tradeId" << id << bsoncxx::builder::stream::finalize);
     }

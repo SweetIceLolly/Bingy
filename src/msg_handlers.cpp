@@ -263,7 +263,7 @@ CMD(sell_trade) {
     }
 
     auto params = str_split(str_trim(ev.message.substr(9)), ' ');
-    if (params.size() != 1 && params.size() != 2) {
+    if (params.size() != 2 && params.size() != 3) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 上架指令格式为: \"bg 上架 背包序号 价格\"。"
             "若要指定为有密码的交易, 则在命令最后加个空格和\"私\"字: \"bg 上架 背包序号 价格 私\"");
         return;

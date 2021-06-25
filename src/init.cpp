@@ -16,6 +16,7 @@
 #include "equipment.hpp"
 #include "synthesis.hpp"
 #include "config_parser.hpp"
+#include "trade.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -61,12 +62,17 @@ bool bg_init() {
     console_log("成功连接数据库");
 
     // 加载玩家信息
-    console_log("正在读取所有玩家...");
+    console_log("正在读取所有玩家数据...");
     if (!bg_get_allplayers_from_db()) {
         console_log("读取玩家数据失败!", LogType::error);
         return false;
     }
     console_log("成功读取玩家数据: 共计" + std::to_string(allPlayers.size()) + "个玩家");
+
+    // 加载交易场信息
+    console_log("正在读取交易场数据...");
+    bg_trade_get_items();
+    console_log("成功读取交易场数据: 共计" + std::to_string(allTradeItems.size()) + "个条目, 下一个交易 ID 为" + std::to_string(bg_get_tradeId()));
 
     // 注册消息路由
     bg_msgrouter_init();
