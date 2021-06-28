@@ -16,6 +16,7 @@ CMD(bg);
 CMD(register);
 CMD(sign_in);
 CMD(pawn);
+CMD(synthesis);
 
 CMD(view_coins);
 CMD(view_inventory);

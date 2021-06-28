@@ -70,6 +70,8 @@ bool preSellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::str
 void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &price);
 bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId);
 void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
+bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL> &invList, LL &targetId, LL &coins, LL &level);
+void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL> &invList, const LL &targetId, const LL &coins, const LL &level);
 
 ADMIN(AddCoins);
 ADMIN(AddHeroCoin);

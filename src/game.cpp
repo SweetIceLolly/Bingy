@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "signin_event.hpp"
 #include "trade.hpp"
+#include "synthesis.hpp"
 #include <mongocxx/exception/exception.hpp>
 #include <unordered_set>
 #include <sstream>
@@ -249,7 +250,7 @@ bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> 
         return true;
     }
     catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("出售前检查发生错误: ") + e.what());
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("出售前检查发生错误, 请检查输入的都是有效的数字: ") + e.what());
         return false;
     }
     catch (...) {
@@ -1208,6 +1209,88 @@ void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
     catch (...) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "下架时出现错误!");
     }
+}
+
+bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL> &invList, LL &targetId, LL &coins, LL &level) {
+    if (!accountCheck(ev))
+        return false;
+
+    try {
+        targetId = str_to_ll(args[0]);                      // 获取目标装备 ID
+
+        // 检查目标装备是否存在
+        if (allEquipments.find(targetId) == allEquipments.end()) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "指定的目标装备ID\"" + args[0] + "\"不存在!");
+            return false;
+        }
+
+        // 如果只指定了目标装备, 则列出可用的合成
+        if (args.size() == 1) {
+            const auto result = allSynthesises.equal_range(targetId);       // 获取可行的合成方案
+            if (std::distance(result.first, result.second) == 0) {          // 没有合成方案
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "装备\"" + allEquipments.at(targetId).name + "\"不可合成!");
+                return false;
+            }
+            std::string msg = "装备\"" + allEquipments.at(targetId).name + "\"的合成方式:\n";
+            for (auto it = result.first; it != result.second; ++it) {       // 生成所有合成方案的字串
+                for (const auto &item : it->second.requirements) {
+                    msg += allEquipments.at(item).name + "+";
+                }
+                msg += "$" + std::to_string(it->second.coins) + "\n";
+            }
+            msg.pop_back();                                                 // 去掉末尾的 '\n'
+            cq::send_group_message(GROUP_ID, msg);
+            return false;
+        }
+
+        auto inventory = PLAYER.get_inventory();                            // 获取玩家背包
+        for (size_t i = 1; i < args.size(); ++i) {                          // 获取所有背包序号
+            LL tmp = str_to_ll(args[i]) - 1;
+            if (invList.find(tmp) != invList.end()) {                       // 不允许背包序号重复
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "指定的背包序号\"" + args[i] + "\"重复啦!");
+                return false;
+            }
+            if (tmp < 0 || tmp >= inventory.size()) {                       // 不允许序号超出背包范围
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "指定的背包序号\"" + args[i] + "\"超出了背包范围!");
+                return false;
+            }
+            invList.insert(tmp);
+        }
+
+        std::unordered_multiset<LL> materials;                              // 所有提供的材料
+        auto invIter = inventory.begin();
+        LL prevInvId = 0;
+        for (auto invIdIter = invList.begin(); invIdIter != invList.end(); ++invIdIter) {
+            std::advance(invIter, *invIdIter - prevInvId);
+            materials.insert(invIter->id);
+            if (invIter->level > level)                                     // 获取材料的最高等级
+                level = invIter->level;
+            prevInvId = *invIdIter;
+        }
+
+        if (!bg_match_synthesis(targetId, materials, coins)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "没有找到这个合成哦! 你可以发送\"bg 合成 \"" + std::to_string(targetId) + "来获取合成方式。");
+            return false;
+        }
+
+        if (PLAYER.get_coins() < coins) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "还不够钱进行这个合成哦! 还需要" + std::to_string(coins - PLAYER.get_coins()) + "硬币。");
+            return false;
+        }
+        return true;
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("合成前检查发生错误, 请检查输入的都是有效的数字: ") + e.what());
+        return false;
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "输入格式错误! 请检查输入的都是有效的数字?");
+        return false;
+    }
+}
+
+void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL> &invList, const LL &targetId, const LL &coins, const LL &level) {
+
 }
 
 // =====================================================================================================

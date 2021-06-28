@@ -164,7 +164,7 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 上架", bg_cmd_sell_trade);
     bg_groupmsg_router_add("bg 下架", bg_cmd_recall_trade);
     
-    bg_groupmsg_router_add("bg 合成", nullptr);
+    bg_groupmsg_router_add("bg 合成", bg_cmd_synthesis);
     bg_groupmsg_router_add("bg 挑战", nullptr);
     bg_groupmsg_router_add("bg 挑战森林", nullptr);
     bg_groupmsg_router_add("bg pvp", nullptr);
@@ -282,7 +282,7 @@ inline bool bg_load_config() {
                             if (itemId == -1)
                                 break;
                             else
-                                synInfo->requirements.push_back(itemId);
+                                synInfo->requirements.insert(itemId);
                         }
                     }
                     else if (propName == "coins")
@@ -318,7 +318,7 @@ inline bool bg_load_config() {
                 delete signInEv;
             }
             else if (state == 2) {
-                allSynthesises.push_back(*synInfo);
+                allSynthesises.insert({ synInfo->targetId, *synInfo });
                 delete synInfo;
             }
 
