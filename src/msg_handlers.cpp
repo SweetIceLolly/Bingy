@@ -291,12 +291,12 @@ CMD(recall_trade) {
 CMD(synthesis) {
     if (ev.message.length() < 10) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备指令格式为: \"bg 合成 目标装备ID(或名称) 背包序号1 背包序号2 ...\"。"
-            "例如: bg 合成 终极魔剑 1 2 3。发送\"bg 合成\"可查看可用的合成。");
+            "例如: bg 合成 终极魔剑 1 2 3。发送\"bg 合成 装备ID(或名称)\"可查看可用的合成。");
         return;
     }
     auto params = str_split(str_trim(ev.message.substr(9)), ' ');
     LL targetId = -1, coins = 0, level = 0;
-    std::set<LL> invList;
+    std::set<LL, std::greater<LL>> invList;
     if (preSynthesisCallback(ev, params, invList, targetId, coins, level))
         postSynthesisCallback(ev, invList, targetId, coins, level);
 }

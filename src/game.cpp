@@ -1211,7 +1211,7 @@ void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
     }
 }
 
-bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL> &invList, LL &targetId, LL &coins, LL &level) {
+bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL, std::greater<LL>> &invList, LL &targetId, LL &coins, LL &level) {
     if (!accountCheck(ev))
         return false;
 
@@ -1289,8 +1289,43 @@ bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::str
     }
 }
 
-void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL> &invList, const LL &targetId, const LL &coins, const LL &level) {
+void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level) {
+    try {
+        // 扣除硬币
+        if (!PLAYER.inc_coins(-coins)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备发生错误: 扣除玩家硬币失败!");
+            return;
+        }
 
+        // 从玩家背包移除装备
+        std::vector<LL> invId;
+        for (const auto &inv : invList)
+            invId.push_back(inv);
+        if (!PLAYER.remove_at_inventory(invId)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备发生错误: 从玩家背包移除装备失败!");
+            return;
+        }
+
+        // 添加合成后的装备到玩家背包
+        inventoryData newItem;
+        newItem.id = targetId;
+        newItem.level = level;
+        newItem.wear = allEquipments.at(targetId).wear;
+        if (!PLAYER.add_inventory_item(newItem)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备发生错误: 往玩家背包添加" +
+                allEquipments.at(targetId).name + "+" + std::to_string(level) + "失败!");
+            return;
+        }
+
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "成功合成" +
+            allEquipments.at(targetId).name + "+" + std::to_string(level) + ", 花费" + std::to_string(coins) + "硬币");
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("合成装备发生错误: ") + e.what());
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备发生错误!");
+    }
 }
 
 // =====================================================================================================

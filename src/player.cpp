@@ -451,7 +451,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
             LL      prevIndex = static_cast<LL>(this->inventory.size()) - 1;
             auto    it = this->inventory.end();
             --it;
-            for (const auto &index : indexes) {
+            for (const auto &index : sortedIndexes) {
                 std::advance(it, index - prevIndex);
                 this->inventory.erase(it++);
                 prevIndex = index;
