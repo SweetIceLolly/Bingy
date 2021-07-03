@@ -43,6 +43,7 @@ bool bg_init() {
         console_log("读取怪物数据文件失败!", LogType::error);
         return false;
     }
+    bg_init_monster_chances();
     console_log("成功读取怪物数据: 共计" + std::to_string(allMonsters.size()) + "个怪物");
 
     // 加载装备数据
@@ -188,15 +189,18 @@ inline bool bg_load_config() {
     configParser parser(CONFIG_FILE_PATH);
     signInEvent *signInEv = nullptr;        // 签到活动临时变量
     synthesisInfo *synInfo = nullptr;       // 合成信息临时变量
+    dungeonData *dungeon = nullptr;         // 副本配置临时变量
 
     return parser.load(
         // 切换 state 回调函数
         [](const std::string &line, char &state) -> bool {
-            // state: 0: 一般配置; 1: 签到活动; 2: 装备合成
+            // state: 0: 一般配置; 1: 签到活动; 2: 装备合成; 3: 副本配置
             if (line == "[签到活动]")
                 state = 1;
             else if (line == "[装备合成]")
                 state = 2;
+            else if (line == "[副本配置]")
+                state = 3;
             else
                 state = 0;
             return true;
@@ -242,7 +246,7 @@ inline bool bg_load_config() {
                     else if (propName == "day")
                         signInEv->day = std::stoi(propValue);
                     else if (propName == "hour")
-                        signInEv->hour = (char)std::stoi(propValue);
+                        signInEv->hour = static_cast<char>(std::stoi(propValue));
                     else if (propName == "minute")
                         signInEv->minute = (char)std::stoi(propValue);
                     else if (propName == "coinfactor")
@@ -289,12 +293,36 @@ inline bool bg_load_config() {
                         synInfo->coins = std::stoll(propValue);
                     else if (propName == "target")
                         synInfo->targetId = std::stoll(propValue);
+                    else
+                        console_log(std::string("未知的配置名: \"") + propName + std::string("\", 于行") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
                     console_log("添加合成信息失败, 处理配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
                 }
                 catch (...) {
                     console_log("添加合成信息失败, 处理配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);
+                }
+            }
+
+            // 处理副本配置
+            else if (state == 3) {
+                try {
+                    if (propName == "level")
+                        dungeon->level = std::stoll(propValue);
+                    else if (propName == "monsters") {
+                        for (const auto &idStr : str_split(propValue, ',')) {
+                            const auto id = std::stoll(idStr);
+                            dungeon->monsters.push_back(id);
+                        }
+                    }
+                    else
+                        console_log(std::string("未知的配置名: \"") + propName + std::string("\", 于行") + std::to_string(lineNo), LogType::warning);
+                }
+                catch (const std::exception &e) {
+                    console_log("添加副本配置失败, 处理配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);
+                }
+                catch (...) {
+                    console_log("添加副本配置失败, 处理配置时发生错误: 于行" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
@@ -307,6 +335,8 @@ inline bool bg_load_config() {
                 signInEv = new signInEvent();
             else if (state == 2)
                 synInfo = new synthesisInfo();
+            else if (state == 3)
+                dungeon = new dungeonData();
 
             return true;
         },
@@ -320,6 +350,9 @@ inline bool bg_load_config() {
             else if (state == 2) {
                 allSynthesises.insert({ synInfo->targetId, *synInfo });
                 delete synInfo;
+            }
+            else if (state == 3) {
+                allDungeons.insert({ dungeon->level, *dungeon });
             }
 
             return true;

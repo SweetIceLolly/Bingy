@@ -12,6 +12,8 @@
 
 std::string                         monsterConfigPath = DEFAULT_MONSTER_PATH;
 std::unordered_map<LL, monsterData> allMonsters;    // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+std::unordered_map<LL, dungeonData> allDungeons;    // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+luckyDraw                           forestDraw;     // 森林抽奖机
 
 // 读取所有怪物信息
 bool bg_load_monster_config() {
@@ -35,10 +37,16 @@ bool bg_load_monster_config() {
                     temp->atk = std::stoll(propValue);
                 else if (propName == "def")
                     temp->def = std::stoll(propValue);
+                else if (propName == "brk")
+                    temp->brk = std::stoll(propValue);
                 else if (propName == "agi")
                     temp->agi = std::stoll(propValue);
                 else if (propName == "hp")
                     temp->hp = std::stoll(propValue);
+                else if (propName == "dungeonweight")
+                    temp->dungeonWeight = std::stoll(propValue);
+                else if (propName == "forestweight")
+                    temp->forestWeight = std::stoll(propValue);
                 else if (propName == "coin")
                     temp->coin = std::stoll(propValue);
                 else if (propName == "exp")
@@ -81,4 +89,51 @@ bool bg_load_monster_config() {
             return rtn;
         }
     );
+}
+
+// 初始化怪物出现和掉落概率
+void bg_init_monster_chances() {
+    // 初始化所有副本中怪物出现的概率
+    for (auto &dungeon : allDungeons) {
+        for (const auto &monster : dungeon.second.monsters) {
+            dungeon.second.monstersDraw.insertItem(monster, allMonsters.at(monster).dungeonWeight);
+        }
+    }
+
+    // 初始化所有怪物掉落的概率
+    for (auto &monster : allMonsters) {
+        monster.second.initDropDraw();
+    }
+}
+
+// 获取浮点数的小数点后的小数点位数
+inline int getDecimals(double n) {
+    int rtn = 0;
+    n -= static_cast<int>(n);
+    while (abs(n) > 1e-16 && rtn < 16) {
+        n *= 10;
+        ++rtn;
+        n -= static_cast<int>(n);
+    }
+    return rtn;
+}
+
+// 根据怪物的掉落列表重新生成怪物的掉落抽取器
+void monsterData::initDropDraw() {
+    int     maxPrecision = 0;               // 掉落列表中概率的最大精度
+    double  noDropChance = 1;               // 无掉落的概率 (= 1 - 所有掉落概率总和)
+
+    for (const auto &item : this->drop) {
+        int precision = getDecimals(item.chance);
+        if (precision > maxPrecision)
+            maxPrecision = precision;
+        noDropChance -= item.chance;
+    }
+    for (const auto &item : this->drop) {
+        this->dropDraw.insertItem(item.id, item.chance * pow(10.0, maxPrecision));
+    }
+    this->dropDraw.insertItem(-1, noDropChance * pow(10.0, maxPrecision));
+    if (noDropChance < 0) {
+        console_log("怪物" + this->name + " (id: " + std::to_string(this->id) + ") 的装备掉落概率总和大于1!", LogType::warning);
+    }
 }
