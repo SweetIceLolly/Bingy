@@ -23,13 +23,41 @@ enum class LogType : unsigned char {
     error
 };
 
+// 请求参数, 包含 QQ 群号和玩家号
+typedef struct _requestParams {
+    int todo;
+} requestParams;
+
 // 日志相关
 void console_log(const std::string &msg, const LogType &type = LogType::info);
 
 // 字符串相关
+
 std::string str_trim(const std::string &str);
-std::vector<std::string> str_split(const std::string &str, const char &delimiter);
-void str_lcase(std::string &str);
+
+template <typename TStr, typename TDel>
+std::vector<TStr> str_split(const TStr &str, const TDel &delimiter) {
+    std::vector<TStr> rtn;
+    size_t last = 0;
+    size_t next = 0;
+
+    while ((next = str.find(delimiter, last)) != std::string::npos) {
+        rtn.push_back(str.substr(last, next - last));
+        last = next + 1;
+    }
+    rtn.push_back(str.substr(last));
+
+    return rtn;
+}
+
+template <typename TStr>
+void str_lcase(TStr &str) {
+    for (size_t i = 0; i < str.length(); ++i) {
+        if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'))
+            str[i] |= 32;           // 如果是字母, 则转换为小写字母
+    }
+}
+
 LL qq_parse(const std::string &str);
 
 // 时间日期类

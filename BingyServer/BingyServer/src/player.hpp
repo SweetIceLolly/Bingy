@@ -19,9 +19,9 @@
 // 懒人宏
 // 定义 LL 类型的属性的 getter, setter, 和 inc (增加数值)的函数原型
 #define DEF_LL_GET_SET_INC(propName)                            \
-    LL player::get_##propName##(const bool &use_cache = true);  \
-    bool player::set_##propName##(const LL &val);               \
-    bool player::inc_##propName##(const LL &val);               \
+    LL get_##propName##(const bool &use_cache = true);          \
+    bool set_##propName##(const LL &val);                       \
+    bool inc_##propName##(const LL &val);                       \
 
 using LL = long long;
 
@@ -74,7 +74,7 @@ public:
     LL get_id();
 
     std::string get_nickname(const bool &use_cache = true);
-    bool player::set_nickname(const std::string &val);
+    bool set_nickname(const std::string &val);
 
     DEF_LL_GET_SET_INC(signInCount);
     DEF_LL_GET_SET_INC(signInCountCont);
@@ -146,7 +146,7 @@ public:
     // 获取整个已装备的一次性物品表
     std::list<inventoryData> get_equipItems(const bool &use_cache = true);
     // 获取已装备的一次性物品数量
-    LL player::get_equipItems_size(const bool &use_cache = true);
+    LL get_equipItems_size(const bool &use_cache = true);
     // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_equipItems(const LL &index);
     // 清空已装备的一次性物品

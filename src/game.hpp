@@ -1,7 +1,7 @@
 /*
-æè¿°: Bingy æ¸¸æˆç›¸å…³å‡½æ•°çš„æ¥å£
-ä½œè€…: å†°æ£
-æ–‡ä»¶: game.hpp
+ÃèÊö: Bingy ÓÎÏ·Ïà¹Øº¯ÊıµÄ½Ó¿Ú
+×÷Õß: ±ù¹÷
+ÎÄ¼ş: game.hpp
 */
 
 #pragma once
@@ -18,21 +18,21 @@ extern std::unordered_set<LL>  allAdmins;
 std::string bg_at(const cq::MessageEvent &ev);
 bool accountCheck(const cq::MessageEvent &ev);
 
-// æ‡’äººå®
-// å®šä¹‰ pre*Callback å’Œ post*Callback
+// ÀÁÈËºê
+// ¶¨Òå pre*Callback ºÍ post*Callback
 #define PRE_POST(name)                                      \
     bool pre##name##Callback(const cq::MessageEvent &ev);   \
     void post##name##Callback(const cq::MessageEvent &ev);  \
 
-// æ‡’äººå®
-// å®šä¹‰ç®¡ç†å‘½ä»¤ admin*Callback
+// ÀÁÈËºê
+// ¶¨Òå¹ÜÀíÃüÁî admin*Callback
 #define ADMIN(name)                                         \
     void admin##name##Callback(const cq::MessageEvent &ev, const std::string &arg);
 
-// æ‡’äººå®
-#define GROUP_ID    ev.target.group_id.value()      // ä» ev è·å–ç¾¤å·
-#define USER_ID     ev.target.user_id.value()       // ä» ev è·å–ç©å®¶ QQ å·
-#define PLAYER      allPlayers.at(USER_ID)          // çº¿ç¨‹å®‰å…¨åœ°è·å– QQ å·å¯¹åº”çš„ç©å®¶
+// ÀÁÈËºê
+#define GROUP_ID    ev.target.group_id.value()      // ´Ó ev »ñÈ¡ÈººÅ
+#define USER_ID     ev.target.user_id.value()       // ´Ó ev »ñÈ¡Íæ¼Ò QQ ºÅ
+#define PLAYER      allPlayers.at(USER_ID)          // Ïß³Ì°²È«µØ»ñÈ¡ QQ ºÅ¶ÔÓ¦µÄÍæ¼Ò
 
 PRE_POST(Register);
 PRE_POST(ViewCoins);
@@ -72,6 +72,8 @@ bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, 
 void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
 bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL, std::greater<LL>> &invList, LL &targetId, LL &coins, LL &level);
 void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
+bool preFightCallback(const cq::MessageEvent &ev, const std::string &arg, LL &dungeonLevel);
+void postFightCallback(const cq::MessageEvent &ev, const LL &dungeonLevel);
 
 ADMIN(AddCoins);
 ADMIN(AddHeroCoin);

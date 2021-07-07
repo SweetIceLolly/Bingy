@@ -6,3 +6,9 @@ build
 out
 cmake-build-*
 tmp
+BingyServer/.vs
+BingyServer/x64
+BingyServer/Debug
+*.user
+BingyServer/BingyServer/Debug
+BingyServer/BingyServer/x64

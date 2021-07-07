@@ -1,7 +1,7 @@
 /*
-æè¿°: æ¶ˆæ¯è·¯ç”±, è´Ÿè´£æ¶ˆæ¯åˆ†å‘åˆ°å¯¹åº”å‡½æ•°
-ä½œè€…: å†°æ£
-æ–‡ä»¶: msg_router.cpp
+ÃèÊö: ÏûÏ¢Â·ÓÉ, ¸ºÔğÏûÏ¢·Ö·¢µ½¶ÔÓ¦º¯Êı
+×÷Õß: ±ù¹÷
+ÎÄ¼ş: msg_router.cpp
 */
 
 #include "msg_router.hpp"
@@ -14,33 +14,33 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
 
 bg_trie<handlerFunc> gm_router, pm_router;
 
-// æ·»åŠ ç¾¤èŠæ¶ˆæ¯è·¯ç”±
+// Ìí¼ÓÈºÁÄÏûÏ¢Â·ÓÉ
 void bg_groupmsg_router_add(const std::string &msg, const handlerFunc &handler) {
     gm_router.addMsg(msg, handler);
 }
 
-// æ·»åŠ ç§èŠæ¶ˆæ¯è·¯ç”±
+// Ìí¼ÓË½ÁÄÏûÏ¢Â·ÓÉ
 void bg_privatemsg_router_add(const std::string &msg, const handlerFunc &handler) {
     pm_router.addMsg(msg, handler);
 }
 
-// ç¾¤èŠæ¶ˆæ¯åˆ†å‘
+// ÈºÁÄÏûÏ¢·Ö·¢
 void bg_groupmsg_dispatch(const cq::MessageEvent &ev) {
     bg_msg_parse_and_dispatch((cq::MessageEvent)ev, gm_router);
 }
 
-// ç§èŠæ¶ˆæ¯åˆ†å‘
+// Ë½ÁÄÏûÏ¢·Ö·¢
 void bg_privatemsg_dispatch(const cq::MessageEvent &ev) {
     bg_msg_parse_and_dispatch((cq::MessageEvent)ev, pm_router);
 }
 
-// å¤„ç†å‘½ä»¤, ç„¶åé€šè¿‡æŒ‡å®šçš„è·¯ç”±åˆ†å‘æ¶ˆæ¯
+// ´¦ÀíÃüÁî, È»ºóÍ¨¹ıÖ¸¶¨µÄÂ·ÓÉ·Ö·¢ÏûÏ¢
 void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> &router) {
-    // å‘½ä»¤å¿…é¡»å¤šäºæˆ–ç­‰äºä¸¤ä¸ªå­—
+    // ÃüÁî±ØĞë¶àÓÚ»òµÈÓÚÁ½¸ö×Ö
     if (ev.message.length() < 2)
         return;
 
-    // å»æ‰å¼€å¤´å¤šä½™çš„ç©ºæ ¼å’Œæ¢è¡Œç¬¦
+    // È¥µô¿ªÍ·¶àÓàµÄ¿Õ¸ñºÍ»»ĞĞ·û
     size_t pos = 0;
     for (pos; pos < ev.message.length(); ++pos) {
         if (ev.message[pos] != ' ' && ev.message[pos] != '\r' && ev.message[pos] != '\n' && ev.message[pos] != '\0')
@@ -49,20 +49,20 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
     if (ev.message.length() - pos < 2)
         return;
 
-    // å‘½ä»¤å¿…é¡»ä»¥"bg"å¼€å¤´
+    // ÃüÁî±ØĞëÒÔ"bg"¿ªÍ·
     if ((ev.message[pos] != 'b' && ev.message[pos] != 'B') || (ev.message[pos + 1] != 'g' && ev.message[pos + 1] != 'G'))
         return;
 
-    // æŠŠå¤šä½™çš„æ¢è¡Œç¬¦å’Œ '\0' æ›¿æ¢ä¸ºç©ºæ ¼, æ–¹ä¾¿æ¥ä¸‹æ¥å¤„ç†
+    // °Ñ¶àÓàµÄ»»ĞĞ·ûºÍ '\0' Ìæ»»Îª¿Õ¸ñ, ·½±ã½ÓÏÂÀ´´¦Àí
     for (size_t i = pos; i < ev.message.length(); ++i) {
         if (ev.message[i] == '\r' || ev.message[i] == '\n' || ev.message[i] == '\0')
             ev.message[i] = ' ';
     }
 
-    // è·å–å‘½ä»¤å­—ä¸², åœ¨ç¬¬äºŒä¸ªç©ºæ ¼å¤„æˆªæ–­å‘½ä»¤
-    // è¿™æ ·å°±ä¸ç”¨ä¸€ä¸‹å­æŠŠæ•´ä¸ªæ¶ˆæ¯å­—ç¬¦ä¸²å¤„ç†æ‰, èŠ‚çœCPUèµ„æº
+    // »ñÈ¡ÃüÁî×Ö´®, ÔÚµÚ¶ş¸ö¿Õ¸ñ´¦½Ø¶ÏÃüÁî
+    // ÕâÑù¾Í²»ÓÃÒ»ÏÂ×Ó°ÑÕû¸öÏûÏ¢×Ö·û´®´¦Àíµô, ½ÚÊ¡CPU×ÊÔ´
     bool spaceFound = false;
-    std::string cmd = "";       // å¤„ç†å®Œæˆåçš„å‘½ä»¤
+    std::string cmd = "";       // ´¦ÀíÍê³ÉºóµÄÃüÁî
     for (pos; pos < ev.message.length(); ++pos) {
         if (ev.message[pos] == ' ' && pos + 1 < ev.message.length() && ev.message[pos + 1] != ' ') {
             if (!spaceFound) {
@@ -73,33 +73,33 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
                 break;
         }
         else if (ev.message[pos] != ' ') {
-            if (ev.message[pos] >= '0' && ev.message[pos] <= '9')       // æ˜¯æ•°å­—å°±é©¬ä¸Šæˆªæ–­. å› ä¸ºå‘½ä»¤ä¸­ä¸å¯ä»¥æœ‰æ•°å­—
+            if (ev.message[pos] >= '0' && ev.message[pos] <= '9')       // ÊÇÊı×Ö¾ÍÂíÉÏ½Ø¶Ï. ÒòÎªÃüÁîÖĞ²»¿ÉÒÔÓĞÊı×Ö
                 break;
-            else if (ev.message[pos] == '[')                            // æ˜¯ä¸­æ‹¬å·åˆ™é©¬ä¸Šæˆªæ–­. å› ä¸ºè¿™å¯èƒ½æ˜¯è‰¾ç‰¹çš„ CQ ç 
+            else if (ev.message[pos] == '[')                            // ÊÇÖĞÀ¨ºÅÔòÂíÉÏ½Ø¶Ï. ÒòÎªÕâ¿ÉÄÜÊÇ°¬ÌØµÄ CQ Âë
                 break;
             else if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
-                cmd += ev.message[pos] | 32;    // è½¬æ¢ä¸ºå°å†™å­—æ¯
+                cmd += ev.message[pos] | 32;    // ×ª»»ÎªĞ¡Ğ´×ÖÄ¸
             else
                 cmd += ev.message[pos];
         }
     }
 
-    // æŸ¥æ‰¾å¯¹åº”çš„å‘½ä»¤å¤„ç†å‡½æ•°
+    // ²éÕÒ¶ÔÓ¦µÄÃüÁî´¦Àíº¯Êı
     auto handler = router.getMsgHandler(cmd);
     if (handler) {
-        // æœ‰å¯¹åº”çš„å‘½ä»¤å¤„ç†å‡½æ•°æ‰ç»§ç»­å¤„ç†å­—ç¬¦ä¸²
-        // ç§»é™¤å­—ç¬¦ä¸²ä¸­æ‰€æœ‰å¤šä½™çš„ç©ºæ ¼å’Œæ¢è¡Œç¬¦
+        // ÓĞ¶ÔÓ¦µÄÃüÁî´¦Àíº¯Êı²Å¼ÌĞø´¦Àí×Ö·û´®
+        // ÒÆ³ı×Ö·û´®ÖĞËùÓĞ¶àÓàµÄ¿Õ¸ñºÍ»»ĞĞ·û
         for (pos; pos < ev.message.length(); ++pos) {
             if (ev.message[pos] != ' ' || (ev.message[pos] == ' ' && pos + 1 < ev.message.length() && ev.message[pos + 1] != ' ')) {
                 if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
-                    cmd += ev.message[pos] | 32;    // è½¬æ¢ä¸ºå°å†™å­—æ¯
+                    cmd += ev.message[pos] | 32;    // ×ª»»ÎªĞ¡Ğ´×ÖÄ¸
                 else
                     cmd += ev.message[pos];
             }
         }
         ev.message = cmd;
 
-        // è°ƒç”¨å‘½ä»¤å¤„ç†å‡½æ•°
+        // µ÷ÓÃÃüÁî´¦Àíº¯Êı
         handler(ev);
     }
 }

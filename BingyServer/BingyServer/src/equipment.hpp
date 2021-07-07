@@ -35,12 +35,12 @@ enum class EqiType : unsigned char {
 
 class equipmentData {
 public:
-    LL          id;
-    EqiType     type;                               // 装备类型
-    std::string name;
-    LL          atk, def, brk, agi, hp, mp, crt;    // 原始攻防破敏血魔暴 (请使用 inventoryData 中对应的 getter 来获取计算后的数据)
-    LL          wear;                               // 原始磨损
-    LL          price;                              // 出售价格
+    LL              id;
+    EqiType         type;                               // 装备类型
+    std::string     name;
+    LL              atk, def, brk, agi, hp, mp, crt;    // 原始攻防破敏血魔暴 (请使用 inventoryData 中对应的 getter 来获取计算后的数据)
+    LL              wear;                               // 原始磨损
+    LL              price;                              // 出售价格
 };
 
 extern std::string                             eqiConfigPath;

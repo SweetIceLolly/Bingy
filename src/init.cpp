@@ -1,7 +1,7 @@
 /*
-æè¿°: åˆå§‹åŒ–ç›¸å…³ä»£ç 
-ä½œè€…: å†°æ£
-æ–‡ä»¶: init.cpp
+ÃèÊö: ³õÊ¼»¯Ïà¹Ø´úÂë
+×÷Õß: ±ù¹÷
+ÎÄ¼þ: init.cpp
 */
 
 #include "init.hpp"
@@ -25,149 +25,149 @@
 inline void bg_msgrouter_init();
 inline bool bg_load_config();
 
-bool bgInitialized = false;     // Bingy æ˜¯å¦æˆåŠŸå¯åŠ¨
+bool bgInitialized = false;     // Bingy ÊÇ·ñ³É¹¦Æô¶¯
 
-// åˆå§‹åŒ–ä¸»å‡½æ•°
+// ³õÊ¼»¯Ö÷º¯Êý
 bool bg_init() {
-    // åŠ è½½é…ç½®æ–‡ä»¶
-    console_log("æ­£åœ¨è¯»å–é…ç½®æ–‡ä»¶...");
+    // ¼ÓÔØÅäÖÃÎÄ¼þ
+    console_log("ÕýÔÚ¶ÁÈ¡ÅäÖÃÎÄ¼þ...");
     if (!bg_load_config()) {
-        console_log("è¯»å–é…ç½®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡ÅäÖÃÎÄ¼þÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–é…ç½®æ–‡ä»¶: å…±è®¡" + std::to_string(allSignInEvents.size()) + "ä¸ªç­¾åˆ°æ´»åŠ¨, " + std::to_string(allSynthesises.size()) + "ä¸ªè£…å¤‡åˆæˆ");
+    console_log("³É¹¦¶ÁÈ¡ÅäÖÃÎÄ¼þ: ¹²¼Æ" + std::to_string(allSignInEvents.size()) + "¸öÇ©µ½»î¶¯, " + std::to_string(allSynthesises.size()) + "¸ö×°±¸ºÏ³É");
 
-    // åŠ è½½æ€ªç‰©æ•°æ®
-    console_log("æ­£åœ¨è¯»å–æ€ªç‰©æ•°æ®...");
+    // ¼ÓÔØ¹ÖÎïÊý¾Ý
+    console_log("ÕýÔÚ¶ÁÈ¡¹ÖÎïÊý¾Ý...");
     if (!bg_load_monster_config()) {
-        console_log("è¯»å–æ€ªç‰©æ•°æ®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡¹ÖÎïÊý¾ÝÎÄ¼þÊ§°Ü!", LogType::error);
         return false;
     }
     bg_init_monster_chances();
-    console_log("æˆåŠŸè¯»å–æ€ªç‰©æ•°æ®: å…±è®¡" + std::to_string(allMonsters.size()) + "ä¸ªæ€ªç‰©");
+    console_log("³É¹¦¶ÁÈ¡¹ÖÎïÊý¾Ý: ¹²¼Æ" + std::to_string(allMonsters.size()) + "¸ö¹ÖÎï");
 
-    // åŠ è½½è£…å¤‡æ•°æ®
-    console_log("æ­£åœ¨è¯»å–è£…å¤‡æ•°æ®...");
+    // ¼ÓÔØ×°±¸Êý¾Ý
+    console_log("ÕýÔÚ¶ÁÈ¡×°±¸Êý¾Ý...");
     if (!bg_load_equipment_config()) {
-        console_log("è¯»å–è£…å¤‡æ•°æ®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡×°±¸Êý¾ÝÎÄ¼þÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–è£…å¤‡æ•°æ®: å…±è®¡" + std::to_string(allEquipments.size()) + "ä¸ªè£…å¤‡");
+    console_log("³É¹¦¶ÁÈ¡×°±¸Êý¾Ý: ¹²¼Æ" + std::to_string(allEquipments.size()) + "¸ö×°±¸");
 
-    // è¿žæŽ¥æ•°æ®åº“
-    console_log("æ­£åœ¨è¿žæŽ¥æ•°æ®åº“...");
+    // Á¬½ÓÊý¾Ý¿â
+    console_log("ÕýÔÚÁ¬½ÓÊý¾Ý¿â...");
     if (!dbInit()) {
-        console_log("è¿žæŽ¥æ•°æ®åº“å¤±è´¥!", LogType::error);
+        console_log("Á¬½ÓÊý¾Ý¿âÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¿žæŽ¥æ•°æ®åº“");
+    console_log("³É¹¦Á¬½ÓÊý¾Ý¿â");
 
-    // åŠ è½½çŽ©å®¶ä¿¡æ¯
-    console_log("æ­£åœ¨è¯»å–æ‰€æœ‰çŽ©å®¶æ•°æ®...");
+    // ¼ÓÔØÍæ¼ÒÐÅÏ¢
+    console_log("ÕýÔÚ¶ÁÈ¡ËùÓÐÍæ¼ÒÊý¾Ý...");
     if (!bg_get_allplayers_from_db()) {
-        console_log("è¯»å–çŽ©å®¶æ•°æ®å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡Íæ¼ÒÊý¾ÝÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–çŽ©å®¶æ•°æ®: å…±è®¡" + std::to_string(allPlayers.size()) + "ä¸ªçŽ©å®¶");
+    console_log("³É¹¦¶ÁÈ¡Íæ¼ÒÊý¾Ý: ¹²¼Æ" + std::to_string(allPlayers.size()) + "¸öÍæ¼Ò");
 
-    // åŠ è½½äº¤æ˜“åœºä¿¡æ¯
-    console_log("æ­£åœ¨è¯»å–äº¤æ˜“åœºæ•°æ®...");
+    // ¼ÓÔØ½»Ò×³¡ÐÅÏ¢
+    console_log("ÕýÔÚ¶ÁÈ¡½»Ò×³¡Êý¾Ý...");
     bg_trade_get_items();
-    console_log("æˆåŠŸè¯»å–äº¤æ˜“åœºæ•°æ®: å…±è®¡" + std::to_string(allTradeItems.size()) + "ä¸ªæ¡ç›®, ä¸‹ä¸€ä¸ªäº¤æ˜“ ID ä¸º" + std::to_string(bg_get_tradeId()));
+    console_log("³É¹¦¶ÁÈ¡½»Ò×³¡Êý¾Ý: ¹²¼Æ" + std::to_string(allTradeItems.size()) + "¸öÌõÄ¿, ÏÂÒ»¸ö½»Ò× ID Îª" + std::to_string(bg_get_tradeId()));
 
-    // æ³¨å†Œæ¶ˆæ¯è·¯ç”±
+    // ×¢²áÏûÏ¢Â·ÓÉ
     bg_msgrouter_init();
 
-    // å¯åŠ¨ BgKeepAlive
+    // Æô¶¯ BgKeepAlive
 
-    // åˆå§‹åŒ–å®Œæˆ
+    // ³õÊ¼»¯Íê³É
     bgInitialized = true;
     return true;
 }
 
-// æ³¨å†Œæ‰€æœ‰å‘½ä»¤
+// ×¢²áËùÓÐÃüÁî
 inline void bg_msgrouter_init() {
-    // æ³¨å†Œç¾¤èŠç›¸å…³å‘½ä»¤
+    // ×¢²áÈºÁÄÏà¹ØÃüÁî
     bg_groupmsg_router_add("bg", bg_cmd_bg);
-    bg_groupmsg_router_add("bg æ³¨å†Œ", bg_cmd_register);
-    bg_groupmsg_router_add("bg ç­¾åˆ°", bg_cmd_sign_in);
+    bg_groupmsg_router_add("bg ×¢²á", bg_cmd_register);
+    bg_groupmsg_router_add("bg Ç©µ½", bg_cmd_sign_in);
 
-    bg_groupmsg_router_add("bg æŸ¥çœ‹ç¡¬å¸", bg_cmd_view_coins);
-    bg_groupmsg_router_add("bg æŸ¥çœ‹èƒŒåŒ…", bg_cmd_view_inventory);
-    bg_groupmsg_router_add("bg æŸ¥çœ‹å±žæ€§", bg_cmd_view_properties);
+    bg_groupmsg_router_add("bg ²é¿´Ó²±Ò", bg_cmd_view_coins);
+    bg_groupmsg_router_add("bg ²é¿´±³°ü", bg_cmd_view_inventory);
+    bg_groupmsg_router_add("bg ²é¿´ÊôÐÔ", bg_cmd_view_properties);
 
-    bg_groupmsg_router_add("bg æŸ¥çœ‹è£…å¤‡", bg_cmd_view_equipments);
-    bg_groupmsg_router_add("bg è£…å¤‡", bg_cmd_equip);
-    bg_groupmsg_router_add("bg å‡ºå”®", bg_cmd_pawn);
+    bg_groupmsg_router_add("bg ²é¿´×°±¸", bg_cmd_view_equipments);
+    bg_groupmsg_router_add("bg ×°±¸", bg_cmd_equip);
+    bg_groupmsg_router_add("bg ³öÊÛ", bg_cmd_pawn);
 
-    bg_groupmsg_router_add("bg å¸ä¸‹å¤´ç›”", bg_cmd_unequip_helmet);
-    bg_groupmsg_router_add("bg å¸ä¸‹æˆ˜ç”²", bg_cmd_unequip_body);
-    bg_groupmsg_router_add("bg å¸ä¸‹æŠ¤è…¿", bg_cmd_unequip_leg);
-    bg_groupmsg_router_add("bg å¸ä¸‹æˆ˜é´", bg_cmd_unequip_boot);
-    bg_groupmsg_router_add("bg å¸ä¸‹æŠ¤ç”²", bg_cmd_unequip_armor);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÍ·¿ø", bg_cmd_unequip_helmet);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÕ½¼×", bg_cmd_unequip_body);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ»¤ÍÈ", bg_cmd_unequip_leg);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÕ½Ñ¥", bg_cmd_unequip_boot);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ»¤¼×", bg_cmd_unequip_armor);
 
-    bg_groupmsg_router_add("bg å¸ä¸‹ä¸»æ­¦å™¨", bg_cmd_unequip_primary);
-    bg_groupmsg_router_add("bg å¸ä¸‹å‰¯æ­¦å™¨", bg_cmd_unequip_secondary);
-    bg_groupmsg_router_add("bg å¸ä¸‹æ­¦å™¨", bg_cmd_unequip_weapon);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÖ÷ÎäÆ÷", bg_cmd_unequip_primary);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ¸±ÎäÆ÷", bg_cmd_unequip_secondary);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÎäÆ÷", bg_cmd_unequip_weapon);
 
-    bg_groupmsg_router_add("bg å¸ä¸‹è€³çŽ¯", bg_cmd_unequip_earrings);
-    bg_groupmsg_router_add("bg å¸ä¸‹æˆ’æŒ‡", bg_cmd_unequip_rings);
-    bg_groupmsg_router_add("bg å¸ä¸‹é¡¹é“¾", bg_cmd_unequip_necklace);
-    bg_groupmsg_router_add("bg å¸ä¸‹å®çŸ³", bg_cmd_unequip_jewelry);
-    bg_groupmsg_router_add("bg å¸ä¸‹é¥°å“", bg_cmd_unequip_ornament);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ¶ú»·", bg_cmd_unequip_earrings);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ½äÖ¸", bg_cmd_unequip_rings);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÏîÁ´", bg_cmd_unequip_necklace);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ±¦Ê¯", bg_cmd_unequip_jewelry);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÊÎÆ·", bg_cmd_unequip_ornament);
 
-    bg_groupmsg_router_add("bg å¸ä¸‹", bg_cmd_unequip_item);
-    bg_groupmsg_router_add("bg å¸ä¸‹è£…å¤‡", bg_cmd_unequip_item_2);
-    bg_groupmsg_router_add("bg å¸ä¸‹æ‰€æœ‰", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg å¸ä¸‹æ‰€æœ‰è£…å¤‡", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg å¸ä¸‹å…¨éƒ¨", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg å¸ä¸‹å…¨éƒ¨è£…å¤‡", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ", bg_cmd_unequip_item);
+    bg_groupmsg_router_add("bg Ð¶ÏÂ×°±¸", bg_cmd_unequip_item_2);
+    bg_groupmsg_router_add("bg Ð¶ÏÂËùÓÐ", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg Ð¶ÏÂËùÓÐ×°±¸", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÈ«²¿", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg Ð¶ÏÂÈ«²¿×°±¸", bg_cmd_unequip_all);
 
-    bg_groupmsg_router_add("bg å¼ºåŒ–å¤´ç›”", bg_cmd_upgrade_helmet);
-    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ˜ç”²", bg_cmd_upgrade_body);
-    bg_groupmsg_router_add("bg å¼ºåŒ–æŠ¤è…¿", bg_cmd_upgrade_leg);
-    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ˜é´", bg_cmd_upgrade_boot);
-    bg_groupmsg_router_add("bg å‡çº§å¤´ç›”", bg_cmd_upgrade_helmet);
-    bg_groupmsg_router_add("bg å‡çº§æˆ˜ç”²", bg_cmd_upgrade_body);
-    bg_groupmsg_router_add("bg å‡çº§æŠ¤è…¿", bg_cmd_upgrade_leg);
-    bg_groupmsg_router_add("bg å‡çº§æˆ˜é´", bg_cmd_upgrade_boot);
+    bg_groupmsg_router_add("bg Ç¿»¯Í·¿ø", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg Ç¿»¯Õ½¼×", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg Ç¿»¯»¤ÍÈ", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg Ç¿»¯Õ½Ñ¥", bg_cmd_upgrade_boot);
+    bg_groupmsg_router_add("bg Éý¼¶Í·¿ø", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg Éý¼¶Õ½¼×", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg Éý¼¶»¤ÍÈ", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg Éý¼¶Õ½Ñ¥", bg_cmd_upgrade_boot);
 
-    bg_groupmsg_router_add("bg å¼ºåŒ–ä¸»æ­¦å™¨", bg_cmd_upgrade_primary);
-    bg_groupmsg_router_add("bg å¼ºåŒ–å‰¯æ­¦å™¨", bg_cmd_upgrade_secondary);
-    bg_groupmsg_router_add("bg å‡çº§ä¸»æ­¦å™¨", bg_cmd_upgrade_primary);
-    bg_groupmsg_router_add("bg å‡çº§å‰¯æ­¦å™¨", bg_cmd_upgrade_secondary);
+    bg_groupmsg_router_add("bg Ç¿»¯Ö÷ÎäÆ÷", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg Ç¿»¯¸±ÎäÆ÷", bg_cmd_upgrade_secondary);
+    bg_groupmsg_router_add("bg Éý¼¶Ö÷ÎäÆ÷", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg Éý¼¶¸±ÎäÆ÷", bg_cmd_upgrade_secondary);
 
-    bg_groupmsg_router_add("bg å¼ºåŒ–è€³çŽ¯", bg_cmd_upgrade_earrings);
-    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ’æŒ‡", bg_cmd_upgrade_rings);
-    bg_groupmsg_router_add("bg å¼ºåŒ–é¡¹é“¾", bg_cmd_upgrade_necklace);
-    bg_groupmsg_router_add("bg å¼ºåŒ–å®çŸ³", bg_cmd_upgrade_jewelry);
-    bg_groupmsg_router_add("bg å‡çº§è€³çŽ¯", bg_cmd_upgrade_earrings);
-    bg_groupmsg_router_add("bg å‡çº§æˆ’æŒ‡", bg_cmd_upgrade_rings);
-    bg_groupmsg_router_add("bg å‡çº§é¡¹é“¾", bg_cmd_upgrade_necklace);
-    bg_groupmsg_router_add("bg å‡çº§å®çŸ³", bg_cmd_upgrade_jewelry);
-    bg_groupmsg_router_add("bg ç¡®è®¤", bg_cmd_confirm_upgrade);
+    bg_groupmsg_router_add("bg Ç¿»¯¶ú»·", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg Ç¿»¯½äÖ¸", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg Ç¿»¯ÏîÁ´", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg Ç¿»¯±¦Ê¯", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg Éý¼¶¶ú»·", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg Éý¼¶½äÖ¸", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg Éý¼¶ÏîÁ´", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg Éý¼¶±¦Ê¯", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg È·ÈÏ", bg_cmd_confirm_upgrade);
 
-    bg_groupmsg_router_add("bg å¼ºåŒ–æŠ¤ç”²", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å¼ºåŒ–æ­¦å™¨", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å¼ºåŒ–é¥°å“", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å¼ºåŒ–è£…å¤‡", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å¼ºåŒ–", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å‡çº§æŠ¤ç”²", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å‡çº§æ­¦å™¨", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å‡çº§é¥°å“", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å‡çº§è£…å¤‡", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg å‡çº§", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Ç¿»¯»¤¼×", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Ç¿»¯ÎäÆ÷", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Ç¿»¯ÊÎÆ·", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Ç¿»¯×°±¸", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Ç¿»¯", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Éý¼¶»¤¼×", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Éý¼¶ÎäÆ÷", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Éý¼¶ÊÎÆ·", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Éý¼¶×°±¸", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg Éý¼¶", bg_cmd_upgrade_help);
 
-    bg_groupmsg_router_add("bg äº¤æ˜“åœº", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg æŸ¥çœ‹äº¤æ˜“åœº", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg äº¤æ˜“", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg è´­ä¹°", bg_cmd_buy_trade);
-    bg_groupmsg_router_add("bg ä¸Šæž¶", bg_cmd_sell_trade);
-    bg_groupmsg_router_add("bg ä¸‹æž¶", bg_cmd_recall_trade);
+    bg_groupmsg_router_add("bg ½»Ò×³¡", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg ²é¿´½»Ò×³¡", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg ½»Ò×", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg ¹ºÂò", bg_cmd_buy_trade);
+    bg_groupmsg_router_add("bg ÉÏ¼Ü", bg_cmd_sell_trade);
+    bg_groupmsg_router_add("bg ÏÂ¼Ü", bg_cmd_recall_trade);
     
-    bg_groupmsg_router_add("bg åˆæˆ", bg_cmd_synthesis);
-    bg_groupmsg_router_add("bg æŒ‘æˆ˜", nullptr);
-    bg_groupmsg_router_add("bg æŒ‘æˆ˜æ£®æž—", nullptr);
+    bg_groupmsg_router_add("bg ºÏ³É", bg_cmd_synthesis);
+    bg_groupmsg_router_add("bg ÌôÕ½", bg_cmd_fight);
+    bg_groupmsg_router_add("bg ÌôÕ½É­ÁÖ", nullptr);
     bg_groupmsg_router_add("bg pvp", nullptr);
     bg_groupmsg_router_add("bg vip", nullptr);
 
@@ -180,62 +180,62 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg /addinvcapacity", bg_cmd_admin_add_invCapacity);
     bg_groupmsg_router_add("bg /addvip", bg_cmd_admin_add_vip);
 
-    // æ³¨å†Œç§èŠç›¸å…³å‘½ä»¤
+    // ×¢²áË½ÁÄÏà¹ØÃüÁî
 
 }
 
-// è¯»å–æ¸¸æˆé…ç½®
+// ¶ÁÈ¡ÓÎÏ·ÅäÖÃ
 inline bool bg_load_config() {
     configParser parser(CONFIG_FILE_PATH);
-    signInEvent *signInEv = nullptr;        // ç­¾åˆ°æ´»åŠ¨ä¸´æ—¶å˜é‡
-    synthesisInfo *synInfo = nullptr;       // åˆæˆä¿¡æ¯ä¸´æ—¶å˜é‡
-    dungeonData *dungeon = nullptr;         // å‰¯æœ¬é…ç½®ä¸´æ—¶å˜é‡
+    signInEvent *signInEv = nullptr;        // Ç©µ½»î¶¯ÁÙÊ±±äÁ¿
+    synthesisInfo *synInfo = nullptr;       // ºÏ³ÉÐÅÏ¢ÁÙÊ±±äÁ¿
+    dungeonData *dungeon = nullptr;         // ¸±±¾ÅäÖÃÁÙÊ±±äÁ¿
 
     return parser.load(
-        // åˆ‡æ¢ state å›žè°ƒå‡½æ•°
+        // ÇÐ»» state »Øµ÷º¯Êý
         [](const std::string &line, char &state) -> bool {
-            // state: 0: ä¸€èˆ¬é…ç½®; 1: ç­¾åˆ°æ´»åŠ¨; 2: è£…å¤‡åˆæˆ; 3: å‰¯æœ¬é…ç½®
-            if (line == "[ç­¾åˆ°æ´»åŠ¨]")
+            // state: 0: Ò»°ãÅäÖÃ; 1: Ç©µ½»î¶¯; 2: ×°±¸ºÏ³É; 3: ¸±±¾ÅäÖÃ
+            if (line == "[Ç©µ½»î¶¯]")
                 state = 1;
-            else if (line == "[è£…å¤‡åˆæˆ]")
+            else if (line == "[×°±¸ºÏ³É]")
                 state = 2;
-            else if (line == "[å‰¯æœ¬é…ç½®]")
+            else if (line == "[¸±±¾ÅäÖÃ]")
                 state = 3;
             else
                 state = 0;
             return true;
         },
 
-        // èŽ·å–å±žæ€§å€¼å›žè°ƒå‡½æ•°
+        // »ñÈ¡ÊôÐÔÖµ»Øµ÷º¯Êý
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
-            // å¤„ç†ä¸€èˆ¬é…ç½®
+            // ´¦ÀíÒ»°ãÅäÖÃ
             if (state == 0) {
-                if (propName == "dburi")                              // æ•°æ®åº“ URI
+                if (propName == "dburi")                              // Êý¾Ý¿â URI
                     dbUri = propValue + std::string("?authSource=admin");
-                else if (propName == "dbname")                        // æ•°æ®åº“å
+                else if (propName == "dbname")                        // Êý¾Ý¿âÃû
                     dbName = propValue;
-                else if (propName == "monsters")                      // æ€ªç‰©é…ç½®è·¯å¾„
+                else if (propName == "monsters")                      // ¹ÖÎïÅäÖÃÂ·¾¶
                     monsterConfigPath = propValue;
-                else if (propName == "equipments")                    // è£…å¤‡é…ç½®è·¯å¾„
+                else if (propName == "equipments")                    // ×°±¸ÅäÖÃÂ·¾¶
                     eqiConfigPath = propValue;
-                else if (propName == "admin") {                       // ç®¡ç†å‘˜
+                else if (propName == "admin") {                       // ¹ÜÀíÔ±
                     try {
                         LL qq = std::stoll(propValue);
                         if (allAdmins.insert(qq).second)
-                            console_log("æˆåŠŸæ·»åŠ ç®¡ç†å‘˜: " + propValue);
+                            console_log("³É¹¦Ìí¼Ó¹ÜÀíÔ±: " + propValue);
                         else
-                            console_log("æŠŠç®¡ç†å‘˜" + propValue + "æ·»åŠ åˆ°ç®¡ç†å‘˜åˆ—è¡¨æ—¶å‘ç”Ÿé”™è¯¯, å¯èƒ½æ˜¯å› ä¸ºé‡å¤äº†? äºŽè¡Œ" + std::to_string(lineNo), LogType::warning);
+                            console_log("°Ñ¹ÜÀíÔ±" + propValue + "Ìí¼Óµ½¹ÜÀíÔ±ÁÐ±íÊ±·¢Éú´íÎó, ¿ÉÄÜÊÇÒòÎªÖØ¸´ÁË? ÓÚÐÐ" + std::to_string(lineNo), LogType::warning);
                     }
                     catch (...) {
-                        console_log("æ— æ³•æŠŠ\"" + propValue + "\"æ·»åŠ åˆ°ç®¡ç†å‘˜åˆ—è¡¨, è¯·æ£€æŸ¥æ˜¯å¦ä¸ºæœ‰æ•ˆæ•°å€¼! äºŽè¡Œ" + std::to_string(lineNo), LogType::warning);
+                        console_log("ÎÞ·¨°Ñ\"" + propValue + "\"Ìí¼Óµ½¹ÜÀíÔ±ÁÐ±í, Çë¼ì²éÊÇ·ñÎªÓÐÐ§ÊýÖµ! ÓÚÐÐ" + std::to_string(lineNo), LogType::warning);
                     }
                 }
                 else
-                    console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName + std::string("\", äºŽè¡Œ") + std::to_string(lineNo), LogType::warning);
+                    console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚÐÐ") + std::to_string(lineNo), LogType::warning);
             }
 
-            // å¤„ç†ç­¾åˆ°æ´»åŠ¨
-            else if (state == 1) {                                          // é…ç½®
+            // ´¦ÀíÇ©µ½»î¶¯
+            else if (state == 1) {                                          // ÅäÖÃ
                 try {
                     if (propName == "id")
                         signInEv->id = std::stoll(propValue);
@@ -267,17 +267,17 @@ inline bool bg_load_config() {
                     else if (propName == "message")
                         signInEv->message = propValue;
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName + std::string("\", äºŽè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚÐÐ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("å¤„ç†ç­¾åˆ°æ´»åŠ¨é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo) + ", åŽŸå› : " + e.what(), LogType::warning);
+                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("å¤„ç†ç­¾åˆ°æ´»åŠ¨é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
-            // å¤„ç†è£…å¤‡åˆæˆä¿¡æ¯
+            // ´¦Àí×°±¸ºÏ³ÉÐÅÏ¢
             else if (state == 2) {
                 try {
                     if (propName == "requirements") {
@@ -294,17 +294,17 @@ inline bool bg_load_config() {
                     else if (propName == "target")
                         synInfo->targetId = std::stoll(propValue);
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName + std::string("\", äºŽè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚÐÐ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("æ·»åŠ åˆæˆä¿¡æ¯å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo) + ", åŽŸå› : " + e.what(), LogType::warning);
+                    console_log("Ìí¼ÓºÏ³ÉÐÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("æ·»åŠ åˆæˆä¿¡æ¯å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("Ìí¼ÓºÏ³ÉÐÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
-            // å¤„ç†å‰¯æœ¬é…ç½®
+            // ´¦Àí¸±±¾ÅäÖÃ
             else if (state == 3) {
                 try {
                     if (propName == "level")
@@ -316,20 +316,20 @@ inline bool bg_load_config() {
                         }
                     }
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName + std::string("\", äºŽè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚÐÐ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("æ·»åŠ å‰¯æœ¬é…ç½®å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo) + ", åŽŸå› : " + e.what(), LogType::warning);
+                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("æ·»åŠ å‰¯æœ¬é…ç½®å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºŽè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚÐÐ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
             return true;
         },
 
-        // å¼€å§‹æ ‡è®°å›žè°ƒå‡½æ•°
+        // ¿ªÊ¼±ê¼Ç»Øµ÷º¯Êý
         [&](const char &state) -> bool {
             if (state == 1)
                 signInEv = new signInEvent();
@@ -341,7 +341,7 @@ inline bool bg_load_config() {
             return true;
         },
 
-        // ç»“æŸæ ‡è®°å›žè°ƒå‡½æ•°
+        // ½áÊø±ê¼Ç»Øµ÷º¯Êý
         [&](const char &state) -> bool {
             if (state == 1) {
                 allSignInEvents.push_back(*signInEv);

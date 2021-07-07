@@ -173,7 +173,7 @@ bool bg_player_add(const LL &id) {
         p.##prop##_cache = true;                \
     }                                           \
     else                                        \
-        throw std::exception(("获取玩家" + std::to_string(id) + "的 " + #prop + " 属性失败").c_str());
+        throw std::exception("获取玩家属性失败");
 
 // 从数据库读取所有玩家
 bool bg_get_allplayers_from_db() {
@@ -407,7 +407,7 @@ bool player::remove_at_inventory(const LL &index) {
         bsoncxx::builder::stream::document{} << "inventory." + std::to_string(index) << bsoncxx::types::b_null()
         << bsoncxx::builder::stream::finalize)) {
 
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
             bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
@@ -441,7 +441,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
     // 更新数据库, 成功后再更新本地缓存
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set", doc)) {
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
             bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
@@ -646,7 +646,7 @@ bool player::remove_at_equipItems(const LL &index) {
         bsoncxx::builder::stream::document{} << "equipItems." + std::to_string(index) << bsoncxx::types::b_null()
         << bsoncxx::builder::stream::finalize)) {
 
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
             bsoncxx::builder::stream::document{} << "equipItems" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 

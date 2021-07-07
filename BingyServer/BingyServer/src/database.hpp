@@ -10,7 +10,6 @@
 
 #include <mongocxx/client.hpp>
 #include <mongocxx/uri.hpp>
-#include <mongocxx/instance.hpp>
 #include <mongocxx/pool.hpp>
 #include <mongocxx/exception/exception.hpp>
 

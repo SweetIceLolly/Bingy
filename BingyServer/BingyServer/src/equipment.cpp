@@ -30,7 +30,7 @@ bool bg_load_equipment_config() {
                 if (propName == "id")
                     temp->id = std::stoll(propValue);
                 else if (propName == "type")
-                    temp->type = (EqiType)(unsigned char)std::stoi(propValue);
+                    temp->type = static_cast<EqiType>(static_cast<unsigned char>(std::stoi(propValue)));
                 else if (propName == "name")
                     temp->name = propValue;
                 else if (propName == "atk")

@@ -1,15 +1,15 @@
 /*
-æè¿°: å¤„ç† Bingy çš„æŒ‡ä»¤, ç„¶åå‘¼å«å¯¹åº”çš„å‡½æ•°
-ä½œè€…: å†°æ£
-æ–‡ä»¶: msg_handler.cpp
+ÃèÊö: ´¦Àí Bingy µÄÖ¸Áî, È»ºóºô½Ğ¶ÔÓ¦µÄº¯Êı
+×÷Õß: ±ù¹÷
+ÎÄ¼ş: msg_handler.cpp
 */
 
 #include "msg_handlers.hpp"
 #include "game.hpp"
 #include "utils.hpp"
 
-// æ‡’äººå®
-// å‘½ä»¤å¿…é¡»è¦å…¨å­—åŒ¹é…æ‰å‘¼å«å¯¹åº”çš„ pre å’Œ post å›è°ƒå‡½æ•°
+// ÀÁÈËºê
+// ÃüÁî±ØĞëÒªÈ«×ÖÆ¥Åä²Åºô½Ğ¶ÔÓ¦µÄ pre ºÍ post »Øµ÷º¯Êı
 #define MATCH(str, callbackName)                                    \
     if (ev.message == "bg " str) {                                  \
         if (pre##callbackName##Callback(ev))                        \
@@ -17,190 +17,190 @@
     }                                                               \
     else {                                                          \
         cq::send_group_message(GROUP_ID, bg_at(ev) +                \
-            "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è¦" str "çš„è¯å‘é€\"bg " str "\"å³å¯");  \
+            "ÃüÁî¸ñÊ½²»¶ÔÅ¶! Òª" str "µÄ»°·¢ËÍ\"bg " str "\"¼´¿É");  \
     }
 
 // ping
 CMD(bg) {
     if (ev.message == "bg")
-        cq::send_group_message(ev.target.group_id.value(), "æˆ‘åœ¨å‘€!");
+        cq::send_group_message(ev.target.group_id.value(), "ÎÒÔÚÑ½!");
 }
 
-// æ³¨å†Œ
+// ×¢²á
 CMD(register) {
-    MATCH("æ³¨å†Œ", Register);
+    MATCH("×¢²á", Register);
 }
 
-// æŸ¥çœ‹ç¡¬å¸
+// ²é¿´Ó²±Ò
 CMD(view_coins) {
-    MATCH("æŸ¥çœ‹ç¡¬å¸", ViewCoins);
+    MATCH("²é¿´Ó²±Ò", ViewCoins);
 }
 
-// ç­¾åˆ°
+// Ç©µ½
 CMD(sign_in) {
-    MATCH("ç­¾åˆ°", SignIn);
+    MATCH("Ç©µ½", SignIn);
 }
 
-// æŸ¥çœ‹èƒŒåŒ…
+// ²é¿´±³°ü
 CMD(view_inventory) {
-    MATCH("æŸ¥çœ‹èƒŒåŒ…", ViewInventory);
+    MATCH("²é¿´±³°ü", ViewInventory);
 }
 
-// å‡ºå”®
+// ³öÊÛ
 CMD(pawn) {
     if (ev.message.length() < 9) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! å‡ºå”®æŒ‡ä»¤æ ¼å¼ä¸º: \"bg å‡ºå”® èƒŒåŒ…åºå·1 èƒŒåŒ…åºå·2 ...\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ³öÊÛÖ¸Áî¸ñÊ½Îª: \"bg ³öÊÛ ±³°üĞòºÅ1 ±³°üĞòºÅ2 ...\"");
         return;
     }
-    auto params = str_split(ev.message.substr(9), ' ');         // å»æ‰å‘½ä»¤å­—ç¬¦ä¸², ç„¶åä»¥ç©ºæ ¼åˆ†éš”å¼€å‚æ•°
+    auto params = str_split(ev.message.substr(9), ' ');         // È¥µôÃüÁî×Ö·û´®, È»ºóÒÔ¿Õ¸ñ·Ö¸ô¿ª²ÎÊı
     if (params.size() > 0) {
-        std::vector<LL> items;                                  // prePawnCallback è¿”å›çš„å¤„ç†ä¹‹åçš„åºå·åˆ—è¡¨
+        std::vector<LL> items;                                  // prePawnCallback ·µ»ØµÄ´¦ÀíÖ®ºóµÄĞòºÅÁĞ±í
         if (prePawnCallback(ev, params, items))
             postPawnCallback(ev, items);
     }
     else {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! å‡ºå”®æŒ‡ä»¤æ ¼å¼ä¸º: \"bg å‡ºå”® èƒŒåŒ…åºå·1 èƒŒåŒ…åºå·2 ...\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ³öÊÛÖ¸Áî¸ñÊ½Îª: \"bg ³öÊÛ ±³°üĞòºÅ1 ±³°üĞòºÅ2 ...\"");
     }
 }
 
-// æŸ¥çœ‹å±æ€§
+// ²é¿´ÊôĞÔ
 CMD(view_properties) {
-    MATCH("æŸ¥çœ‹å±æ€§", ViewProperties);
+    MATCH("²é¿´ÊôĞÔ", ViewProperties);
 }
 
-// æŸ¥çœ‹è£…å¤‡
+// ²é¿´×°±¸
 CMD(view_equipments) {
-    MATCH("æŸ¥çœ‹è£…å¤‡", ViewEquipments);
+    MATCH("²é¿´×°±¸", ViewEquipments);
 }
 
-// è£…å¤‡
+// ×°±¸
 CMD(equip) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è£…å¤‡æŒ‡ä»¤æ ¼å¼ä¸º: \"bg è£…å¤‡ èƒŒåŒ…åºå·\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ×°±¸Ö¸Áî¸ñÊ½Îª: \"bg ×°±¸ ±³°üĞòºÅ\"");
         return;
     }
-    auto param = ev.message.substr(9);                          // å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•°
+    auto param = ev.message.substr(9);                          // È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı
     LL item = -1;
     if (preEquipCallback(ev, param, item))
         postEquipCallback(ev, item);
 }
 
-// å¸ä¸‹å¤´ç›”
+// Ğ¶ÏÂÍ·¿ø
 CMD(unequip_helmet) {
-    MATCH("å¸ä¸‹å¤´ç›”", UnequipHelmet);
+    MATCH("Ğ¶ÏÂÍ·¿ø", UnequipHelmet);
 }
 
-// å¸ä¸‹æˆ˜ç”²
+// Ğ¶ÏÂÕ½¼×
 CMD(unequip_body) {
-    MATCH("å¸ä¸‹æˆ˜ç”²", UnequipBody);
+    MATCH("Ğ¶ÏÂÕ½¼×", UnequipBody);
 }
 
-// å¸ä¸‹æŠ¤è…¿
+// Ğ¶ÏÂ»¤ÍÈ
 CMD(unequip_leg) {
-    MATCH("å¸ä¸‹æŠ¤è…¿", UnequipLeg);
+    MATCH("Ğ¶ÏÂ»¤ÍÈ", UnequipLeg);
 }
 
-// å¸ä¸‹æˆ˜é´
+// Ğ¶ÏÂÕ½Ñ¥
 CMD(unequip_boot) {
-    MATCH("å¸ä¸‹æˆ˜é´", UnequipBoot);
+    MATCH("Ğ¶ÏÂÕ½Ñ¥", UnequipBoot);
 }
 
-// å¸ä¸‹æŠ¤ç”²
+// Ğ¶ÏÂ»¤¼×
 CMD(unequip_armor) {
-    MATCH("å¸ä¸‹æŠ¤ç”²", UnequipArmor);
+    MATCH("Ğ¶ÏÂ»¤¼×", UnequipArmor);
 }
 
-// å¸ä¸‹ä¸»æ­¦å™¨
+// Ğ¶ÏÂÖ÷ÎäÆ÷
 CMD(unequip_primary) {
-    MATCH("å¸ä¸‹ä¸»æ­¦å™¨", UnequipPrimary);
+    MATCH("Ğ¶ÏÂÖ÷ÎäÆ÷", UnequipPrimary);
 }
 
-// å¸ä¸‹å‰¯æ­¦å™¨
+// Ğ¶ÏÂ¸±ÎäÆ÷
 CMD(unequip_secondary) {
-    MATCH("å¸ä¸‹å‰¯æ­¦å™¨", UnequipSecondary);
+    MATCH("Ğ¶ÏÂ¸±ÎäÆ÷", UnequipSecondary);
 }
 
-// å¸ä¸‹æ­¦å™¨
+// Ğ¶ÏÂÎäÆ÷
 CMD(unequip_weapon) {
-    MATCH("å¸ä¸‹æ­¦å™¨", UnequipWeapon);
+    MATCH("Ğ¶ÏÂÎäÆ÷", UnequipWeapon);
 }
 
-// å¸ä¸‹è€³ç¯
+// Ğ¶ÏÂ¶ú»·
 CMD(unequip_earrings) {
-    MATCH("å¸ä¸‹è€³ç¯", UnequipEarrings);
+    MATCH("Ğ¶ÏÂ¶ú»·", UnequipEarrings);
 }
 
-// å¸ä¸‹æˆ’æŒ‡
+// Ğ¶ÏÂ½äÖ¸
 CMD(unequip_rings) {
-    MATCH("å¸ä¸‹æˆ’æŒ‡", UnequipRings);
+    MATCH("Ğ¶ÏÂ½äÖ¸", UnequipRings);
 }
 
-// å¸ä¸‹é¡¹é“¾
+// Ğ¶ÏÂÏîÁ´
 CMD(unequip_necklace) {
-    MATCH("å¸ä¸‹é¡¹é“¾", UnequipNecklace);
+    MATCH("Ğ¶ÏÂÏîÁ´", UnequipNecklace);
 }
 
-// å¸ä¸‹å®çŸ³
+// Ğ¶ÏÂ±¦Ê¯
 CMD(unequip_jewelry) {
-    MATCH("å¸ä¸‹å®çŸ³", UnequipJewelry);
+    MATCH("Ğ¶ÏÂ±¦Ê¯", UnequipJewelry);
 }
 
-// å¸ä¸‹é¥°å“
+// Ğ¶ÏÂÊÎÆ·
 CMD(unequip_ornament) {
-    MATCH("å¸ä¸‹é¥°å“", UnequipOrnament);
+    MATCH("Ğ¶ÏÂÊÎÆ·", UnequipOrnament);
 }
 
-// å¸ä¸‹ä¸€æ¬¡æ€§ç‰©å“
+// Ğ¶ÏÂÒ»´ÎĞÔÎïÆ·
 CMD(unequip_item) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! å¸ä¸‹ä¸€æ¬¡æ€§ç‰©å“æŒ‡ä»¤æ ¼å¼ä¸º: \"bg å¸ä¸‹ èƒŒåŒ…åºå·\"\n"
-            "æˆ–è€…å¸ä¸‹æŒ‡å®šç±»å‹çš„ç‰©å“: ä¾‹å¦‚: bg å¸ä¸‹å¤´ç›” (åªå¸ä¸‹å¤´ç›”); bg å¸ä¸‹é¥°å“ (å¸ä¸‹æ‰€æœ‰é¥°å“); bg å¸ä¸‹æ‰€æœ‰ (å¸ä¸‹æ‰€æœ‰è£…å¤‡)");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! Ğ¶ÏÂÒ»´ÎĞÔÎïÆ·Ö¸Áî¸ñÊ½Îª: \"bg Ğ¶ÏÂ ±³°üĞòºÅ\"\n"
+            "»òÕßĞ¶ÏÂÖ¸¶¨ÀàĞÍµÄÎïÆ·: ÀıÈç: bg Ğ¶ÏÂÍ·¿ø (Ö»Ğ¶ÏÂÍ·¿ø); bg Ğ¶ÏÂÊÎÆ· (Ğ¶ÏÂËùÓĞÊÎÆ·); bg Ğ¶ÏÂËùÓĞ (Ğ¶ÏÂËùÓĞ×°±¸)");
         return;
     }
-    auto param = ev.message.substr(9);                          // å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•°
+    auto param = ev.message.substr(9);                          // È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı
     LL item = -1;
     if (preUnequipSingleCallback(ev, param, item))
         postUnequipSingleCallback(ev, item);
 }
 
-// å¸ä¸‹ä¸€æ¬¡æ€§ç‰©å“ (å¦ä¸€å‘½ä»¤)
+// Ğ¶ÏÂÒ»´ÎĞÔÎïÆ· (ÁíÒ»ÃüÁî)
 CMD(unequip_item_2) {
     if (ev.message.length() < 14) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! å¸ä¸‹ä¸€æ¬¡æ€§ç‰©å“æŒ‡ä»¤æ ¼å¼ä¸º: \"bg å¸ä¸‹ èƒŒåŒ…åºå·\"\n"
-            "æˆ–è€…å¸ä¸‹æŒ‡å®šç±»å‹çš„ç‰©å“: ä¾‹å¦‚: bg å¸ä¸‹å¤´ç›” (åªå¸ä¸‹å¤´ç›”); bg å¸ä¸‹é¥°å“ (å¸ä¸‹æ‰€æœ‰é¥°å“); bg å¸ä¸‹æ‰€æœ‰ (å¸ä¸‹æ‰€æœ‰è£…å¤‡)");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! Ğ¶ÏÂÒ»´ÎĞÔÎïÆ·Ö¸Áî¸ñÊ½Îª: \"bg Ğ¶ÏÂ ±³°üĞòºÅ\"\n"
+            "»òÕßĞ¶ÏÂÖ¸¶¨ÀàĞÍµÄÎïÆ·: ÀıÈç: bg Ğ¶ÏÂÍ·¿ø (Ö»Ğ¶ÏÂÍ·¿ø); bg Ğ¶ÏÂÊÎÆ· (Ğ¶ÏÂËùÓĞÊÎÆ·); bg Ğ¶ÏÂËùÓĞ (Ğ¶ÏÂËùÓĞ×°±¸)");
         return;
     }
-    auto param = ev.message.substr(13);                         // å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•°
+    auto param = ev.message.substr(13);                         // È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı
     LL item = -1;
     if (preUnequipSingleCallback(ev, param, item))
         postUnequipSingleCallback(ev, item);
 }
 
-// å¸ä¸‹æ‰€æœ‰
+// Ğ¶ÏÂËùÓĞ
 CMD(unequip_all) {
-    if (ev.message == "bg å¸ä¸‹æ‰€æœ‰" || ev.message == "bg å¸ä¸‹å…¨éƒ¨" || ev.message == "bg å¸ä¸‹æ‰€æœ‰è£…å¤‡" || ev.message == "bg å¸ä¸‹å…¨éƒ¨è£…å¤‡") {
+    if (ev.message == "bg Ğ¶ÏÂËùÓĞ" || ev.message == "bg Ğ¶ÏÂÈ«²¿" || ev.message == "bg Ğ¶ÏÂËùÓĞ×°±¸" || ev.message == "bg Ğ¶ÏÂÈ«²¿×°±¸") {
         if (preUnequipAllCallback(ev))
             postUnequipAllCallback(ev);
     }
     else {
         cq::send_group_message(GROUP_ID, bg_at(ev) +
-            "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è¦å¸ä¸‹æ‰€æœ‰è£…å¤‡çš„è¯å¯ä»¥å‘é€: \"bg å¸ä¸‹æ‰€æœ‰\"");
+            "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÒªĞ¶ÏÂËùÓĞ×°±¸µÄ»°¿ÉÒÔ·¢ËÍ: \"bg Ğ¶ÏÂËùÓĞ\"");
     }
 }
 
-// æ‡’äººå®
-// å®šä¹‰å¼ºåŒ–è£…å¤‡ç›¸å…³çš„å‘½ä»¤è§„åˆ™, å¹¶è°ƒç”¨å¼ºåŒ–å›è°ƒå‡½æ•°
+// ÀÁÈËºê
+// ¶¨ÒåÇ¿»¯×°±¸Ïà¹ØµÄÃüÁî¹æÔò, ²¢µ÷ÓÃÇ¿»¯»Øµ÷º¯Êı
 #define UPGRADE_CMD(name, type, cmdLen)                                                                 \
     CMD(upgrade_##name##) {                                                                             \
-        LL upgradeTimes = 0;                                /* å¼ºåŒ–æ¬¡æ•° */                              \
-        LL coinsNeeded = 0;                                 /* éœ€è¦ç¡¬å¸ */                              \
+        LL upgradeTimes = 0;                                /* Ç¿»¯´ÎÊı */                              \
+        LL coinsNeeded = 0;                                 /* ĞèÒªÓ²±Ò */                              \
                                                                                                         \
-        if (ev.message.length() < cmdLen) {                 /* æ— å‚æ•° */                                \
+        if (ev.message.length() < cmdLen) {                 /* ÎŞ²ÎÊı */                                \
             if (preUpgradeCallback(ev, EqiType::##type##, "1", upgradeTimes, coinsNeeded))              \
                 postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
         }                                                                                               \
-        else {                                              /* æœ‰å‚æ•° */                                \
-            auto param = ev.message.substr(cmdLen - 1);     /* å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•° */             \
+        else {                                              /* ÓĞ²ÎÊı */                                \
+            auto param = ev.message.substr(cmdLen - 1);     /* È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı */             \
             if (preUpgradeCallback(ev, EqiType::##type##, param, upgradeTimes, coinsNeeded))            \
                 postUpgradeCallback(ev, EqiType::##type##, upgradeTimes, coinsNeeded);                  \
         }                                                                                               \
@@ -217,36 +217,36 @@ UPGRADE_CMD(rings, ornament_rings, 16);
 UPGRADE_CMD(necklace, ornament_necklace, 16);
 UPGRADE_CMD(jewelry, ornament_jewelry, 16);
 
-// ç¡®è®¤å¼ºåŒ–
+// È·ÈÏÇ¿»¯
 CMD(confirm_upgrade) {
-    MATCH("ç¡®è®¤", ConfirmUpgrade);
+    MATCH("È·ÈÏ", ConfirmUpgrade);
 }
 
-// å¼ºåŒ–è£…å¤‡å¸®åŠ©
+// Ç¿»¯×°±¸°ïÖú
 CMD(upgrade_help) {
-    cq::send_group_message(ev.target.group_id.value(), "è¯·æŒ‡å®šéœ€è¦å¼ºåŒ–çš„è£…å¤‡ç±»å‹, å‘½ä»¤åé¢å¯ä»¥è·Ÿéœ€è¦å¼ºåŒ–çš„æ¬¡æ•°ã€‚ä¾‹å¦‚: \"bg å¼ºåŒ–ä¸»æ­¦å™¨\", \"bg å¼ºåŒ–æˆ˜ç”² 5\"");
+    cq::send_group_message(ev.target.group_id.value(), "ÇëÖ¸¶¨ĞèÒªÇ¿»¯µÄ×°±¸ÀàĞÍ, ÃüÁîºóÃæ¿ÉÒÔ¸úĞèÒªÇ¿»¯µÄ´ÎÊı¡£ÀıÈç: \"bg Ç¿»¯Ö÷ÎäÆ÷\", \"bg Ç¿»¯Õ½¼× 5\"");
 }
 
-// æŸ¥çœ‹äº¤æ˜“åœº
+// ²é¿´½»Ò×³¡
 CMD(view_trade) {
-    if (ev.message == "bg äº¤æ˜“åœº" || ev.message == "bg æŸ¥çœ‹äº¤æ˜“åœº" || ev.message == "bg äº¤æ˜“") {
+    if (ev.message == "bg ½»Ò×³¡" || ev.message == "bg ²é¿´½»Ò×³¡" || ev.message == "bg ½»Ò×") {
         if (preViewTradeCallback(ev))
             postViewTradeCallback(ev);
     }
     else {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è¦æŸ¥çœ‹äº¤æ˜“åœºçš„è¯å¯ä»¥å‘é€: \"bg äº¤æ˜“åœº\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! Òª²é¿´½»Ò×³¡µÄ»°¿ÉÒÔ·¢ËÍ: \"bg ½»Ò×³¡\"");
     }
 }
 
-// è´­ä¹°äº¤æ˜“åœºé¡¹ç›®
+// ¹ºÂò½»Ò×³¡ÏîÄ¿
 CMD(buy_trade) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è´­ä¹°æŒ‡ä»¤æ ¼å¼ä¸º: \"bg è´­ä¹° äº¤æ˜“ID\"ã€‚å¦‚æœäº¤æ˜“æœ‰å¯†ç , åˆ™ä¸º: \"bg è´­ä¹° äº¤æ˜“ID å¯†ç \"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ¹ºÂòÖ¸Áî¸ñÊ½Îª: \"bg ¹ºÂò ½»Ò×ID\"¡£Èç¹û½»Ò×ÓĞÃÜÂë, ÔòÎª: \"bg ¹ºÂò ½»Ò×ID ÃÜÂë\"");
         return;
     }
     auto params = str_split(str_trim(ev.message.substr(9)), ' ');
     if (params.size() > 2) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! è´­ä¹°æŒ‡ä»¤æ ¼å¼ä¸º: \"bg è´­ä¹° äº¤æ˜“ID\"ã€‚å¦‚æœäº¤æ˜“æœ‰å¯†ç , åˆ™ä¸º: \"bg è´­ä¹° äº¤æ˜“ID å¯†ç \"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ¹ºÂòÖ¸Áî¸ñÊ½Îª: \"bg ¹ºÂò ½»Ò×ID\"¡£Èç¹û½»Ò×ÓĞÃÜÂë, ÔòÎª: \"bg ¹ºÂò ½»Ò×ID ÃÜÂë\"");
         return;
     }
     LL item = -1;
@@ -254,18 +254,18 @@ CMD(buy_trade) {
         postBuyTradeCallback(ev, item);
 }
 
-// äº¤æ˜“åœºä¸Šæ¶
+// ½»Ò×³¡ÉÏ¼Ü
 CMD(sell_trade) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! ä¸Šæ¶æŒ‡ä»¤æ ¼å¼ä¸º: \"bg ä¸Šæ¶ èƒŒåŒ…åºå· ä»·æ ¼\"ã€‚"
-            "è‹¥è¦æŒ‡å®šä¸ºæœ‰å¯†ç çš„äº¤æ˜“, åˆ™åœ¨å‘½ä»¤æœ€ååŠ ä¸ªç©ºæ ¼å’Œ\"ç§\"å­—: \"bg ä¸Šæ¶ èƒŒåŒ…åºå· ç§\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÉÏ¼ÜÖ¸Áî¸ñÊ½Îª: \"bg ÉÏ¼Ü ±³°üĞòºÅ ¼Û¸ñ\"¡£"
+            "ÈôÒªÖ¸¶¨ÎªÓĞÃÜÂëµÄ½»Ò×, ÔòÔÚÃüÁî×îºó¼Ó¸ö¿Õ¸ñºÍ\"Ë½\"×Ö: \"bg ÉÏ¼Ü ±³°üĞòºÅ Ë½\"");
         return;
     }
 
     auto params = str_split(str_trim(ev.message.substr(9)), ' ');
     if (params.size() != 2 && params.size() != 3) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! ä¸Šæ¶æŒ‡ä»¤æ ¼å¼ä¸º: \"bg ä¸Šæ¶ èƒŒåŒ…åºå· ä»·æ ¼\"ã€‚"
-            "è‹¥è¦æŒ‡å®šä¸ºæœ‰å¯†ç çš„äº¤æ˜“, åˆ™åœ¨å‘½ä»¤æœ€ååŠ ä¸ªç©ºæ ¼å’Œ\"ç§\"å­—: \"bg ä¸Šæ¶ èƒŒåŒ…åºå· ä»·æ ¼ ç§\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÉÏ¼ÜÖ¸Áî¸ñÊ½Îª: \"bg ÉÏ¼Ü ±³°üĞòºÅ ¼Û¸ñ\"¡£"
+            "ÈôÒªÖ¸¶¨ÎªÓĞÃÜÂëµÄ½»Ò×, ÔòÔÚÃüÁî×îºó¼Ó¸ö¿Õ¸ñºÍ\"Ë½\"×Ö: \"bg ÉÏ¼Ü ±³°üĞòºÅ ¼Û¸ñ Ë½\"");
         return;
     }
     LL invId = -1;
@@ -275,23 +275,35 @@ CMD(sell_trade) {
         postSellTradeCallback(ev, invId, hasPassword, price);
 }
 
-// äº¤æ˜“åœºä¸‹æ¶
+// ½»Ò×³¡ÏÂ¼Ü
 CMD(recall_trade) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼ä¸å¯¹å“¦! ä¸‹æ¶æŒ‡ä»¤æ ¼å¼ä¸º: \"bg ä¸‹æ¶ äº¤æ˜“ID\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÏÂ¼ÜÖ¸Áî¸ñÊ½Îª: \"bg ÏÂ¼Ü ½»Ò×ID\"");
         return;
     }
-    auto param = ev.message.substr(9);                         // å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•°
+    auto param = ev.message.substr(9);                         // È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı
     LL tradeId = -1;
     if (preRecallTradeCallback(ev, param, tradeId))
         postRecallTradeCallback(ev, tradeId);
 }
 
-// åˆæˆè£…å¤‡
+// ÌôÕ½¹ÖÎï
+CMD(fight) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÏÂ¼ÜÖ¸Áî¸ñÊ½Îª: \"bg ÌôÕ½ ¸±±¾ºÅID\"");
+        return;
+    }
+    auto param = ev.message.substr(9);                         // È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı
+    LL dungeonLevel = -1;
+    if (preFightCallback(ev, param, dungeonLevel))
+        postFightCallback(ev, dungeonLevel);
+}
+
+// ºÏ³É×°±¸
 CMD(synthesis) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "åˆæˆè£…å¤‡æŒ‡ä»¤æ ¼å¼ä¸º: \"bg åˆæˆ ç›®æ ‡è£…å¤‡ID(æˆ–åç§°) èƒŒåŒ…åºå·1 èƒŒåŒ…åºå·2 ...\"ã€‚"
-            "ä¾‹å¦‚: bg åˆæˆ ç»ˆæé­”å‰‘ 1 2 3ã€‚å‘é€\"bg åˆæˆ è£…å¤‡ID(æˆ–åç§°)\"å¯æŸ¥çœ‹å¯ç”¨çš„åˆæˆã€‚");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "ºÏ³É×°±¸Ö¸Áî¸ñÊ½Îª: \"bg ºÏ³É Ä¿±ê×°±¸ID(»òÃû³Æ) ±³°üĞòºÅ1 ±³°üĞòºÅ2 ...\"¡£"
+            "ÀıÈç: bg ºÏ³É ÖÕ¼«Ä§½£ 1 2 3¡£·¢ËÍ\"bg ºÏ³É ×°±¸ID(»òÃû³Æ)\"¿É²é¿´¿ÉÓÃµÄºÏ³É¡£");
         return;
     }
     auto params = str_split(str_trim(ev.message.substr(9)), ' ');
@@ -301,25 +313,25 @@ CMD(synthesis) {
         postSynthesisCallback(ev, invList, targetId, coins, level);
 }
 
-// æ‡’äººå®
-// å®šä¹‰ä¸ºæŒ‡å®šç©å®¶æ·»åŠ æŒ‡å®šå±æ€§æ•°å€¼çš„ç®¡ç†æŒ‡ä»¤
+// ÀÁÈËºê
+// ¶¨ÒåÎªÖ¸¶¨Íæ¼ÒÌí¼ÓÖ¸¶¨ÊôĞÔÊıÖµµÄ¹ÜÀíÖ¸Áî
 #define CMD_ADMIN_INC_FIELD(funcName, commandStr, fieldStr, callbackFuncName)                               \
     CMD(admin_add_##funcName##) {                                                                           \
         if (allAdmins.find(USER_ID) == allAdmins.end())                                                     \
             return;                                                                                         \
         if (ev.message.length() < sizeof(commandStr)) {                                                     \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "å‘½ä»¤æ ¼å¼: " commandStr " qq/all " fieldStr "æ•°");  \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½: " commandStr " qq/all " fieldStr "Êı");  \
             return;                                                                                         \
         }                                                                                                   \
-        auto param = ev.message.substr(sizeof(commandStr) - 1);         /* å»æ‰å‘½ä»¤å­—ç¬¦ä¸², åªä¿ç•™å‚æ•° */     \
+        auto param = ev.message.substr(sizeof(commandStr) - 1);         /* È¥µôÃüÁî×Ö·û´®, Ö»±£Áô²ÎÊı */     \
         adminAdd##callbackFuncName##Callback(ev, param);                                                    \
     }
 
-CMD_ADMIN_INC_FIELD(coins, "bg /addcoins", "ç¡¬å¸", Coins);
-CMD_ADMIN_INC_FIELD(heroCoin, "bg /addherocoin", "è‹±é›„å¸", HeroCoin);
-CMD_ADMIN_INC_FIELD(level, "bg /addlevel", "ç­‰çº§", Level);
-CMD_ADMIN_INC_FIELD(blessing, "bg /addblessing", "ç¥ç¦", Blessing);
-CMD_ADMIN_INC_FIELD(energy, "bg /addenergy", "ä½“åŠ›", Energy);
-CMD_ADMIN_INC_FIELD(exp, "bg /addexp", "ç»éªŒ", Exp);
-CMD_ADMIN_INC_FIELD(invCapacity, "bg /addinvcapacity", "èƒŒåŒ…å®¹é‡", InvCapacity);
-CMD_ADMIN_INC_FIELD(vip, "bg /addvip", "VIPç­‰çº§", Vip);
+CMD_ADMIN_INC_FIELD(coins, "bg /addcoins", "Ó²±Ò", Coins);
+CMD_ADMIN_INC_FIELD(heroCoin, "bg /addherocoin", "Ó¢ĞÛ±Ò", HeroCoin);
+CMD_ADMIN_INC_FIELD(level, "bg /addlevel", "µÈ¼¶", Level);
+CMD_ADMIN_INC_FIELD(blessing, "bg /addblessing", "×£¸£", Blessing);
+CMD_ADMIN_INC_FIELD(energy, "bg /addenergy", "ÌåÁ¦", Energy);
+CMD_ADMIN_INC_FIELD(exp, "bg /addexp", "¾­Ñé", Exp);
+CMD_ADMIN_INC_FIELD(invCapacity, "bg /addinvcapacity", "±³°üÈİÁ¿", InvCapacity);
+CMD_ADMIN_INC_FIELD(vip, "bg /addvip", "VIPµÈ¼¶", Vip);
