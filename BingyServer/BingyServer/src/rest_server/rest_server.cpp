@@ -1,18 +1,18 @@
 /*
-ÃèÊö: REST HTTP ·şÎñÆ÷Ïà¹ØÊµÏÖ
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: rest_server.cpp
+æè¿°: REST HTTP æœåŠ¡å™¨ç›¸å…³å®ç°
+ä½œè€…: å†°æ£
+æ–‡ä»¶: rest_server.cpp
 */
 
 #include "rest_server.hpp"
 
-// Ä¬ÈÏÇëÇó´¦Àíº¯Êı
+// é»˜è®¤è¯·æ±‚å¤„ç†å‡½æ•°
 static void builtInHandler(mg_connection *connection, int ev, mg_http_message *ev_data, void *fn_data);
 
-// ÇëÇóÅÉ·¢
+// è¯·æ±‚æ´¾å‘
 static void httpRequestDispatch(struct mg_connection *connection, int ev, void *ev_data, void *fn_data);
 
-// °Ñ str ÖĞËùÓĞ×Ö·û×ª»»Îª´óĞ´
+// æŠŠ str ä¸­æ‰€æœ‰å­—ç¬¦è½¬æ¢ä¸ºå¤§å†™
 inline void str_ucase(std::string &str) {
     for (auto &ch : str)
         if (ch < 128)
@@ -31,7 +31,7 @@ void rest_server::removeHandler(const handler_identifier& item) {
     this->router.erase(item);
 }
 
-void rest_server::startServer(const std::string& connStr, void *userdata) {
+void rest_server::startServer(const std::string& connStr, const int &pollFreq, void *userdata) {
     struct mg_mgr mgr;
     dispatcherInfo info;
 
@@ -45,16 +45,20 @@ void rest_server::startServer(const std::string& connStr, void *userdata) {
         if (this->stopping) {
             break;
         }
-        mg_mgr_poll(&mgr, 1000);
+        mg_mgr_poll(&mgr, pollFreq);
     }
     mg_mgr_free(&mgr);
+}
+
+void rest_server::stopServer() {
+    this->stopping = true;
 }
 
 handler rest_server::matchHandler(const std::string& method, const std::string& path) {
     auto info = this->router.find(path);
 
     if (info != this->router.end()) {
-        // Æ¥ÅäÇëÇóÀàĞÍ
+        // åŒ¹é…è¯·æ±‚ç±»å‹
         if (info->second.method.at(0) == '\0' || method == info->second.method) {
             return info->second.eventHandler;
         }
@@ -78,10 +82,10 @@ static void httpRequestDispatch(struct mg_connection *connection, int ev, void *
     rest_server *ptrToClass = static_cast<dispatcherInfo*>(fn_data)->ptrToClass;
 
     if (ev == MG_EV_HTTP_MSG) {
-        // ´¦Àí HTTP ÇëÇó
+        // å¤„ç† HTTP è¯·æ±‚
         struct mg_http_message *httpMsg = static_cast<mg_http_message*>(ev_data);
 
-        // Æ¥Åä¶ÔÓ¦µÄ´¦Àíº¯Êı
+        // åŒ¹é…å¯¹åº”çš„å¤„ç†å‡½æ•°
         auto reqMethod = std::string(httpMsg->method.ptr, httpMsg->method.len);
         str_ucase(reqMethod);
         auto handler = ptrToClass->matchHandler(
@@ -90,4 +94,12 @@ static void httpRequestDispatch(struct mg_connection *connection, int ev, void *
         );
         handler(connection, ev, static_cast<mg_http_message*>(ev_data), fn_data);
     }
+}
+
+std::string get_query_param(mg_http_message *ev_data, const char *fieldName) {
+    char buf[255];
+    int len = mg_http_get_var(&ev_data->query, fieldName, buf, 255);
+    if (len < 1)
+        return "";
+    return std::string(buf, len);
 }

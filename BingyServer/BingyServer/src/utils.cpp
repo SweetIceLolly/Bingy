@@ -1,7 +1,7 @@
 /*
 描述: 一些辅助函数
 作者: 冰棍
-文件: utlis.cpp
+文件: utils.cpp
 */
 
 #include "utils.hpp"
@@ -15,10 +15,12 @@
 #define WIN32_MEAN_AND_LEAN
 #endif
 #include <Windows.h>
-#define RED     12
-#define YELLOW  14
-#define WHITE   15
+#define RED         12
+#define YELLOW      14
+#define WHITE       15
 #endif
+
+#define TOKEN_LEN   32
 
 // 初始化随机数产生器
 std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -76,15 +78,37 @@ std::string str_trim(const std::string &str) {
         return "";
 }
 
-LL qq_parse(const std::string &str) {
-    if (str[0] == '[') {
-        if (str.length() < 11)
-            throw std::exception("无效的 at 指令");
-        else
-            return std::stoll(str.substr(10));
+std::vector<std::string> str_split(const std::string &str, const char &delimiter) {
+    std::vector<std::string> rtn;
+    size_t last = 0;
+    size_t next = 0;
+
+    while ((next = str.find(delimiter, last)) != std::string::npos) {
+        rtn.push_back(str.substr(last, next - last));
+        last = next + 1;
     }
-    else
-        return std::stoll(str);
+    rtn.push_back(str.substr(last));
+
+    return rtn;
+}
+
+void str_lcase(std::string &str) {
+    for (size_t i = 0; i < str.length(); ++i) {
+        if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'))
+            str[i] |= 32;           // 如果是字母, 则转换为小写字母
+    }
+}
+
+std::string generate_token() {
+    const char ch[] =
+        "0123456789"
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    std::string rtn;
+    for (int i = 0; i < TOKEN_LEN; ++i) {
+        rtn += ch[rndRange(sizeof(ch) - 1)];
+    }
+    return rtn;
 }
 
 // --------------------------------------------------------------

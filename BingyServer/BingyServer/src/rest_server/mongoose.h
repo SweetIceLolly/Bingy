@@ -79,7 +79,9 @@
 #endif  // !defined(MG_ARCH)
 
 #define WIN32_LEAN_AND_MEAN
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 // Standard C headers
@@ -628,7 +630,7 @@ struct mg_connection {
   struct mg_iobuf send;        // Outgoing data
   mg_event_handler_t fn;       // User-specified event handler function
   void *fn_data;               // User-speficied function parameter
-  int socketpair_socket;        // The non-blocking socket to receive data from thread
+  int socketpair_socket;       // The non-blocking socket to receive data from thread
   mg_event_handler_t pfn;      // Protocol-specific handler function
   void *pfn_data;              // Protocol-specific function parameter
   char label[50];              // Arbitrary label

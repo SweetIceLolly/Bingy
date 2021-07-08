@@ -66,6 +66,12 @@
     <ClCompile Include="src\rest_server\mongoose.c">
       <Filter>Source Files\rest_server</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread_pool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http_auth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bingy.hpp">
@@ -116,8 +122,17 @@
     <ClInclude Include="src\rest_server\rest_server.hpp">
       <Filter>Source Files\rest_server</Filter>
     </ClInclude>
+    <ClInclude Include="src\json.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\rest_server\mongoose.h">
       <Filter>Source Files\rest_server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread_pool.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http_auth.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

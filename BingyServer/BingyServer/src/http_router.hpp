@@ -9,4 +9,4 @@
 #include "rest_server/rest_server.hpp"
 
 // 初始化 HTTP 路由
-bool init_server_router(const rest_server &server);
+bool init_server_router(rest_server &server);

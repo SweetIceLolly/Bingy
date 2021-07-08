@@ -1,7 +1,7 @@
-ï»¿/*
-æè¿°: åˆå§‹åŒ–ç›¸å…³ä»£ç 
-ä½œè€…: å†°æ£
-æ–‡ä»¶: init.cpp
+/*
+ÃèÊö: ³õÊ¼»¯Ïà¹Ø´úÂë
+×÷Õß: ±ù¹÷
+ÎÄ¼ş: init.cpp
 */
 
 #include "init.hpp"
@@ -15,6 +15,7 @@
 #include "synthesis.hpp"
 #include "config_parser.hpp"
 #include "trade.hpp"
+#include "http_auth.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -22,116 +23,119 @@
 
 inline bool bg_load_config();
 
-bool bgInitialized = false;     // Bingy æ˜¯å¦æˆåŠŸå¯åŠ¨
+bool bgInitialized = false;     // Bingy ÊÇ·ñ³É¹¦Æô¶¯
 
-// åˆå§‹åŒ–ä¸»å‡½æ•°
+// ³õÊ¼»¯Ö÷º¯Êı
 bool bg_init() {
-    // åŠ è½½é…ç½®æ–‡ä»¶
-    console_log("æ­£åœ¨è¯»å–é…ç½®æ–‡ä»¶...");
+    // ¼ÓÔØÅäÖÃÎÄ¼ş
+    console_log("ÕıÔÚ¶ÁÈ¡ÅäÖÃÎÄ¼ş...");
     if (!bg_load_config()) {
-        console_log("è¯»å–é…ç½®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡ÅäÖÃÎÄ¼şÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–é…ç½®æ–‡ä»¶: å…±è®¡" + std::to_string(allSignInEvents.size()) + "ä¸ªç­¾åˆ°æ´»åŠ¨, " + std::to_string(allSyntheses.size()) + "ä¸ªè£…å¤‡åˆæˆ");
+    console_log("³É¹¦¶ÁÈ¡ÅäÖÃÎÄ¼ş: ¹²¼Æ" + std::to_string(allSignInEvents.size()) + "¸öÇ©µ½»î¶¯, " + std::to_string(allSyntheses.size()) + "¸ö×°±¸ºÏ³É");
 
-    // åŠ è½½æ€ªç‰©æ•°æ®
-    console_log("æ­£åœ¨è¯»å–æ€ªç‰©æ•°æ®...");
+    // ¼ÓÔØ¹ÖÎïÊı¾İ
+    console_log("ÕıÔÚ¶ÁÈ¡¹ÖÎïÊı¾İ...");
     if (!bg_load_monster_config()) {
-        console_log("è¯»å–æ€ªç‰©æ•°æ®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡¹ÖÎïÊı¾İÎÄ¼şÊ§°Ü!", LogType::error);
         return false;
     }
     bg_init_monster_chances();
-    console_log("æˆåŠŸè¯»å–æ€ªç‰©æ•°æ®: å…±è®¡" + std::to_string(allMonsters.size()) + "ä¸ªæ€ªç‰©");
+    console_log("³É¹¦¶ÁÈ¡¹ÖÎïÊı¾İ: ¹²¼Æ" + std::to_string(allMonsters.size()) + "¸ö¹ÖÎï");
 
-    // åŠ è½½è£…å¤‡æ•°æ®
-    console_log("æ­£åœ¨è¯»å–è£…å¤‡æ•°æ®...");
+    // ¼ÓÔØ×°±¸Êı¾İ
+    console_log("ÕıÔÚ¶ÁÈ¡×°±¸Êı¾İ...");
     if (!bg_load_equipment_config()) {
-        console_log("è¯»å–è£…å¤‡æ•°æ®æ–‡ä»¶å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡×°±¸Êı¾İÎÄ¼şÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–è£…å¤‡æ•°æ®: å…±è®¡" + std::to_string(allEquipments.size()) + "ä¸ªè£…å¤‡");
+    console_log("³É¹¦¶ÁÈ¡×°±¸Êı¾İ: ¹²¼Æ" + std::to_string(allEquipments.size()) + "¸ö×°±¸");
 
-    // è¿æ¥æ•°æ®åº“
-    console_log("æ­£åœ¨è¿æ¥æ•°æ®åº“...");
+    // Á¬½ÓÊı¾İ¿â
+    console_log("ÕıÔÚÁ¬½ÓÊı¾İ¿â...");
     if (!dbInit()) {
-        console_log("è¿æ¥æ•°æ®åº“å¤±è´¥!", LogType::error);
+        console_log("Á¬½ÓÊı¾İ¿âÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¿æ¥æ•°æ®åº“");
+    console_log("³É¹¦Á¬½ÓÊı¾İ¿â");
 
-    // åŠ è½½ç©å®¶ä¿¡æ¯
-    console_log("æ­£åœ¨è¯»å–æ‰€æœ‰ç©å®¶æ•°æ®...");
+    // ¼ÓÔØÍæ¼ÒĞÅÏ¢
+    console_log("ÕıÔÚ¶ÁÈ¡ËùÓĞÍæ¼ÒÊı¾İ...");
     if (!bg_get_allplayers_from_db()) {
-        console_log("è¯»å–ç©å®¶æ•°æ®å¤±è´¥!", LogType::error);
+        console_log("¶ÁÈ¡Íæ¼ÒÊı¾İÊ§°Ü!", LogType::error);
         return false;
     }
-    console_log("æˆåŠŸè¯»å–ç©å®¶æ•°æ®: å…±è®¡" + std::to_string(allPlayers.size()) + "ä¸ªç©å®¶");
+    console_log("³É¹¦¶ÁÈ¡Íæ¼ÒÊı¾İ: ¹²¼Æ" + std::to_string(allPlayers.size()) + "¸öÍæ¼Ò");
 
-    // åŠ è½½äº¤æ˜“åœºä¿¡æ¯
-    console_log("æ­£åœ¨è¯»å–äº¤æ˜“åœºæ•°æ®...");
+    // ¼ÓÔØ½»Ò×³¡ĞÅÏ¢
+    console_log("ÕıÔÚ¶ÁÈ¡½»Ò×³¡Êı¾İ...");
     bg_trade_get_items();
-    console_log("æˆåŠŸè¯»å–äº¤æ˜“åœºæ•°æ®: å…±è®¡" + std::to_string(allTradeItems.size()) + "ä¸ªæ¡ç›®, ä¸‹ä¸€ä¸ªäº¤æ˜“ ID ä¸º" + std::to_string(bg_get_tradeId()));
+    console_log("³É¹¦¶ÁÈ¡½»Ò×³¡Êı¾İ: ¹²¼Æ" + std::to_string(allTradeItems.size()) + "¸öÌõÄ¿, ÏÂÒ»¸ö½»Ò× ID Îª" + std::to_string(bg_get_tradeId()));
 
-    // å¯åŠ¨ BgKeepAlive
+    // Æô¶¯ BgKeepAlive
 
-    // åˆå§‹åŒ–å®Œæˆ
+    // ³õÊ¼»¯Íê³É
     bgInitialized = true;
     return true;
 }
 
-// è¯»å–æ¸¸æˆé…ç½®
+// ¶ÁÈ¡ÓÎÏ·ÅäÖÃ
 inline bool bg_load_config() {
-    configParser parser(CONFIG_FILE_PATH);
-    signInEvent *signInEv = nullptr;        // ç­¾åˆ°æ´»åŠ¨ä¸´æ—¶å˜é‡
-    synthesisInfo *synInfo = nullptr;       // åˆæˆä¿¡æ¯ä¸´æ—¶å˜é‡
-    dungeonData *dungeon = nullptr;         // å‰¯æœ¬é…ç½®ä¸´æ—¶å˜é‡
+    configParser    parser(CONFIG_FILE_PATH);
+    signInEvent     *signInEv = nullptr;            // Ç©µ½»î¶¯ÁÙÊ±±äÁ¿
+    synthesisInfo   *synInfo = nullptr;             // ºÏ³ÉĞÅÏ¢ÁÙÊ±±äÁ¿
+    dungeonData     *dungeon = nullptr;             // ¸±±¾ÅäÖÃÁÙÊ±±äÁ¿
+    std::string     httpAppId, httpAppSecret;       // HTTP ¿Í»§¶ËÅäÖÃÁÙÊ±±äÁ¿
 
     return parser.load(
-        // åˆ‡æ¢ state å›è°ƒå‡½æ•°
+        // ÇĞ»» state »Øµ÷º¯Êı
         [](const std::string &line, char &state) -> bool {
-            // state: 0: ä¸€èˆ¬é…ç½®; 1: ç­¾åˆ°æ´»åŠ¨; 2: è£…å¤‡åˆæˆ; 3: å‰¯æœ¬é…ç½®
-            if (line == "[ç­¾åˆ°æ´»åŠ¨]")
+            // state: 0: Ò»°ãÅäÖÃ; 1: Ç©µ½»î¶¯; 2: ×°±¸ºÏ³É; 3: ¸±±¾ÅäÖÃ; 4: HTTP ¿Í»§¶ËÅäÖÃ
+            if (line == "[Ç©µ½»î¶¯]")
                 state = 1;
-            else if (line == "[è£…å¤‡åˆæˆ]")
+            else if (line == "[×°±¸ºÏ³É]")
                 state = 2;
-            else if (line == "[å‰¯æœ¬é…ç½®]")
+            else if (line == "[¸±±¾ÅäÖÃ]")
                 state = 3;
+            else if (line == "[¿Í»§¶ËÅäÖÃ]")
+                state = 4;
             else
                 state = 0;
             return true;
         },
 
-        // è·å–å±æ€§å€¼å›è°ƒå‡½æ•°
+        // »ñÈ¡ÊôĞÔÖµ»Øµ÷º¯Êı
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
-            // å¤„ç†ä¸€èˆ¬é…ç½®
+            // ´¦ÀíÒ»°ãÅäÖÃ
             if (state == 0) {
-                if (propName == "dburi")                           // æ•°æ®åº“ URI
+                if (propName == "dburi")                           // Êı¾İ¿â URI
                     dbUri = propValue + std::string("?authSource=admin");
-                else if (propName == "dbname")                     // æ•°æ®åº“å
+                else if (propName == "dbname")                     // Êı¾İ¿âÃû
                     dbName = propValue;
-                else if (propName == "monsters")                   // æ€ªç‰©é…ç½®è·¯å¾„
+                else if (propName == "monsters")                   // ¹ÖÎïÅäÖÃÂ·¾¶
                     monsterConfigPath = propValue;
-                else if (propName == "equipments")                 // è£…å¤‡é…ç½®è·¯å¾„
+                else if (propName == "equipments")                 // ×°±¸ÅäÖÃÂ·¾¶
                     eqiConfigPath = propValue;
-                else if (propName == "admin") {                    // ç®¡ç†å‘˜
+                else if (propName == "admin") {                    // ¹ÜÀíÔ±
                     try {
                         LL qq = std::stoll(propValue);
                         if (allAdmins.insert(qq).second)
-                            console_log("æˆåŠŸæ·»åŠ ç®¡ç†å‘˜: " + propValue);
+                            console_log("³É¹¦Ìí¼Ó¹ÜÀíÔ±: " + propValue);
                         else
-                            console_log("æŠŠç®¡ç†å‘˜" + propValue + "æ·»åŠ åˆ°ç®¡ç†å‘˜åˆ—è¡¨æ—¶å‘ç”Ÿé”™è¯¯, å¯èƒ½æ˜¯å› ä¸ºé‡å¤äº†? äºè¡Œ" + std::to_string(lineNo), LogType::warning);
+                            console_log("°Ñ¹ÜÀíÔ±" + propValue + "Ìí¼Óµ½¹ÜÀíÔ±ÁĞ±íÊ±·¢Éú´íÎó, ¿ÉÄÜÊÇÒòÎªÖØ¸´ÁË? ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
                     }
                     catch (...) {
-                        console_log("æ— æ³•æŠŠ\"" + propValue + "\"æ·»åŠ åˆ°ç®¡ç†å‘˜åˆ—è¡¨, è¯·æ£€æŸ¥æ˜¯å¦ä¸ºæœ‰æ•ˆæ•°å€¼! äºè¡Œ" + std::to_string(lineNo), LogType::warning);
+                        console_log("ÎŞ·¨°Ñ\"" + propValue + "\"Ìí¼Óµ½¹ÜÀíÔ±ÁĞ±í, Çë¼ì²éÊÇ·ñÎªÓĞĞ§ÊıÖµ! ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
                     }
                 }
                 else
-                    console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName +
-                        std::string("\", äºè¡Œ") + std::to_string(lineNo), LogType::warning);
+                    console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName +
+                        std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
             }
 
-            // å¤„ç†ç­¾åˆ°æ´»åŠ¨
-            else if (state == 1) {                                          // é…ç½®
+            // ´¦ÀíÇ©µ½»î¶¯
+            else if (state == 1) {                                          // ÅäÖÃ
                 try {
                     if (propName == "id")
                         signInEv->id = std::stoll(propValue);
@@ -144,7 +148,7 @@ inline bool bg_load_config() {
                     else if (propName == "hour")
                         signInEv->hour = static_cast<char>(std::stoi(propValue));
                     else if (propName == "minute")
-                        signInEv->minute = (char)std::stoi(propValue);
+                        signInEv->minute = static_cast<char>(std::stoi(propValue));
                     else if (propName == "coinfactor")
                         signInEv->coinFactor = std::stod(propValue);
                     else if (propName == "energyfactor")
@@ -163,18 +167,18 @@ inline bool bg_load_config() {
                     else if (propName == "message")
                         signInEv->message = propValue;
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName +
-                            std::string("\", äºè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName +
+                            std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("å¤„ç†ç­¾åˆ°æ´»åŠ¨é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo) + ", åŸå› : " + e.what(), LogType::warning);
+                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("å¤„ç†ç­¾åˆ°æ´»åŠ¨é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
-            // å¤„ç†è£…å¤‡åˆæˆä¿¡æ¯
+            // ´¦Àí×°±¸ºÏ³ÉĞÅÏ¢
             else if (state == 2) {
                 try {
                     if (propName == "requirements") {
@@ -191,18 +195,18 @@ inline bool bg_load_config() {
                     else if (propName == "target")
                         synInfo->targetId = std::stoll(propValue);
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName +
-                            std::string("\", äºè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName +
+                            std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("æ·»åŠ åˆæˆä¿¡æ¯å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo) + ", åŸå› : " + e.what(), LogType::warning);
+                    console_log("Ìí¼ÓºÏ³ÉĞÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("æ·»åŠ åˆæˆä¿¡æ¯å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("Ìí¼ÓºÏ³ÉĞÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
-            // å¤„ç†å‰¯æœ¬é…ç½®
+            // ´¦Àí¸±±¾ÅäÖÃ
             else if (state == 3) {
                 try {
                     if (propName == "level")
@@ -214,21 +218,40 @@ inline bool bg_load_config() {
                         }
                     }
                     else
-                        console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName +
-                            std::string("\", äºè¡Œ") + std::to_string(lineNo), LogType::warning);
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName +
+                            std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
                 }
                 catch (const std::exception &e) {
-                    console_log("æ·»åŠ å‰¯æœ¬é…ç½®å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo) + ", åŸå› : " + e.what(), LogType::warning);
+                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
                 }
                 catch (...) {
-                    console_log("æ·»åŠ å‰¯æœ¬é…ç½®å¤±è´¥, å¤„ç†é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo), LogType::warning);
+                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
+                }
+            }
+
+            // ´¦Àí HTTP ¿Í»§¶ËÅäÖÃ
+            else if (state == 4) {
+                try {
+                    if (propName == "appid")
+                        httpAppId = propValue;
+                    else if (propName == "secret")
+                        httpAppSecret = propValue;
+                    else
+                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName +
+                            std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
+                }
+                catch (const std::exception &e) {
+                    console_log("Ìí¼Ó¿Í»§¶ËÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
+                }
+                catch (...) {
+                    console_log("Ìí¼Ó¿Í»§¶ËÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
                 }
             }
 
             return true;
         },
 
-        // å¼€å§‹æ ‡è®°å›è°ƒå‡½æ•°
+        // ¿ªÊ¼±ê¼Ç»Øµ÷º¯Êı
         [&](const char &state) -> bool {
             if (state == 1)
                 signInEv = new signInEvent();
@@ -236,11 +259,15 @@ inline bool bg_load_config() {
                 synInfo = new synthesisInfo();
             else if (state == 3)
                 dungeon = new dungeonData();
+            else if (state == 4) {
+                httpAppSecret = "";
+                httpAppId = "";
+            }
 
             return true;
         },
 
-        // ç»“æŸæ ‡è®°å›è°ƒå‡½æ•°
+        // ½áÊø±ê¼Ç»Øµ÷º¯Êı
         [&](const char &state) -> bool {
             if (state == 1) {
                 allSignInEvents.push_back(*signInEv);
@@ -252,6 +279,10 @@ inline bool bg_load_config() {
             }
             else if (state == 3) {
                 allDungeons.insert({ dungeon->level, *dungeon });
+            }
+            else if (state == 4) {
+                bg_http_add_app(httpAppId, httpAppSecret);
+                console_log("³É¹¦Ìí¼Ó HTTP ¿Í»§¶Ë: " + httpAppId);
             }
 
             return true;

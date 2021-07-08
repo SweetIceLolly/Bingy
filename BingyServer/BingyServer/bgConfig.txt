@@ -5,6 +5,12 @@ dbName=bingy
 monsters=monsters.txt
 equipments=equipments.txt
 
+[客户端配置]
+begin
+appid=bingyserver
+secret=123456
+end
+
 [管理员]
 admin=1257472418
 admin=666

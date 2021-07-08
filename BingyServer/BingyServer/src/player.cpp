@@ -1,26 +1,26 @@
-/*
-ÃèÊö: Bingy Íæ¼ÒÏà¹Ø²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: player.cpp
+ï»¿/*
+æè¿°: Bingy ç©å®¶ç›¸å…³æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: player.cpp
 */
 
 #include "player.hpp"
 #include "database.hpp"
-#include <chrono>               // ÓÃÓÚÈ·ÈÏÏß³Ì³¬Ê±
+#include <chrono>               // ç”¨äºç¡®è®¤çº¿ç¨‹è¶…æ—¶
 
 #define LOCK_CURR_PLAYER std::scoped_lock<std::mutex> __lock(this->mutexPlayer);
 
-std::unordered_map<LL, player>  allPlayers;         // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
+std::unordered_map<LL, player>  allPlayers;         // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
 std::mutex                      mutexAllPlayers;
 
 template <typename T> void invListFromBson(const bsoncxx::document::element &elem, T &container);
 void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container);
 
 // --------------------------------------------------
-// ¹¹Ôìº¯Êı
+// æ„é€ å‡½æ•°
 
 player::player() {
-    throw std::exception("´´½¨ player ¶ÔÏóÊ±±ØĞëÖ¸¶¨ QQ ºÅ!");
+    throw std::exception("åˆ›å»º player å¯¹è±¡æ—¶å¿…é¡»æŒ‡å®š QQ å·!");
 }
 
 player::player(const player &p) {
@@ -77,21 +77,21 @@ player::player(const LL &qq) {
 }
 
 // --------------------------------------------------
-// Íæ¼Ò²Ù×÷º¯Êı
+// ç©å®¶æ“ä½œå‡½æ•°
 
-// ¼ì²éÍæ¼ÒÊÇ·ñ´æÔÚ
+// æ£€æŸ¥ç©å®¶æ˜¯å¦å­˜åœ¨
 bool bg_player_exist(const LL &id) {
     auto val = dbFindOne(DB_COLL_USERDATA, "id", id);
     return allPlayers.end() != allPlayers.find(id);
 }
 
-// ÀÁÈËºê
-// °ÑÍæ¼ÒÊôĞÔÖĞ LL ÀàĞÍµÄÊı¾İÉèÖÃÎª0, ²¢°Ñ¶ÔÓ¦µÄ»º´æ±êÊ¶ÉèÖÃÎª true
+// æ‡’äººå®
+// æŠŠç©å®¶å±æ€§ä¸­ LL ç±»å‹çš„æ•°æ®è®¾ç½®ä¸º0, å¹¶æŠŠå¯¹åº”çš„ç¼“å­˜æ ‡è¯†è®¾ç½®ä¸º true
 #define SET_LL_PROP_ZERO(prop) p.##prop = 0; p.##prop##_cache = true;
 
-// ÎŞÌõ¼şÌí¼ÓÍæ¼Òµ½Êı¾İ¿âºÍ×ÖµäÖĞ. Å×³öµÄÒì³£ĞèÒªÓÉÍâ²¿´¦Àí
+// æ— æ¡ä»¶æ·»åŠ ç©å®¶åˆ°æ•°æ®åº“å’Œå­—å…¸ä¸­. æŠ›å‡ºçš„å¼‚å¸¸éœ€è¦ç”±å¤–éƒ¨å¤„ç†
 bool bg_player_add(const LL &id) {
-    // °ÑËùÓĞ×°±¸¶¼ÉèÖÃÎª -1 (¿Õ)
+    // æŠŠæ‰€æœ‰è£…å¤‡éƒ½è®¾ç½®ä¸º -1 (ç©º)
     auto equipments = bsoncxx::builder::stream::document{};
     for (LL i = 0; i <= 9; ++i) {
         equipments << std::to_string(i) << bsoncxx::builder::stream::open_document
@@ -126,7 +126,7 @@ bool bg_player_add(const LL &id) {
     if (!dbInsertDocument(DB_COLL_USERDATA, doc))
         return false;
 
-    // ³õÊ¼»¯Íæ¼ÒÊôĞÔ
+    // åˆå§‹åŒ–ç©å®¶å±æ€§
     player p(id);
     p.nickname = "";                        p.nickname_cache = true;
     SET_LL_PROP_ZERO(signInCount);
@@ -145,7 +145,7 @@ bool bg_player_add(const LL &id) {
     p.buyCount_cache = true;
     p.equipItems_cache = true;
     
-    // ³õÊ¼»¯Íæ¼Ò×°±¸
+    // åˆå§‹åŒ–ç©å®¶è£…å¤‡
     p.equipments[EqiType::armor_helmet] = { -1, -1, -1 };
     p.equipments[EqiType::armor_body] = { -1, -1, -1 };
     p.equipments[EqiType::armor_leg] = { -1, -1, -1 };
@@ -163,9 +163,9 @@ bool bg_player_add(const LL &id) {
     return true;
 }
 
-// ÀÁÈËºê
-// °ÑÍæ¼ÒÊôĞÔÖĞ LL ÀàĞÍµÄÊı¾İÉèÖÃÎª´ÓÊı¾İ¿âÖĞ¶ÁÈ¡µ½µÄÄÚÈİ, ²¢°Ñ¶ÔÓ¦µÄ»º´æ±êÊ¶ÉèÖÃÎª true
-// Ë³±ã°Ñ¿ÉÄÜ·¢ÉúµÄÒì³£´¦ÀíÒ»ÏÂ
+// æ‡’äººå®
+// æŠŠç©å®¶å±æ€§ä¸­ LL ç±»å‹çš„æ•°æ®è®¾ç½®ä¸ºä»æ•°æ®åº“ä¸­è¯»å–åˆ°çš„å†…å®¹, å¹¶æŠŠå¯¹åº”çš„ç¼“å­˜æ ‡è¯†è®¾ç½®ä¸º true
+// é¡ºä¾¿æŠŠå¯èƒ½å‘ç”Ÿçš„å¼‚å¸¸å¤„ç†ä¸€ä¸‹
 #define SET_LL_PROP(prop)                       \
     tmp = doc[#prop];                           \
     if (tmp) {                                  \
@@ -173,9 +173,9 @@ bool bg_player_add(const LL &id) {
         p.##prop##_cache = true;                \
     }                                           \
     else                                        \
-        throw std::exception("»ñÈ¡Íæ¼ÒÊôĞÔÊ§°Ü");
+        throw std::exception("è·å–ç©å®¶å±æ€§å¤±è´¥");
 
-// ´ÓÊı¾İ¿â¶ÁÈ¡ËùÓĞÍæ¼Ò
+// ä»æ•°æ®åº“è¯»å–æ‰€æœ‰ç©å®¶
 bool bg_get_allplayers_from_db() {
     try {
         std::scoped_lock<std::mutex> lock(mutexAllPlayers);
@@ -202,26 +202,26 @@ bool bg_get_allplayers_from_db() {
             SET_LL_PROP(invCapacity);
             SET_LL_PROP(vip);
 
-            // ¶ÁÈ¡±³°üÄÚÈİ
+            // è¯»å–èƒŒåŒ…å†…å®¹
             tmp = doc["inventory"];
             if (tmp)
                 invListFromBson(tmp, p.inventory);
             else
-                throw std::exception(("»ñÈ¡Íæ¼Ò" + std::to_string(id) + "µÄ inventory ÊôĞÔÊ§°Ü").c_str());
+                throw std::exception(("è·å–ç©å®¶" + std::to_string(id) + "çš„ inventory å±æ€§å¤±è´¥").c_str());
 
-            // ¶ÁÈ¡Íæ¼Ò×°±¸
+            // è¯»å–ç©å®¶è£…å¤‡
             tmp = doc["equipments"];
             if (tmp)
                 eqiMapFromBson(tmp, p.equipments);
             else
-                throw std::exception(("»ñÈ¡Íæ¼Ò" + std::to_string(id) + "µÄ equipments ÊôĞÔÊ§°Ü").c_str());
+                throw std::exception(("è·å–ç©å®¶" + std::to_string(id) + "çš„ equipments å±æ€§å¤±è´¥").c_str());
 
-            // ¶ÁÈ¡Ò»´ÎĞÔ×°±¸
+            // è¯»å–ä¸€æ¬¡æ€§è£…å¤‡
             tmp = doc["equipItems"];
             if (tmp)
                 invListFromBson(tmp, p.equipItems);
             else
-                throw std::exception(("»ñÈ¡Íæ¼Ò" + std::to_string(id) + "µÄ equipItems ÊôĞÔÊ§°Ü").c_str());
+                throw std::exception(("è·å–ç©å®¶" + std::to_string(id) + "çš„ equipItems å±æ€§å¤±è´¥").c_str());
 
             // todo
             //p.buyCount
@@ -232,6 +232,7 @@ bool bg_get_allplayers_from_db() {
     }
     catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
+        return false;
     }
     catch (...) {
         return false;
@@ -239,11 +240,11 @@ bool bg_get_allplayers_from_db() {
 }
 
 // --------------------------------------------------
-// ¸÷ÖÖÊôĞÔµÄ getter ºÍ setter
+// å„ç§å±æ€§çš„ getter å’Œ setter
 
-// ÀÁÈËºê
-// ·½±ã±àĞ´ LL ÀàĞÍÊôĞÔµÄ getter ºÍ setter. ÆäÖĞ°üÀ¨:
-// 1. »ñÈ¡Ä³¸öÊôĞÔ; 2. ÉèÖÃÄ³¸öÊôĞÔ; 3. ÎªÄ³¸öÊôĞÔÌí¼ÓÖ¸¶¨ÊıÖµ
+// æ‡’äººå®
+// æ–¹ä¾¿ç¼–å†™ LL ç±»å‹å±æ€§çš„ getter å’Œ setter. å…¶ä¸­åŒ…æ‹¬:
+// 1. è·å–æŸä¸ªå±æ€§; 2. è®¾ç½®æŸä¸ªå±æ€§; 3. ä¸ºæŸä¸ªå±æ€§æ·»åŠ æŒ‡å®šæ•°å€¼
 #define LL_GET_SET_INC(propName)                                                \
     LL player::get_##propName##(const bool &use_cache) {                        \
         if (##propName##_cache && use_cache)                                    \
@@ -251,10 +252,10 @@ bool bg_get_allplayers_from_db() {
                                                                                 \
         auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, #propName);   \
         if (!result)                                                            \
-            throw std::exception("ÕÒ²»µ½¶ÔÓ¦µÄÍæ¼Ò ID");                         \
+            throw std::exception("æ‰¾ä¸åˆ°å¯¹åº”çš„ç©å®¶ ID");                         \
         auto field = result->view()[#propName];                                 \
         if (!field.raw())                                                       \
-            throw std::exception("Ã»ÓĞÕÒµ½ " #propName " field");                \
+            throw std::exception("æ²¡æœ‰æ‰¾åˆ° " #propName " field");                \
         auto tmp = field.get_int64().value;                                     \
                                                                                 \
         LOCK_CURR_PLAYER;                                                       \
@@ -308,22 +309,22 @@ LL_GET_SET_INC(exp);
 LL_GET_SET_INC(invCapacity);
 LL_GET_SET_INC(vip);
 
-// Íæ¼Ò ID
+// ç©å®¶ ID
 LL player::get_id() {
     return this->id;
 }
 
-// »ñÈ¡êÇ³Æ
+// è·å–æ˜µç§°
 std::string player::get_nickname(const bool &use_cache) {
     if (nickname_cache && use_cache)
         return this->nickname;
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "nickname");
     if (!result)
-        throw std::exception("ÕÒ²»µ½¶ÔÓ¦µÄÍæ¼Ò ID");
+        throw std::exception("æ‰¾ä¸åˆ°å¯¹åº”çš„ç©å®¶ ID");
     auto field = result->view()["nickname"];
     if (!field.raw())
-        throw std::exception("Ã»ÓĞÕÒµ½ nickname field");
+        throw std::exception("æ²¡æœ‰æ‰¾åˆ° nickname field");
     auto tmp = std::string(result->view()["nickname"].get_utf8().value);
 
     LOCK_CURR_PLAYER;
@@ -332,7 +333,7 @@ std::string player::get_nickname(const bool &use_cache) {
     return tmp;
 }
 
-// ÉèÖÃêÇ³Æ
+// è®¾ç½®æ˜µç§°
 bool player::set_nickname(const std::string &val) {
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "nickname", val)) {
@@ -343,35 +344,35 @@ bool player::set_nickname(const std::string &val) {
     return false;
 }
 
-// ´¦Àí±³°üµÄ BSON Êı×é, ²¢°ÑÄÚÈİÌí¼Óµ½Ö¸¶¨µÄÈİÆ÷ÖĞ
-// ×¢Òâ, ¸Ãº¯Êı¼ÙÉè elem ÊÇºÏ·¨µÄÇÒ´æÓĞ×°±¸Êı¾İ
+// å¤„ç†èƒŒåŒ…çš„ BSON æ•°ç»„, å¹¶æŠŠå†…å®¹æ·»åŠ åˆ°æŒ‡å®šçš„å®¹å™¨ä¸­
+// æ³¨æ„, è¯¥å‡½æ•°å‡è®¾ elem æ˜¯åˆæ³•çš„ä¸”å­˜æœ‰è£…å¤‡æ•°æ®
 template <typename T>
 void invListFromBson(const bsoncxx::document::element &elem, T &container) {
-    bsoncxx::array::view tmpArray{ elem.get_array().value };   // ´¦Àí BSON Êı×é
+    bsoncxx::array::view tmpArray{ elem.get_array().value };   // å¤„ç† BSON æ•°ç»„
 
-    // Êı×é¸ñÊ½: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
+    // æ•°ç»„æ ¼å¼: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
     inventoryData invItem;
     for (const auto &item : tmpArray) {
         auto tmpObj = item.get_document().view();
 
-        invItem.id = tmpObj["id"].get_int64().value;            // ×°±¸ ID
-        invItem.level = tmpObj["level"].get_int64().value;      // ×°±¸µÈ¼¶
-        invItem.wear = tmpObj["wear"].get_int64().value;        // ×°±¸Ä¥Ëğ¶È
+        invItem.id = tmpObj["id"].get_int64().value;            // è£…å¤‡ ID
+        invItem.level = tmpObj["level"].get_int64().value;      // è£…å¤‡ç­‰çº§
+        invItem.wear = tmpObj["wear"].get_int64().value;        // è£…å¤‡ç£¨æŸåº¦
         container.push_back(invItem);
     }
 }
 
-// »ñÈ¡Õû¸ö±³°üÁĞ±í
+// è·å–æ•´ä¸ªèƒŒåŒ…åˆ—è¡¨
 std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     if (inventory_cache && use_cache)
         return inventory;
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "inventory");
     if (!result)
-        throw std::exception("ÕÒ²»µ½¶ÔÓ¦Íæ¼Ò ID");
+        throw std::exception("æ‰¾ä¸åˆ°å¯¹åº”ç©å®¶ ID");
     auto field = result->view()["inventory"];
     if (!field.raw())
-        throw std::exception("Ã»ÓĞÕÒµ½ inventory field");
+        throw std::exception("æ²¡æœ‰æ‰¾åˆ° inventory field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
@@ -381,27 +382,27 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     return rtn;
 }
 
-// »ñÈ¡±³°ü×°±¸ÊıÁ¿
+// è·å–èƒŒåŒ…è£…å¤‡æ•°é‡
 LL player::get_inventory_size(const bool &use_cache) {
     if (inventory_cache && use_cache)
         return inventory.size();
     return get_inventory().size();
 }
 
-// °´ÕÕÖ¸¶¨ĞòºÅÒÆ³ı±³°üÎïÆ·. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false
+// æŒ‰ç…§æŒ‡å®šåºå·ç§»é™¤èƒŒåŒ…ç‰©å“. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false
 bool player::remove_at_inventory(const LL &index) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!inventory_cache) {
         get_inventory();
         if (!inventory_cache)
             return false;
     }
 
-    // ¼ì²éĞòºÅÊÇ·ñÓĞĞ§
+    // æ£€æŸ¥åºå·æ˜¯å¦æœ‰æ•ˆ
     if (index >= inventory.size())
         return false;
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "inventory." + std::to_string(index) << bsoncxx::types::b_null()
@@ -421,16 +422,16 @@ bool player::remove_at_inventory(const LL &index) {
     return false;
 }
 
-// °´ÕÕÖ¸¶¨µÄĞòºÅÁĞ±íÒÆ³ı±³°üÎïÆ·. Ö¸¶¨µÄĞòºÅ²»µÃÖØ¸´. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false
+// æŒ‰ç…§æŒ‡å®šçš„åºå·åˆ—è¡¨ç§»é™¤èƒŒåŒ…ç‰©å“. æŒ‡å®šçš„åºå·ä¸å¾—é‡å¤. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false
 bool player::remove_at_inventory(const std::vector<LL> &indexes) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!inventory_cache) {
         get_inventory();
         if (!inventory_cache)
             return false;
     }
 
-    // ¼ì²éĞòºÅÊÇ·ñÓĞĞ§, ²¢Ìí¼Óµ½ document ÖĞ
+    // æ£€æŸ¥åºå·æ˜¯å¦æœ‰æ•ˆ, å¹¶æ·»åŠ åˆ° document ä¸­
     bsoncxx::builder::basic::document doc;
     for (const auto &index : indexes) {
         if (index >= inventory.size())
@@ -438,7 +439,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
         doc.append(bsoncxx::builder::basic::kvp("inventory." + std::to_string(index), bsoncxx::types::b_null()));
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set", doc)) {
         if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
@@ -446,7 +447,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
             << bsoncxx::builder::stream::finalize)) {
 
             std::vector<LL> sortedIndexes = indexes;
-            std::sort(sortedIndexes.rbegin(), sortedIndexes.rend());    // °ÑĞòºÅ´Ó´óµ½Ğ¡ÅÅĞò
+            std::sort(sortedIndexes.rbegin(), sortedIndexes.rend());    // æŠŠåºå·ä»å¤§åˆ°å°æ’åº
 
             LL      prevIndex = static_cast<LL>(this->inventory.size()) - 1;
             auto    it = this->inventory.end();
@@ -463,16 +464,16 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
     return false;
 }
 
-// Ìí¼ÓĞÂÎïÆ·µ½±³°üÄ©Î²
+// æ·»åŠ æ–°ç‰©å“åˆ°èƒŒåŒ…æœ«å°¾
 bool player::add_inventory_item(const inventoryData &item) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!inventory_cache) {
         get_inventory();
         if (!inventory_cache)
             return false;
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     // inventory: [{id: id, level: level, wear: wear}, ...]
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$push",
@@ -490,9 +491,9 @@ bool player::add_inventory_item(const inventoryData &item) {
     return false;
 }
 
-// ÉèÖÃÕû¸ö±³°üÁĞ±í
+// è®¾ç½®æ•´ä¸ªèƒŒåŒ…åˆ—è¡¨
 bool player::set_inventory(const std::list<inventoryData> &val) {
-    // °Ñ±³°üÄÚÈİÌí¼Óµ½ document ÖĞ
+    // æŠŠèƒŒåŒ…å†…å®¹æ·»åŠ åˆ° document ä¸­
     auto doc = bsoncxx::builder::basic::array{};
     for (const auto &item : val) {
         doc.append(
@@ -504,7 +505,7 @@ bool player::set_inventory(const std::list<inventoryData> &val) {
         );
     }
     
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "inventory" << doc
@@ -517,28 +518,28 @@ bool player::set_inventory(const std::list<inventoryData> &val) {
     return false;
 }
 
-// »ñÈ¡Õû¸ö¹ºÂò´ÎÊı±í
+// è·å–æ•´ä¸ªè´­ä¹°æ¬¡æ•°è¡¨
 std::unordered_map<LL, LL> player::get_buyCount(const bool &use_cache) {
     return buyCount;
 }
 
-// »ñÈ¡¹ºÂò´ÎÊı±íÖĞÄ³¸öÉÌÆ·µÄ¹ºÂò´ÎÊı. Èç¹ûÕÒ²»µ½¶ÔÓ¦µÄÉÌÆ·¹ºÂò¼ÇÂ¼, Ôò·µ»Ø 0
+// è·å–è´­ä¹°æ¬¡æ•°è¡¨ä¸­æŸä¸ªå•†å“çš„è´­ä¹°æ¬¡æ•°. å¦‚æœæ‰¾ä¸åˆ°å¯¹åº”çš„å•†å“è´­ä¹°è®°å½•, åˆ™è¿”å› 0
 LL player::get_buyCount_item(const LL &id, const bool &use_cache) {
     return 0;
 }
 
-// ÉèÖÃ¹ºÂò´ÎÊı±íÖĞÄ³¸öÉÌÆ·µÄ¹ºÂò´ÎÊı. Èç¹û¶ÔÓ¦ÉÌÆ·µÄ¹ºÂò¼ÇÂ¼²»´æÔÚ, Ôò»á´´½¨
+// è®¾ç½®è´­ä¹°æ¬¡æ•°è¡¨ä¸­æŸä¸ªå•†å“çš„è´­ä¹°æ¬¡æ•°. å¦‚æœå¯¹åº”å•†å“çš„è´­ä¹°è®°å½•ä¸å­˜åœ¨, åˆ™ä¼šåˆ›å»º
 bool player::set_buyCount_item(const LL &id, const LL &count) {
     return false;
 }
 
-// ´¦Àí×°±¸µÄ BSON Êı¾İ, ²¢°ÑÄÚÈİÌí¼Óµ½Ö¸¶¨µÄÈİÆ÷ÖĞ
-// ×¢Òâ, ¸Ãº¯Êı¼ÙÉè elem ÊÇºÏ·¨µÄÇÒ´æÓĞÒÑ×°±¸µÄ×°±¸Êı¾İ. ±¾º¯Êı²»»á»ñÈ¡ÒÑ×°±¸µÄÒ»´ÎĞÔ×°±¸
+// å¤„ç†è£…å¤‡çš„ BSON æ•°æ®, å¹¶æŠŠå†…å®¹æ·»åŠ åˆ°æŒ‡å®šçš„å®¹å™¨ä¸­
+// æ³¨æ„, è¯¥å‡½æ•°å‡è®¾ elem æ˜¯åˆæ³•çš„ä¸”å­˜æœ‰å·²è£…å¤‡çš„è£…å¤‡æ•°æ®. æœ¬å‡½æ•°ä¸ä¼šè·å–å·²è£…å¤‡çš„ä¸€æ¬¡æ€§è£…å¤‡
 void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container) {
-    // Êı¾İ¸ñÊ½: equipments: {1: {id: x, level: x, wear: x}, ...}
+    // æ•°æ®æ ¼å¼: equipments: {1: {id: x, level: x, wear: x}, ...}
     auto tmp = elem.get_document().view();
     for (const auto &it : tmp) {
-        if (it.type() == bsoncxx::type::k_document) {         // Ö»´¦Àí object ÀàĞÍµÄÔªËØ
+        if (it.type() == bsoncxx::type::k_document) {         // åªå¤„ç† object ç±»å‹çš„å…ƒç´ 
             inventoryData invData;
             invData.id = it.get_document().value["id"].get_int64().value;
             invData.level = it.get_document().value["level"].get_int64().value;
@@ -548,17 +549,17 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
     }
 }
 
-// »ñÈ¡Õû¸öÒÑ×°±¸µÄ×°±¸±í
+// è·å–æ•´ä¸ªå·²è£…å¤‡çš„è£…å¤‡è¡¨
 std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &use_cache) {
     if (equipments_cache && use_cache)
         return equipments;
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipments");
     if (!result)
-        throw std::exception("ÕÒ²»µ½¶ÔÓ¦Íæ¼Ò ID");
+        throw std::exception("æ‰¾ä¸åˆ°å¯¹åº”ç©å®¶ ID");
     auto field = result->view()["equipments"];
     if (!field.raw())
-        throw std::exception("Ã»ÓĞÕÒµ½ equipments field");
+        throw std::exception("æ²¡æœ‰æ‰¾åˆ° equipments field");
 
     std::unordered_map<EqiType, inventoryData> rtn;
     eqiMapFromBson(field, rtn);
@@ -568,21 +569,21 @@ std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &us
     return rtn;
 }
 
-// »ñÈ¡Ä³¸öÀàĞÍµÄ×°±¸
+// è·å–æŸä¸ªç±»å‹çš„è£…å¤‡
 inventoryData player::get_equipments_item(const EqiType &type, const bool &use_cache) {
     return get_equipments(use_cache)[type];
 }
 
-// ÉèÖÃÄ³¸öÀàĞÍµÄ×°±¸. Èç¹ûÏëÒªÒÆ³ıÄ³¸öÀàĞÍµÄ×°±¸, Ôò°Ñ item µÄ id ÉèÖÃÎª -1
+// è®¾ç½®æŸä¸ªç±»å‹çš„è£…å¤‡. å¦‚æœæƒ³è¦ç§»é™¤æŸä¸ªç±»å‹çš„è£…å¤‡, åˆ™æŠŠ item çš„ id è®¾ç½®ä¸º -1
 bool player::set_equipments_item(const EqiType &type, const inventoryData &item) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!equipments_cache) {
         get_equipments();
         if (!equipments_cache)
             return false;
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{}
@@ -600,17 +601,17 @@ bool player::set_equipments_item(const EqiType &type, const inventoryData &item)
     return false;
 }
 
-// »ñÈ¡Õû¸öÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·±í
+// è·å–æ•´ä¸ªå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“è¡¨
 std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
     if (equipItems_cache && use_cache)
         return equipItems;
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipItems");
     if (!result)
-        throw std::exception("ÕÒ²»µ½¶ÔÓ¦Íæ¼Ò ID");
+        throw std::exception("æ‰¾ä¸åˆ°å¯¹åº”ç©å®¶ ID");
     auto field = result->view()["equipItems"];
     if (!field.raw())
-        throw std::exception("Ã»ÓĞÕÒµ½ equipItems field");
+        throw std::exception("æ²¡æœ‰æ‰¾åˆ° equipItems field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
@@ -620,27 +621,27 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
     return rtn;
 }
 
-// »ñÈ¡ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·ÊıÁ¿
+// è·å–å·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“æ•°é‡
 LL player::get_equipItems_size(const bool &use_cache) {
     if (equipItems_cache && use_cache)
         return equipItems.size();
     return get_equipItems().size();
 }
 
-// ÒÆ³ıÄ³¸öÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false
+// ç§»é™¤æŸä¸ªå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false
 bool player::remove_at_equipItems(const LL &index) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!equipItems_cache) {
         get_equipItems();
         if (!equipItems_cache)
             return false;
     }
 
-    // ¼ì²éĞòºÅÊÇ·ñÓĞĞ§
+    // æ£€æŸ¥åºå·æ˜¯å¦æœ‰æ•ˆ
     if (index >= equipItems.size())
         return false;
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "equipItems." + std::to_string(index) << bsoncxx::types::b_null()
@@ -660,16 +661,16 @@ bool player::remove_at_equipItems(const LL &index) {
     return false;
 }
 
-// Çå¿ÕÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·
+// æ¸…ç©ºå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“
 bool player::clear_equipItems() {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!equipItems_cache) {
         get_equipItems();
         if (!equipItems_cache)
             return false;
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "equipItems" <<
         bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
@@ -681,16 +682,16 @@ bool player::clear_equipItems() {
     return false;
 }
 
-// Ìí¼ÓĞÂÎïÆ·µ½ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·ÁĞ±íÄ©Î²
+// æ·»åŠ æ–°ç‰©å“åˆ°å·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“åˆ—è¡¨æœ«å°¾
 bool player::add_equipItems_item(const inventoryData &item) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!equipItems_cache) {
         get_equipItems();
         if (!equipItems_cache)
             return false;
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     // equipItems: [{id: id, level: level, wear: wear}, ...]
     LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$push",
@@ -709,14 +710,14 @@ bool player::add_equipItems_item(const inventoryData &item) {
 }
 
 // --------------------------------------------------
-// Íæ¼ÒÕ½¶·ÊôĞÔ
+// ç©å®¶æˆ˜æ–—å±æ€§
 
-// ¹¥ = 20 + ËùÓĞ×°±¸¹¥×ÜºÍ + µÈ¼¶ * 1.1 + ×£¸£ * 2
+// æ”» = 20 + æ‰€æœ‰è£…å¤‡æ”»æ€»å’Œ + ç­‰çº§ * 1.1 + ç¥ç¦ * 2
 double player::get_atk() {
     static double calc_result = 20;
     if (!atk_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 20;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -730,12 +731,12 @@ double player::get_atk() {
     return calc_result;
 }
 
-// ·À = 20 + ËùÓĞ×°±¸·À×ÜºÍ + µÈ¼¶ * 0.6 + ×£¸£ * 1.5
+// é˜² = 20 + æ‰€æœ‰è£…å¤‡é˜²æ€»å’Œ + ç­‰çº§ * 0.6 + ç¥ç¦ * 1.5
 double player::get_def() {
     static double calc_result = 20;
     if (!def_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 20;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -749,12 +750,12 @@ double player::get_def() {
     return calc_result;
 }
 
-// ÆÆ = ËùÓĞÎäÆ÷ÆÆ×ÜºÍ
+// ç ´ = æ‰€æœ‰æ­¦å™¨ç ´æ€»å’Œ
 double player::get_brk() {
     static double calc_result = 0;
     if (!brk_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 0;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -767,12 +768,12 @@ double player::get_brk() {
     return calc_result;
 }
 
-// Ãô = 10 + ËùÓĞ×°±¸Ãô×ÜºÍ + ×£¸£ * 0.2
+// æ• = 10 + æ‰€æœ‰è£…å¤‡æ•æ€»å’Œ + ç¥ç¦ * 0.2
 double player::get_agi() {
     static double calc_result = 0;
     if (!agi_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 10;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -786,12 +787,12 @@ double player::get_agi() {
     return calc_result;
 }
 
-// Ñª = 100 + ËùÓĞ×°±¸Ñª×ÜºÍ + Íæ¼ÒµÈ¼¶ * ×£¸£ / 10 + ×£¸£
+// è¡€ = 100 + æ‰€æœ‰è£…å¤‡è¡€æ€»å’Œ + ç©å®¶ç­‰çº§ * ç¥ç¦ / 10 + ç¥ç¦
 double player::get_hp() {
     static double calc_result = 0;
     if (!hp_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 100;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -805,12 +806,12 @@ double player::get_hp() {
     return calc_result;
 }
 
-// Ä§ = ËùÓĞ×°±¸Ä§×ÜºÍ + ×£¸£ * 1.7 + Íæ¼ÒµÈ¼¶ * 1.7
+// é­” = æ‰€æœ‰è£…å¤‡é­”æ€»å’Œ + ç¥ç¦ * 1.7 + ç©å®¶ç­‰çº§ * 1.7
 double player::get_mp() {
     static double calc_result = 0;
     if (!mp_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 0;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -824,12 +825,12 @@ double player::get_mp() {
     return calc_result;
 }
 
-// ±© = ËùÓĞ×°±¸±©×ÜºÍ * (1 + Íæ¼ÒµÈ¼¶ / 170)
+// æš´ = æ‰€æœ‰è£…å¤‡æš´æ€»å’Œ * (1 + ç©å®¶ç­‰çº§ / 170)
 double player::get_crt() {
     static double calc_result = 0;
     if (!crt_cache) {
         // -----------------------------------
-        // ÖØĞÂ¼ÆËã
+        // é‡æ–°è®¡ç®—
         calc_result = 0;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
@@ -843,12 +844,12 @@ double player::get_crt() {
     return calc_result;
 }
 
-// Éı¼¶ËùĞè¾­Ñé = 100 + Íæ¼ÒµÈ¼¶ * 10 + 8 * 1.18 ^ Íæ¼ÒµÈ¼¶
+// å‡çº§æ‰€éœ€ç»éªŒ = 100 + ç©å®¶ç­‰çº§ * 10 + 8 * 1.18 ^ ç©å®¶ç­‰çº§
 LL player::get_exp_needed() {
     return (LL)(100.0 + level * 10.0 + 8 * pow(1.18, level));
 }
 
-// ÀäÈ´Ê±¼ä = Min(200 - Íæ¼ÒµÈ¼¶ * 1.2, 40)
+// å†·å´æ—¶é—´ = Min(200 - ç©å®¶ç­‰çº§ * 1.2, 40)
 LL player::get_cd() {
     LL cd = (LL)(200.0 - level * 1.2);
     if (cd < 40)
@@ -857,7 +858,7 @@ LL player::get_cd() {
         return cd;
 }
 
-// Çå¿Õ¼ÆËã»º´æ
+// æ¸…ç©ºè®¡ç®—ç¼“å­˜
 void player::resetCache() {
     atk_cache = false;
     def_cache = false;
@@ -874,45 +875,45 @@ void player::resetCache() {
     }
 }
 
-// È¡ÏûÇ¿»¯È·ÈÏ
+// å–æ¶ˆå¼ºåŒ–ç¡®è®¤
 void player::abortUpgrade() {
     upgrading = false;
     cvStatusChange.notify_one();
 }
 
-// È·ÈÏÇ¿»¯È·ÈÏ
+// ç¡®è®¤å¼ºåŒ–ç¡®è®¤
 void player::confirmUpgrade() {
     upgrading = true;
     cvStatusChange.notify_one();
 }
 
-// µÈ´ıÇ¿»¯È·ÈÏ. Èç¹ûÍæ¼ÒÈ·ÈÏÁËÇ¿»¯, ¾Í·µ»Ø true; ·ñÔò·µ»Ø false
+// ç­‰å¾…å¼ºåŒ–ç¡®è®¤. å¦‚æœç©å®¶ç¡®è®¤äº†å¼ºåŒ–, å°±è¿”å› true; å¦åˆ™è¿”å› false
 bool player::waitUpgradeConfirm() {
     confirmInProgress = true;
     upgrading = false;
     std::unique_lock lock(this->mutexStatus);
-    cvStatusChange.wait_for(lock, std::chrono::seconds(20));    // 20 ÃëÈ·ÈÏ³¬Ê±
+    cvStatusChange.wait_for(lock, std::chrono::seconds(20));    // 20 ç§’ç¡®è®¤è¶…æ—¶
     confirmInProgress = false;
     cvPrevConfirmCompleted.notify_one();
     return this->upgrading;
 }
 
-// µÈ´ıÈ·ÈÏÍê³É
+// ç­‰å¾…ç¡®è®¤å®Œæˆ
 void player::waitConfirmComplete() {
     std::unique_lock lock(this->mutexStatus);
     cvPrevConfirmCompleted.wait(lock);
 }
 
-// ÀÁÈËºê
-// ÎªËùÓĞÍæ¼ÒµÄÖ¸¶¨ÊôĞÔÔö¼ÓÖ¸¶¨ÊıÖµ
+// æ‡’äººå®
+// ä¸ºæ‰€æœ‰ç©å®¶çš„æŒ‡å®šå±æ€§å¢åŠ æŒ‡å®šæ•°å€¼
 #define ALL_PLAYER_INC(field)                                           \
     bool bg_all_player_inc_##field##(const LL &val) {                   \
-        /* ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ */                            \
+        /* æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜ */                            \
         if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
             bsoncxx::builder::stream::document{} << #field << val       \
             << bsoncxx::builder::stream::finalize)) {                   \
                                                                         \
-            /* ÎªËùÓĞÍæ¼ÒÌí¼ÓÓ²±Ò */                                     \
+            /* ä¸ºæ‰€æœ‰ç©å®¶æ·»åŠ ç¡¬å¸ */                                     \
             for (auto &p : allPlayers) {                                \
                 if (!p.second.##field##_cache) {                        \
                     p.second.get_##field##();                           \

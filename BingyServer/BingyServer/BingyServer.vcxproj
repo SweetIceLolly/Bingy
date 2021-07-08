@@ -24,6 +24,7 @@
     <ClCompile Include="src\database.cpp" />
     <ClCompile Include="src\equipment.cpp" />
     <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\http_auth.cpp" />
     <ClCompile Include="src\http_handlers.cpp" />
     <ClCompile Include="src\http_router.cpp" />
     <ClCompile Include="src\init.cpp" />
@@ -33,6 +34,7 @@
     <ClCompile Include="src\rest_server\rest_server.cpp" />
     <ClCompile Include="src\signin_event.cpp" />
     <ClCompile Include="src\synthesis.cpp" />
+    <ClCompile Include="src\thread_pool.cpp" />
     <ClCompile Include="src\trade.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
@@ -42,16 +44,19 @@
     <ClInclude Include="src\database.hpp" />
     <ClInclude Include="src\equipment.hpp" />
     <ClInclude Include="src\game.hpp" />
+    <ClInclude Include="src\http_auth.hpp" />
     <ClInclude Include="src\http_handlers.hpp" />
     <ClInclude Include="src\http_router.hpp" />
     <ClInclude Include="src\init.hpp" />
     <ClInclude Include="src\inventory.hpp" />
+    <ClInclude Include="src\json.hpp" />
     <ClInclude Include="src\monster.hpp" />
     <ClInclude Include="src\player.hpp" />
     <ClInclude Include="src\rest_server\mongoose.h" />
     <ClInclude Include="src\rest_server\rest_server.hpp" />
     <ClInclude Include="src\signin_event.hpp" />
     <ClInclude Include="src\synthesis.hpp" />
+    <ClInclude Include="src\thread_pool.hpp" />
     <ClInclude Include="src\trade.hpp" />
     <ClInclude Include="src\utils.hpp" />
   </ItemGroup>

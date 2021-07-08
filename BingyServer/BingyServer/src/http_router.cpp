@@ -1,12 +1,19 @@
-/*
-ÃèÊö: ³õÊ¼»¯ Bingy ·şÎñÆ÷µÄÂ·ÓÉ
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: http_router.cpp
+ï»¿/*
+æè¿°: åˆå§‹åŒ– Bingy æœåŠ¡å™¨çš„è·¯ç”±
+ä½œè€…: å†°æ£
+æ–‡ä»¶: http_router.cpp
 */
 
 #include "http_router.hpp"
+#include "http_handlers.hpp"
 
-// ³õÊ¼»¯ HTTP Â·ÓÉ
-bool init_server_router(const rest_server &server) {
-    return false;
+#define POST(url, func) server.addHandler("POST", url, func);
+#define GET(url, func) server.addHandler("GET", url, func);
+
+// åˆå§‹åŒ– HTTP è·¯ç”±
+bool init_server_router(rest_server &server) {
+    POST("/auth", bg_cmd_auth);
+    POST("/register", bg_cmd_register);
+
+    return true;
 }

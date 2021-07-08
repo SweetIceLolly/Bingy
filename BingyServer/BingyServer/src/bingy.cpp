@@ -1,34 +1,51 @@
-/*
-ÃèÊö: Bingy ·şÎñÆ÷µÄÈë¿Úµã, ¸ºÔğµ÷ÓÃ³õÊ¼»¯º¯ÊıºÍ·Ö·¢ÊÂ¼ş
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: bingy.cpp
+ï»¿/*
+æè¿°: Bingy æœåŠ¡å™¨çš„å…¥å£ç‚¹, è´Ÿè´£è°ƒç”¨åˆå§‹åŒ–å‡½æ•°å’Œåˆ†å‘äº‹ä»¶
+ä½œè€…: å†°æ£
+æ–‡ä»¶: bingy.cpp
 */
 
 #include "bingy.hpp"
 #include "utils.hpp"
 #include "init.hpp"
 #include "http_router.hpp"
+#include <csignal>
+
+rest_server gameServer;
 
 int main() {
-    rest_server server;
-
-    // ³õÊ¼»¯ HTTP ·şÎñÆ÷Â·ÓÉ
-    init_server_router(server);
-
-    // ³õÊ¼»¯ Bingy
     auto startTime = std::chrono::high_resolution_clock::now();
-    if (bg_init()) {
-        std::chrono::duration<double> timeDiff = std::chrono::high_resolution_clock::now() - startTime;
-        console_log("Bingy ¼ÓÔØ³É¹¦, ÓÃÊ±" + std::to_string(timeDiff.count() * 1000) + "ms");
-    }
-    else {
-        console_log("Bingy ³õÊ¼»¯Ê§°Ü!", LogType::error);
+
+    // åˆå§‹åŒ– HTTP æœåŠ¡å™¨è·¯ç”±
+    if (!init_server_router(gameServer)) {
+        console_log("Bingy åˆå§‹åŒ– HTTP æœåŠ¡å™¨è·¯ç”±å¤±è´¥!", LogType::error);
         return 1;
     }
+
+    // åˆå§‹åŒ– Bingy
+    if (bg_init()) {
+        std::chrono::duration<double> timeDiff = std::chrono::high_resolution_clock::now() - startTime;
+        console_log("Bingy åŠ è½½æˆåŠŸ, ç”¨æ—¶" + std::to_string(timeDiff.count() * 1000) + "ms");
+    }
+    else {
+        console_log("Bingy åˆå§‹åŒ–å¤±è´¥!", LogType::error);
+        return 1;
+    }
+
+    // æ‹¦æˆªä¸­æ–­ä¿¡å·
+    signal(SIGINT,
+        [](int signum) {
+            console_log("æ¥æ”¶åˆ°é€€å‡ºä¿¡å·, æ­£åœ¨å…³é—­...\n");
+            // åœæ­¢ HTTP æœåŠ¡å™¨
+            gameServer.stopServer();
+        }
+    );
     
-    // Æô¶¯ HTTP ·şÎñÆ÷
-    console_log("ÕıÔÚÆô¶¯ HTTP ·şÎñÆ÷...");
-    server.startServer("127.0.0.1:8000", nullptr);
+    // å¯åŠ¨ HTTP æœåŠ¡å™¨
+    console_log("æ­£åœ¨å¯åŠ¨ HTTP æœåŠ¡å™¨...");
+    gameServer.startServer("127.0.0.1:8000", 1, nullptr);
+
+    // æœ€åæ”¶å°¾
+    console_log("æ”¶å°¾å®Œæ¯•, æ‹œæ‹œ!\n");
 
     return 0;
 }
