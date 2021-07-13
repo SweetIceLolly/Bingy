@@ -1,13 +1,14 @@
 /*
-ÃèÊö: Ò»Ğ©¸¨Öúº¯Êı
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: utils.cpp
+æè¿°: ä¸€äº›è¾…åŠ©å‡½æ•°
+ä½œè€…: å†°æ£
+æ–‡ä»¶: utils.cpp
 */
 
 #include "utils.hpp"
 #include <codecvt>
 #include <iostream>
 #include <mutex>
+#include <climits>
 #include "equipment.hpp"
 
 #ifdef _WIN32
@@ -20,15 +21,13 @@
 #define WHITE       15
 #endif
 
-#define TOKEN_LEN   32
-
-// ³õÊ¼»¯Ëæ»úÊı²úÉúÆ÷
+// åˆå§‹åŒ–éšæœºæ•°äº§ç”Ÿå™¨
 std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 std::mutex mutexRndGen;
 
 void console_log(const std::string &msg, const LogType &type) {
 #ifdef _WIN32
-    // Îª Windows ¿ØÖÆÌ¨ĞŞ¸ÄÊä³öÑÕÉ«
+    // ä¸º Windows æ§åˆ¶å°ä¿®æ”¹è¾“å‡ºé¢œè‰²
     static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     switch (type) {
     case LogType::info:
@@ -45,23 +44,23 @@ void console_log(const std::string &msg, const LogType &type) {
     }
 #endif
 
-    // ÖĞÎÄ²»Ê¹ÓÃ string_to_coolq ×ªÂë»áÂÒÂë
+    // ä¸­æ–‡ä¸ä½¿ç”¨ string_to_coolq è½¬ç ä¼šä¹±ç 
     switch (type) {
     case LogType::info:
-        std::cout << "[ĞÅÏ¢] " + msg << "\n";
+        std::cout << "[ä¿¡æ¯] " + msg << "\n";
         break;
 
     case LogType::warning:
-        std::cout << "[¾¯¸æ] " + msg << "\n";
+        std::cout << "[è­¦å‘Š] " + msg << "\n";
         break;
 
     case LogType::error:
-        std::cout << "[´íÎó] " + msg << "\n";
+        std::cout << "[é”™è¯¯] " + msg << "\n";
         break;
     }
 
 #ifdef _WIN32
-    // Îª Windows ¿ØÖÆÌ¨»Ö¸´Êä³öÑÕÉ«
+    // ä¸º Windows æ§åˆ¶å°æ¢å¤è¾“å‡ºé¢œè‰²
     SetConsoleTextAttribute(hConsole, WHITE);
 #endif
 }
@@ -95,20 +94,8 @@ std::vector<std::string> str_split(const std::string &str, const char &delimiter
 void str_lcase(std::string &str) {
     for (size_t i = 0; i < str.length(); ++i) {
         if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'))
-            str[i] |= 32;           // Èç¹ûÊÇ×ÖÄ¸, Ôò×ª»»ÎªĞ¡Ğ´×ÖÄ¸
+            str[i] |= 32;           // å¦‚æœæ˜¯å­—æ¯, åˆ™è½¬æ¢ä¸ºå°å†™å­—æ¯
     }
-}
-
-std::string generate_token() {
-    const char ch[] =
-        "0123456789"
-        "abcdefghijklmnopqrstuvwxyz"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    std::string rtn;
-    for (int i = 0; i < TOKEN_LEN; ++i) {
-        rtn += ch[rndRange(sizeof(ch) - 1)];
-    }
-    return rtn;
 }
 
 // --------------------------------------------------------------
@@ -143,22 +130,22 @@ bool is_day_sequential(const dateTime &a, const dateTime &b) {
         year_b = b.get_year(), month_b = b.get_month(), day_b = b.get_day();
 
     if (day_b == 1) {
-        // Èç¹û b µÄÌìÊıÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»¸öÔÂµÄ×îºóÒ»Ìì
+        // å¦‚æœ b çš„å¤©æ•°æ˜¯ 1, é‚£ä¹ˆæ£€æŸ¥ a æ˜¯å¦ä¸ºä¸Šä¸€ä¸ªæœˆçš„æœ€åä¸€å¤©
 
         if (month_b == 1) {
-            // Èç¹û b µÄÔÂ·İÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»ÄêµÄ 12 ÔÂ 31 ÈÕ
+            // å¦‚æœ b çš„æœˆä»½æ˜¯ 1, é‚£ä¹ˆæ£€æŸ¥ a æ˜¯å¦ä¸ºä¸Šä¸€å¹´çš„ 12 æœˆ 31 æ—¥
             return (year_b == year_a + 1 && month_a == 12 && day_a == 31);
         }
         else {
-            // Èç¹û b µÄÔÂ·İ²»ÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»ÔÂµÄ×îºóÒ»Ìì
+            // å¦‚æœ b çš„æœˆä»½ä¸æ˜¯ 1, é‚£ä¹ˆæ£€æŸ¥ a æ˜¯å¦ä¸ºä¸Šä¸€æœˆçš„æœ€åä¸€å¤©
             unsigned char month_days[] = { 0, 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-            month_days[2] = is_leap_year(year_a) ? 29 : 28;             // ´¦ÀíÈóÄêµÄ¶şÔÂÌìÊı
+            month_days[2] = is_leap_year(year_a) ? 29 : 28;             // å¤„ç†æ¶¦å¹´çš„äºŒæœˆå¤©æ•°
 
             return (year_b == year_a && month_b == month_a + 1 && day_a == static_cast<int>(month_days[month_a]));
         }
     }
     else {
-        // Èç¹û b µÄÌìÊı²»ÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÕâ¸öÔÂ¶ÔÓ¦µÄÉÏÒ»Ìì
+        // å¦‚æœ b çš„å¤©æ•°ä¸æ˜¯ 1, é‚£ä¹ˆæ£€æŸ¥ a æ˜¯å¦ä¸ºè¿™ä¸ªæœˆå¯¹åº”çš„ä¸Šä¸€å¤©
         return (year_b == year_a && month_b == month_a && day_b == day_a + 1);
     }
 }
@@ -176,18 +163,18 @@ bool luckyDraw::removeItem(const LL &itemId) {
     std::scoped_lock<std::mutex> lock(mutexItems);
     for (auto it = items.begin(); it != items.end(); ++it) {
         if (it->first == itemId) {
-            // °ÑºóÃæÌõÄ¿µÄĞòºÅÇ°ÒÆ
+            // æŠŠåé¢æ¡ç›®çš„åºå·å‰ç§»
             LL weight = it->second.second - it->second.first;
             for (auto it_after = it + 1; it_after != items.end(); ++it_after) {
                 it_after->second.first -= weight;
                 it_after->second.second -= weight;
             }
 
-            // ĞŞ¸Ä×ÜÊıÁ¿
+            // ä¿®æ”¹æ€»æ•°é‡
             maxIndex -= weight;
             currIndex -= weight;
 
-            // ÒÆ³ıÌõÄ¿
+            // ç§»é™¤æ¡ç›®
             items.erase(it);
 
             return true;
@@ -200,36 +187,36 @@ LL luckyDraw::draw() {
     LL rnd = rndRange(maxIndex - 1);
 
     for (const auto &it : items) {
-        // ¸ñÊ½: (ÎïÆ· ID, (ÆğÊ¼ĞòºÅ, ½áÊøĞòºÅ))
+        // æ ¼å¼: (ç‰©å“ ID, (èµ·å§‹åºå·, ç»“æŸåºå·))
         if (it.second.first <= rnd && rnd < it.second.second)
             return it.first;
     }
-    return LLONG_MIN;       // Ï£Íû²»»áÀ´µ½ÕâÀï°É...
+    return LLONG_MIN;       // å¸Œæœ›ä¸ä¼šæ¥åˆ°è¿™é‡Œå§...
 }
 
 LL luckyDraw::massive_draw() {
     LL rnd = rndRange(maxIndex - 1);
 
-    // ¶ÔÎïÆ·½øĞĞ¶ş·ÖËÑË÷
-    // ¸ñÊ½: (ÎïÆ· ID, (ÆğÊ¼ĞòºÅ, ½áÊøĞòºÅ))
-    // Èô ÆğÊ¼ĞòºÅ <= rnd < ½áÊøĞòºÅ, Ôò³éÖĞ¶ÔÓ¦ÎïÆ·
+    // å¯¹ç‰©å“è¿›è¡ŒäºŒåˆ†æœç´¢
+    // æ ¼å¼: (ç‰©å“ ID, (èµ·å§‹åºå·, ç»“æŸåºå·))
+    // è‹¥ èµ·å§‹åºå· <= rnd < ç»“æŸåºå·, åˆ™æŠ½ä¸­å¯¹åº”ç‰©å“
     size_t start = 0, end = items.size(), curr = (start + end) / 2;
     while (end > start) {
         if (items[curr].second.first <= rnd && rnd < items[curr].second.second)
-            // ¸ÕºÃÂäÔÚ·¶Î§ÄÚ
+            // åˆšå¥½è½åœ¨èŒƒå›´å†…
             return items[curr].first;
         else if (rnd < items[curr].second.first) {
-            // Ä¿±ê·¶Î§ÔÚµ±Ç°·¶Î§µÄÇ°Ãæ
+            // ç›®æ ‡èŒƒå›´åœ¨å½“å‰èŒƒå›´çš„å‰é¢
             end = curr - 1;
             curr = (start + end) / 2;
         }
         else {
-            // Ä¿±ê·¶Î§ÔÚµ±Ç°·¶Î§µÄºóÃæ
+            // ç›®æ ‡èŒƒå›´åœ¨å½“å‰èŒƒå›´çš„åé¢
             start = curr + 1;
             curr = (start + end) / 2;
         }
     }
-    return LLONG_MIN;       // Ï£Íû²»»áÀ´µ½ÕâÀï°É...
+    return LLONG_MIN;       // å¸Œæœ›ä¸ä¼šæ¥åˆ°è¿™é‡Œå§...
 }
 
 LL str_to_ll(const std::string &str) {
@@ -242,7 +229,7 @@ LL str_to_ll(const std::string &str) {
             if (str[i] == '-' && !numStarted)
                 continue;
             else
-                throw std::exception("ÎŞĞ§µÄ×Ö·û´®");
+                throw std::runtime_error("æ— æ•ˆçš„å­—ç¬¦ä¸²");
         }
         numStarted = true;
     }
@@ -250,6 +237,6 @@ LL str_to_ll(const std::string &str) {
 }
 
 std::string eqiType_to_str(const EqiType &type) {
-    const std::string names[] = { "Í·¿ø", "Õ½¼×", "»¤ÍÈ", "Õ½Ñ¥", "Ö÷ÎäÆ÷", "¸±ÎäÆ÷", "¶ú»·", "½äÖ¸", "ÏîÁ´", "±¦Ê¯" };
+    const std::string names[] = { "å¤´ç›”", "æˆ˜ç”²", "æŠ¤è…¿", "æˆ˜é´", "ä¸»æ­¦å™¨", "å‰¯æ­¦å™¨", "è€³ç¯", "æˆ’æŒ‡", "é¡¹é“¾", "å®çŸ³" };
     return names[static_cast<LL>(type)];
 }

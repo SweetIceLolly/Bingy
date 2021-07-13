@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Êı¾İ¿âÏà¹Ø²Ù×÷µÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: database.hpp
+æè¿°: æ•°æ®åº“ç›¸å…³æ“ä½œçš„æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: database.hpp
 */
 
 #pragma once
@@ -17,63 +17,63 @@
 
 #include "utils.hpp"
 
-// ¶¨ÒåÒ»Ğ©³£Á¿
+// å®šä¹‰ä¸€äº›å¸¸é‡
 #define DEFAULT_DB_URI      "mongodb://127.0.0.1:27017/dreamy"
 #define DB_NAME             "bingy"
 #define DB_COLL_USERDATA    "userdata"
 #define DB_COLL_SIGNIN      "signin"
 #define DB_COLL_TRADE       "trade"
 
-// Ö¸¶¨Êı¾İ¿â URI ºÍ¿âÃû, ¿ÉÒÔÔÚµ÷ÓÃ dbInit Ç°ĞŞ¸Ä
+// æŒ‡å®šæ•°æ®åº“ URI å’Œåº“å, å¯ä»¥åœ¨è°ƒç”¨ dbInit å‰ä¿®æ”¹
 extern std::string dbUri;
 extern std::string dbName;
 
-// ³õÊ¼»¯Êı¾İ¿âÁ¬½Ó. Èç¹û³õÊ¼»¯Ê±·¢Éú´íÎó (°üÀ¨µ«²»ÏŞÓÚ URI ÎŞĞ§, Á¬½Ó³¬Ê±µÈ), Ôò·µ»Øfalse
+// åˆå§‹åŒ–æ•°æ®åº“è¿æ¥. å¦‚æœåˆå§‹åŒ–æ—¶å‘ç”Ÿé”™è¯¯ (åŒ…æ‹¬ä½†ä¸é™äº URI æ— æ•ˆ, è¿æ¥è¶…æ—¶ç­‰), åˆ™è¿”å›false
 bool dbInit();
 
-// ¼ì²éÁ¬½Ó. Èç¹ûÁ¬½ÓÓĞĞ§, Ôò·µ»Ø true
+// æ£€æŸ¥è¿æ¥. å¦‚æœè¿æ¥æœ‰æ•ˆ, åˆ™è¿”å› true
 bool dbPing();
 
-// »ñÈ¡Ò»¸öÊı¾İ¿â¶ÔÏó. ¸Ãº¯ÊıÊÇÏß³Ì°²È«µÄ, ¿ÉÒÔ´Ó²»Í¬Ïß³ÌÍ¬Ê±µ÷ÓÃ
+// è·å–ä¸€ä¸ªæ•°æ®åº“å¯¹è±¡. è¯¥å‡½æ•°æ˜¯çº¿ç¨‹å®‰å…¨çš„, å¯ä»¥ä»ä¸åŒçº¿ç¨‹åŒæ—¶è°ƒç”¨
 mongocxx::database dbGetDatabase(const char *name);
 
-// »ñÈ¡Ò»¸ö Collection ¶ÔÏó. ¸Ãº¯ÊıÊÇÏß³Ì°²È«µÄ, ¿ÉÒÔ´Ó²»Í¬Ïß³ÌÍ¬Ê±µ÷ÓÃ
+// è·å–ä¸€ä¸ª Collection å¯¹è±¡. è¯¥å‡½æ•°æ˜¯çº¿ç¨‹å®‰å…¨çš„, å¯ä»¥ä»ä¸åŒçº¿ç¨‹åŒæ—¶è°ƒç”¨
 mongocxx::collection dbGetCollection(const char *dbName, const char *collName);
 
-// ÍùÖ¸¶¨ collection ĞÂ¼ÓÒ»¸öÎÄµµ
+// å¾€æŒ‡å®š collection æ–°åŠ ä¸€ä¸ªæ–‡æ¡£
 bool dbInsertDocument(const char *collName, const bsoncxx::document::value &value);
 
-// ÔÚÖ¸¶¨ collection ¸üĞÂÒ»¸öÎÄµµ
+// åœ¨æŒ‡å®š collection æ›´æ–°ä¸€ä¸ªæ–‡æ¡£
 template <typename T1, typename T2>
 bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &filterVal,
     const std::string &updateKey, const T2 &updateVal);
 
-// ¸üĞÂÖ¸¶¨ collection ÖĞËùÓĞ·ûºÏÌõ¼şµÄÎÄµµ
+// æ›´æ–°æŒ‡å®š collection ä¸­æ‰€æœ‰ç¬¦åˆæ¡ä»¶çš„æ–‡æ¡£
 template <typename T1, typename T2>
 bool dbUpdateAll(const char *collName, const std::string &filterKey, const T1 &filterVal,
     const std::string &updateKey, const T2 &updateVal);
 
-// ¸üĞÂÖ¸¶¨ collection ÖĞËùÓĞÎÄµµ
+// æ›´æ–°æŒ‡å®š collection ä¸­æ‰€æœ‰æ–‡æ¡£
 template <typename T>
 bool dbUpdateAll(const char *collName, const std::string &updateKey, const T &updateVal);
 
-// »ñÈ¡Ö¸¶¨ collection ÖĞÒ»¸ö·ûºÏÌõ¼şµÄÎÄµµ
+// è·å–æŒ‡å®š collection ä¸­ä¸€ä¸ªç¬¦åˆæ¡ä»¶çš„æ–‡æ¡£
 template <typename T, typename ... Args>
-std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields);
+mongocxx::v_noabi::stdx::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields);
 
-// »ñÈ¡Ö¸¶¨ collection ÖĞËùÓĞ·ûºÏÌõ¼şµÄÎÄµµ
+// è·å–æŒ‡å®š collection ä¸­æ‰€æœ‰ç¬¦åˆæ¡ä»¶çš„æ–‡æ¡£
 template <typename T, typename ... Args>
 mongocxx::cursor dbFindAll(const char *collName, const std::string &filterKey, const T &filterValue, Args&&... rtnFields);
 
-// »ñÈ¡Ö¸¶¨ collection ÖĞËùÓĞÎÄµµ
+// è·å–æŒ‡å®š collection ä¸­æ‰€æœ‰æ–‡æ¡£
 template <typename ... Args>
 mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields);
 
-// ÒÆ³ıÖ¸¶¨ collection ÖĞÒ»¸ö·ûºÏÌõ¼şµÄÎÄµµ
+// ç§»é™¤æŒ‡å®š collection ä¸­ä¸€ä¸ªç¬¦åˆæ¡ä»¶çš„æ–‡æ¡£
 template <typename T>
 bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &filterVal);
 
-// ÒÆ³ıÖ¸¶¨ collection ÖĞËùÓĞ·ûºÏÌõ¼şµÄÎÄµµ
+// ç§»é™¤æŒ‡å®š collection ä¸­æ‰€æœ‰ç¬¦åˆæ¡ä»¶çš„æ–‡æ¡£
 template <typename T>
 bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &filterVal);
 
@@ -84,15 +84,10 @@ bool dbUpdateOne(const char *collName, const std::string &filterKey, const T1 &f
     const std::string &updateKey, const T2 &updateVal) {
 
     try {
-        auto result = dbGetCollection(dbName.c_str(), collName).update_one(
+        return dbGetCollection(dbName.c_str(), collName).update_one(
             bsoncxx::builder::stream::document{} << filterKey << filterVal << bsoncxx::builder::stream::finalize,
             bsoncxx::builder::stream::document{} << updateKey << updateVal << bsoncxx::builder::stream::finalize
-        );
-
-        if (result.has_value())
-            return result->matched_count() == 1;
-        else
-            return false;
+        )->matched_count() == 1;
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);
@@ -138,14 +133,9 @@ bool dbUpdateAll(const char *collName, const std::string &filterKey, const T1 &f
 template <typename T>
 bool dbUpdateAll(const char *collName, const std::string &updateKey, const T &updateVal) {
     try {
-        auto result = dbGetCollection(dbName.c_str(), collName).update_many({},
+        return dbGetCollection(dbName.c_str(), collName).update_many({},
             bsoncxx::builder::stream::document{} << updateKey << updateVal << bsoncxx::builder::stream::finalize
-        );
-
-        if (result.has_value())
-            return result->matched_count() > 0;
-        else
-            return false;
+        )->matched_count() > 0;
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);
@@ -161,7 +151,7 @@ bool dbUpdateAll(const char *collName, const std::string &updateKey, const T &up
 }
 
 template <typename T, typename ... Args>
-std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields) {
+mongocxx::v_noabi::stdx::optional<bsoncxx::document::value> dbFindOne(const char *collName, const std::string &key, const T &value, Args&&... rtnFields) {
     try {
         mongocxx::options::find opts{};
         bsoncxx::builder::basic::document doc;
@@ -177,14 +167,14 @@ std::optional<bsoncxx::document::value> dbFindOne(const char *collName, const st
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);
-        return std::nullopt;
+        return mongocxx::v_noabi::stdx::nullopt;
     }
     catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
-        return std::nullopt;
+        return mongocxx::v_noabi::stdx::nullopt;
     }
     catch (...) {
-        return std::nullopt;
+        return mongocxx::v_noabi::stdx::nullopt;
     }
 }
 
@@ -205,14 +195,14 @@ mongocxx::cursor dbFindAll(const char *collName, const std::string &filterKey, c
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);
-        return std::nullopt;
+        return nullptr;
     }
     catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
-        return std::nullopt;
+        return nullptr;
     }
     catch (...) {
-        return std::nullopt;
+        return nullptr;
     }
 }
 
@@ -236,20 +226,16 @@ mongocxx::cursor dbFindAll(const char *collName, Args&&... rtnFields) {
         throw e;
     }
     catch (...) {
-        throw std::exception("dbFindAll ·¢Éú´íÎó!");
+        throw std::runtime_error("dbFindAll å‘ç”Ÿé”™è¯¯!");
     }
 }
 
 template <typename T>
 bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &filterVal) {
     try {
-        auto result = dbGetCollection(dbName.c_str(), collName).delete_one(
+        return dbGetCollection(dbName.c_str(), collName).delete_one(
             bsoncxx::builder::stream::document{} << filterKey << filterVal << bsoncxx::builder::stream::finalize
-        );
-        if (result.has_value())
-            return result->deleted_count() == 1;
-        else
-            return false;
+        )->deleted_count() == 1;
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);
@@ -263,13 +249,9 @@ bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &fi
 template <typename T>
 bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &filterVal) {
     try {
-        auto result = dbGetCollection(dbName.c_str(), collName).delete_many(
+        return dbGetCollection(dbName.c_str(), collName).delete_many(
             bsoncxx::builder::stream::document{} << filterKey << filterVal << bsoncxx::builder::stream::finalize
-        );
-        if (result.has_value())
-            return result->deleted_count() > 0;
-        else
-            return false;
+        )->deleted_count() > 0;
     }
     catch (const mongocxx::exception &e) {
         console_log(e.what(), LogType::error);

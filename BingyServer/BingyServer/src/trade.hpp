@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ½»Ò×³¡Ïà¹Ø½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: trade.hpp
+æè¿°: Bingy äº¤æ˜“åœºç›¸å…³æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: trade.hpp
 */
 
 #pragma once
@@ -12,41 +12,41 @@
 #include <mutex>
 #include <vector>
 
-using LL = long long;
+using LL = std::int64_t;
 
 class tradeData {
 public:
     LL              tradeId;
     inventoryData   item;
-    LL              sellerId;       // Âô·½ QQ ºÅ
-    LL              addTime;        // ÉÏ¼ÜÊ±¼ä
-    bool            hasPassword;    // ÓĞÃÜÂë
-    std::string     password;       // ¹ºÂòÃÜÂë
-    LL              price;          // ¼Û¸ñ
+    LL              sellerId;       // å–æ–¹ QQ å·
+    LL              addTime;        // ä¸Šæ¶æ—¶é—´
+    bool            hasPassword;    // æœ‰å¯†ç 
+    std::string     password;       // è´­ä¹°å¯†ç 
+    LL              price;          // ä»·æ ¼
 };
 
-extern std::map<LL, tradeData>  allTradeItems;      // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
+extern std::map<LL, tradeData>  allTradeItems;      // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
 
-// »ñÈ¡ËùÓĞ½»Ò×³¡ÌõÄ¿
+// è·å–æ‰€æœ‰äº¤æ˜“åœºæ¡ç›®
 std::map<LL, tradeData> bg_trade_get_items(const bool &use_cache = true);
 
-// »ñÈ¡µ±Ç°µÄ½»Ò× ID
+// è·å–å½“å‰çš„äº¤æ˜“ ID
 LL bg_get_tradeId(const bool &use_cache = true);
 
-// ÉèÖÃ½»Ò× ID
+// è®¾ç½®äº¤æ˜“ ID
 bool bg_set_tradeId(const LL &val);
 
-// Ê¹½»Ò× ID µÄÖµÔö¼Ó 1
+// ä½¿äº¤æ˜“ ID çš„å€¼å¢åŠ  1
 bool bg_inc_tradeId();
 
-// Íù½»Ò×³¡Ìí¼ÓÏîÄ¿
+// å¾€äº¤æ˜“åœºæ·»åŠ é¡¹ç›®
 bool bg_trade_insert_item(const tradeData &itemData);
 
-// ´Ó½»Ò×³¡ÒÆ³ıÒ»¸öÏîÄ¿
+// ä»äº¤æ˜“åœºç§»é™¤ä¸€ä¸ªé¡¹ç›®
 bool bg_trade_remove_item(const LL &tradeId);
 
-// ´Ó½»Ò×³¡ÒÆ³ıÒ»ÏµÁĞµÄÏîÄ¿
+// ä»äº¤æ˜“åœºç§»é™¤ä¸€ç³»åˆ—çš„é¡¹ç›®
 bool bg_trade_remove_item(const std::vector<LL> &tradeIdList);
 
-// »ñÈ¡½»Ò×³¡ÄÚÈİ×Ö·û´®
+// è·å–äº¤æ˜“åœºå†…å®¹å­—ç¬¦ä¸²
 std::string bg_trade_get_string(const bool &use_cache = true);

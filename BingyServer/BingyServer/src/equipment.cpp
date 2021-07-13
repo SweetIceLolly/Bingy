@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ×°±¸ÀàÏà¹Ø²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: equipment.cpp
+æè¿°: Bingy è£…å¤‡ç±»ç›¸å…³æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: equipment.cpp
 */
 
 #include "equipment.hpp"
@@ -11,20 +11,20 @@
 #define DEFAULT_EQI_PATH    "equipments.txt"
 
 std::string                             eqiConfigPath = DEFAULT_EQI_PATH;
-std::unordered_map<LL, equipmentData>   allEquipments;      // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
+std::unordered_map<LL, equipmentData>   allEquipments;      // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
 
-// ¶ÁÈ¡ËùÓĞ×°±¸ĞÅÏ¢
+// è¯»å–æ‰€æœ‰è£…å¤‡ä¿¡æ¯
 bool bg_load_equipment_config() {
     configParser    parser(eqiConfigPath);
-    equipmentData   *temp = nullptr;                        // ×°±¸ĞÅÏ¢ÁÙÊ±±äÁ¿
+    equipmentData   *temp = nullptr;                        // è£…å¤‡ä¿¡æ¯ä¸´æ—¶å˜é‡
 
     return parser.load(
-        // ÇĞ»» state »Øµ÷º¯Êı. ÕâÀïÓÃ²»ÉÏ. state Ò»Ö±±£³ÖÎª 0
+        // åˆ‡æ¢ state å›è°ƒå‡½æ•°. è¿™é‡Œç”¨ä¸ä¸Š. state ä¸€ç›´ä¿æŒä¸º 0
         [](const std::string &line, char &state) -> bool {
             return true;
         },
 
-        // »ñÈ¡ÊôĞÔÖµ»Øµ÷º¯Êı
+        // è·å–å±æ€§å€¼å›è°ƒå‡½æ•°
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
             try {
                 if (propName == "id")
@@ -53,26 +53,26 @@ bool bg_load_equipment_config() {
                     temp->price = std::stoll(propValue);
             }
             catch (const std::exception &e) {
-                console_log("´¦Àí×°±¸ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
+                console_log("å¤„ç†è£…å¤‡é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo) + ", åŸå› : " + e.what(), LogType::warning);
             }
             catch (...) {
-                console_log("´¦Àí×°±¸ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
+                console_log("å¤„ç†è£…å¤‡é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo), LogType::warning);
             }
             return true;
         },
 
-        // ¿ªÊ¼±ê¼Ç»Øµ÷º¯Êı
+        // å¼€å§‹æ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
             temp = new equipmentData();
             return true;
         },
 
-        // ½áÊø±ê¼Ç»Øµ÷º¯Êı
+        // ç»“æŸæ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
             bool rtn = allEquipments.insert({ temp->id, *temp }).second;
             delete temp;
             if (!rtn)
-                console_log("ÎŞ·¨°Ñ×°±¸ ID = " + std::to_string(temp->id) + " Ìí¼Óµ½×°±¸ÁĞ±í, ¿ÉÄÜÊÇÒòÎª ID ÖØ¸´", LogType::error);
+                console_log("æ— æ³•æŠŠè£…å¤‡ ID = " + std::to_string(temp->id) + " æ·»åŠ åˆ°è£…å¤‡åˆ—è¡¨, å¯èƒ½æ˜¯å› ä¸º ID é‡å¤", LogType::error);
             return rtn;
         }
     );

@@ -1,12 +1,12 @@
 /*
-ÃèÊö: Bingy ·şÎñÆ÷µÄÂ·ÓÉ³õÊ¼»¯½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: http_router.hpp
+æè¿°: Bingy æœåŠ¡å™¨çš„è·¯ç”±åˆå§‹åŒ–æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: http_router.hpp
 */
 
 #pragma once
 
 #include "rest_server/rest_server.hpp"
 
-// ³õÊ¼»¯ HTTP Â·ÓÉ
+// åˆå§‹åŒ– HTTP è·¯ç”±
 bool init_server_router(rest_server &server);

@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ¹ÖÎïÀàÏà¹ØµÄ²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: monster.cpp
+æè¿°: Bingy æ€ªç‰©ç±»ç›¸å…³çš„æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: monster.cpp
 */
 
 #include "monster.hpp"
@@ -11,22 +11,22 @@
 #define DEFAULT_MONSTER_PATH    "monsters.txt"
 
 std::string                         monsterConfigPath = DEFAULT_MONSTER_PATH;
-std::unordered_map<LL, monsterData> allMonsters;    // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
-std::unordered_map<LL, dungeonData> allDungeons;    // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
-luckyDraw                           forestDraw;     // É­ÁÖ³é½±»ú
+std::unordered_map<LL, monsterData> allMonsters;    // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
+std::unordered_map<LL, dungeonData> allDungeons;    // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
+luckyDraw                           forestDraw;     // æ£®æ—æŠ½å¥–æœº
 
-// ¶ÁÈ¡ËùÓĞ¹ÖÎïĞÅÏ¢
+// è¯»å–æ‰€æœ‰æ€ªç‰©ä¿¡æ¯
 bool bg_load_monster_config() {
     configParser    parser(monsterConfigPath);
-    monsterData     *temp = nullptr;                // ¹ÖÎïĞÅÏ¢ÁÙÊ±±äÁ¿
+    monsterData     *temp = nullptr;                // æ€ªç‰©ä¿¡æ¯ä¸´æ—¶å˜é‡
 
     return parser.load(
-        // ÇĞ»» state »Øµ÷º¯Êı. ÕâÀïÓÃ²»ÉÏ. state Ò»Ö±±£³ÖÎª 0
+        // åˆ‡æ¢ state å›è°ƒå‡½æ•°. è¿™é‡Œç”¨ä¸ä¸Š. state ä¸€ç›´ä¿æŒä¸º 0
         [](const std::string &line, char &state) -> bool {
             return true;
         },
 
-        // »ñÈ¡ÊôĞÔÖµ»Øµ÷º¯Êı
+        // è·å–å±æ€§å€¼å›è°ƒå‡½æ•°
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
             try {
                 if (propName == "id")
@@ -66,47 +66,47 @@ bool bg_load_monster_config() {
                 }
             }
             catch (const std::exception &e) {
-                console_log("´¦Àí¹ÖÎïÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
+                console_log("å¤„ç†æ€ªç‰©é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo) + ", åŸå› : " + e.what(), LogType::warning);
             }
             catch (...) {
-                console_log("´¦Àí¹ÖÎïÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
+                console_log("å¤„ç†æ€ªç‰©é…ç½®æ—¶å‘ç”Ÿé”™è¯¯: äºè¡Œ" + std::to_string(lineNo), LogType::warning);
             }
             return true;
         },
 
-        // ¿ªÊ¼±ê¼Ç»Øµ÷º¯Êı
+        // å¼€å§‹æ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
             temp = new monsterData();
             return true;
         },
 
-        // ½áÊø±ê¼Ç»Øµ÷º¯Êı
+        // ç»“æŸæ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
             bool rtn = allMonsters.insert({ temp->id, *temp }).second;
             delete temp;
             if (!rtn)
-                console_log("ÎŞ·¨°Ñ¹ÖÎï ID = " + std::to_string(temp->id) + " Ìí¼Óµ½¹ÖÎïÁĞ±í, ¿ÉÄÜÊÇÒòÎª ID ÖØ¸´", LogType::error);
+                console_log("æ— æ³•æŠŠæ€ªç‰© ID = " + std::to_string(temp->id) + " æ·»åŠ åˆ°æ€ªç‰©åˆ—è¡¨, å¯èƒ½æ˜¯å› ä¸º ID é‡å¤", LogType::error);
             return rtn;
         }
     );
 }
 
-// ³õÊ¼»¯¹ÖÎï³öÏÖºÍµôÂä¸ÅÂÊ
+// åˆå§‹åŒ–æ€ªç‰©å‡ºç°å’Œæ‰è½æ¦‚ç‡
 void bg_init_monster_chances() {
-    // ³õÊ¼»¯ËùÓĞ¸±±¾ÖĞ¹ÖÎï³öÏÖµÄ¸ÅÂÊ
+    // åˆå§‹åŒ–æ‰€æœ‰å‰¯æœ¬ä¸­æ€ªç‰©å‡ºç°çš„æ¦‚ç‡
     for (auto &dungeon : allDungeons) {
         for (const auto &monster : dungeon.second.monsters) {
             dungeon.second.monstersDraw.insertItem(monster, allMonsters.at(monster).dungeonWeight);
         }
     }
 
-    // ³õÊ¼»¯ËùÓĞ¹ÖÎïµôÂäµÄ¸ÅÂÊ
+    // åˆå§‹åŒ–æ‰€æœ‰æ€ªç‰©æ‰è½çš„æ¦‚ç‡
     for (auto &monster : allMonsters) {
         monster.second.initDropDraw();
     }
 }
 
-// »ñÈ¡¸¡µãÊıµÄĞ¡ÊıµãºóµÄĞ¡ÊıµãÎ»Êı
+// è·å–æµ®ç‚¹æ•°çš„å°æ•°ç‚¹åçš„å°æ•°ç‚¹ä½æ•°
 inline int getDecimals(double n) {
     int rtn = 0;
     n -= static_cast<int>(n);
@@ -118,10 +118,10 @@ inline int getDecimals(double n) {
     return rtn;
 }
 
-// ¸ù¾İ¹ÖÎïµÄµôÂäÁĞ±íÖØĞÂÉú³É¹ÖÎïµÄµôÂä³éÈ¡Æ÷
+// æ ¹æ®æ€ªç‰©çš„æ‰è½åˆ—è¡¨é‡æ–°ç”Ÿæˆæ€ªç‰©çš„æ‰è½æŠ½å–å™¨
 void monsterData::initDropDraw() {
-    int     maxPrecision = 0;               // µôÂäÁĞ±íÖĞ¸ÅÂÊµÄ×î´ó¾«¶È
-    double  noDropChance = 1;               // ÎŞµôÂäµÄ¸ÅÂÊ (= 1 - ËùÓĞµôÂä¸ÅÂÊ×ÜºÍ)
+    int     maxPrecision = 0;               // æ‰è½åˆ—è¡¨ä¸­æ¦‚ç‡çš„æœ€å¤§ç²¾åº¦
+    double  noDropChance = 1;               // æ— æ‰è½çš„æ¦‚ç‡ (= 1 - æ‰€æœ‰æ‰è½æ¦‚ç‡æ€»å’Œ)
 
     for (const auto &item : this->drop) {
         int precision = getDecimals(item.chance);
@@ -134,6 +134,6 @@ void monsterData::initDropDraw() {
     }
     this->dropDraw.insertItem(-1, noDropChance * pow(10.0, maxPrecision));
     if (noDropChance < 0) {
-        console_log("¹ÖÎï" + this->name + " (id: " + std::to_string(this->id) + ") µÄ×°±¸µôÂä¸ÅÂÊ×ÜºÍ´óÓÚ1!", LogType::warning);
+        console_log("æ€ªç‰©" + this->name + " (id: " + std::to_string(this->id) + ") çš„è£…å¤‡æ‰è½æ¦‚ç‡æ€»å’Œå¤§äº1!", LogType::warning);
     }
 }

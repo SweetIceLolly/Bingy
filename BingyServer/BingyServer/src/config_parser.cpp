@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ÅäÖÃÎÄ¼ş¶ÁÈ¡Ïà¹Øº¯Êı
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: config_parser.hpp
+æè¿°: Bingy é…ç½®æ–‡ä»¶è¯»å–ç›¸å…³å‡½æ•°
+ä½œè€…: å†°æ£
+æ–‡ä»¶: config_parser.hpp
 */
 
 #include "config_parser.hpp"
@@ -23,7 +23,7 @@ bool configParser::load(
     if (!file.is_open())
         return false;
 
-    // ÖğĞĞ¶ÁÈ¡ÅäÖÃÎÄ¼ş
+    // é€è¡Œè¯»å–é…ç½®æ–‡ä»¶
     std::string     line;
     unsigned int    currLine = 0;
     char            state = 0;
@@ -31,19 +31,19 @@ bool configParser::load(
     while (std::getline(file, line)) {
         ++currLine;
         line = str_trim(line);
-        if (line.empty())               // ºöÂÔ¿ÕĞĞ
+        if (line.empty())               // å¿½ç•¥ç©ºè¡Œ
             continue;
 
-        if (line[0] == '[') {           // ÉèÖÃ×´Ì¬ĞĞ
+        if (line[0] == '[') {           // è®¾ç½®çŠ¶æ€è¡Œ
             if (!stateChangeCallback(line, state))
                 return false;
             continue;
         }
-        else if (line == "begin") {    // ¿ªÊ¼±ê¼Ç
+        else if (line == "begin") {    // å¼€å§‹æ ‡è®°
             if (!beginCallback(state))
                 return false;
         }
-        else if (line == "end") {      // ½áÊø±ê¼Ç
+        else if (line == "end") {      // ç»“æŸæ ‡è®°
             if (!endCallback(state))
                 return false;
         }

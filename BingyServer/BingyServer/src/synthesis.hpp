@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ×°±¸ºÏ³ÉÏà¹Ø½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: synthesis.hpp
+æè¿°: Bingy è£…å¤‡åˆæˆç›¸å…³æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: synthesis.hpp
 */
 
 #pragma once
@@ -10,16 +10,16 @@
 #include <unordered_map>
 #include <unordered_set>
 
-using LL = long long;
+using LL = std::int64_t;
 
 class synthesisInfo {
 public:
-    std::unordered_multiset<LL> requirements;       // ËùĞè×°±¸
-    LL                          coins;              // ËùĞèÓ²±Ò
-    LL                          targetId;           // ºÏ³ÉÄ¿±ê ID
+    std::unordered_multiset<LL> requirements;       // æ‰€éœ€è£…å¤‡
+    LL                          coins;              // æ‰€éœ€ç¡¬å¸
+    LL                          targetId;           // åˆæˆç›®æ ‡ ID
 };
 
 extern std::unordered_multimap<LL, synthesisInfo>   allSyntheses;
 
-// ¸ù¾İËùÌá¹©µÄÌõ¼şÀ´Åä¶Ô¿ÉÓÃµÄºÏ³É. Èç¹ûÓĞ·ûºÏÌõ¼şµÄºÏ³É, Ôò·µ»Ø true, coins ÎªËùĞèÓ²±Ò; ·ñÔò·µ»Ø false; coins µÄÖµ²»±»ĞŞ¸Ä
+// æ ¹æ®æ‰€æä¾›çš„æ¡ä»¶æ¥é…å¯¹å¯ç”¨çš„åˆæˆ. å¦‚æœæœ‰ç¬¦åˆæ¡ä»¶çš„åˆæˆ, åˆ™è¿”å› true, coins ä¸ºæ‰€éœ€ç¡¬å¸; å¦åˆ™è¿”å› false; coins çš„å€¼ä¸è¢«ä¿®æ”¹
 bool bg_match_synthesis(const LL &targetId, const std::unordered_multiset<LL> &materials, LL &coins);

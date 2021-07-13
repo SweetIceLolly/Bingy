@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Ç©µ½»î¶¯Àà, ÒÔ¼°Ïà¹Ø½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: signin_event.hpp
+æè¿°: ç­¾åˆ°æ´»åŠ¨ç±», ä»¥åŠç›¸å…³æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: signin_event.hpp
 */
 
 #pragma once
@@ -12,26 +12,26 @@
 #include <mutex>
 #include "utils.hpp"
 
-using LL = long long;
+using LL = std::int64_t;
 
 class signInEvent {
 private:
-    // Ö»ÓĞÖ¸¶¨ÁËÇ° N ¸öÇ©µ½µÄÍæ¼ÒÊıÁ¿ÕâÈı¸ö±äÁ¿²Å»áÊ¹ÓÃµ½
-    LL              signInCount;            // Ç©µ½µÄÈËÊı
+    // åªæœ‰æŒ‡å®šäº†å‰ N ä¸ªç­¾åˆ°çš„ç©å®¶æ•°é‡è¿™ä¸‰ä¸ªå˜é‡æ‰ä¼šä½¿ç”¨åˆ°
+    LL              signInCount;            // ç­¾åˆ°çš„äººæ•°
     bool            signInCount_cache;
-    LL              prevActiveTime;         // ÉÏÒ»´Î»î¶¯Ê±¼ä
+    LL              prevActiveTime;         // ä¸Šä¸€æ¬¡æ´»åŠ¨æ—¶é—´
     bool            prevActiveTime_cache;
     std::mutex      mutexSignInCount;
 
 public:
     LL              id;
-    int             year, month, day;       // ÄêÔÂÈÕ (ÈôÄê·İÎª -1, ÔòÃ¿Äê¶¼ÓĞ; ÈôÔÂ·İÎª -1, ÈôÌìÊıÎª -1, ÔòÃ¿Ìì¶¼ÓĞ)
-    char            hour, minute;           // Ê±·Ö (ÈôÊ±Îª -1, ÔòÔÚ¹æ¶¨µÄ·ÖÖÓÇ©µ½¾ÍÓĞ; Èô·ÖÎª -1, ÔòÔÚ¹æ¶¨µÄĞ¡Ê±Ç©µ½¾ÍÓĞ)
-    double          coinFactor;             // Ó²±ÒÏµÊı
-    double          energyFactor;           // ÌåÁ¦ÏµÊı
-    LL              firstN;                 // Ç° N ¸öÇ©µ½µÄÍæ¼Ò²ÅÄÜ»ñÈ¡½±Àø. Í³¼ÆÊı¾İÖ»»á¾«Ï¸µ½Ìì
-    std::vector<LL> items;                  // ÔùËÍÎïÆ· (ÈôÖ»ÓĞÒ»¸ö ID Îª -1 µÄÏîÄ¿, ÔòËµÃ÷Ã»ÓĞÔùËÍÎïÆ·)
-    std::string     message;                // »î¶¯ÏûÏ¢
+    int             year, month, day;       // å¹´æœˆæ—¥ (è‹¥å¹´ä»½ä¸º -1, åˆ™æ¯å¹´éƒ½æœ‰; è‹¥æœˆä»½ä¸º -1, è‹¥å¤©æ•°ä¸º -1, åˆ™æ¯å¤©éƒ½æœ‰)
+    char            hour, minute;           // æ—¶åˆ† (è‹¥æ—¶ä¸º -1, åˆ™åœ¨è§„å®šçš„åˆ†é’Ÿç­¾åˆ°å°±æœ‰; è‹¥åˆ†ä¸º -1, åˆ™åœ¨è§„å®šçš„å°æ—¶ç­¾åˆ°å°±æœ‰)
+    double          coinFactor;             // ç¡¬å¸ç³»æ•°
+    double          energyFactor;           // ä½“åŠ›ç³»æ•°
+    LL              firstN;                 // å‰ N ä¸ªç­¾åˆ°çš„ç©å®¶æ‰èƒ½è·å–å¥–åŠ±. ç»Ÿè®¡æ•°æ®åªä¼šç²¾ç»†åˆ°å¤©
+    std::vector<LL> items;                  // èµ é€ç‰©å“ (è‹¥åªæœ‰ä¸€ä¸ª ID ä¸º -1 çš„é¡¹ç›®, åˆ™è¯´æ˜æ²¡æœ‰èµ é€ç‰©å“)
+    std::string     message;                // æ´»åŠ¨æ¶ˆæ¯
 
     signInEvent();
     signInEvent(const signInEvent &ev);

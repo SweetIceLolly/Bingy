@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ×°±¸Àà
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: equipment.hpp
+æè¿°: Bingy è£…å¤‡ç±»
+ä½œè€…: å†°æ£
+æ–‡ä»¶: equipment.hpp
 */
 
 #pragma once
@@ -9,41 +9,41 @@
 #include <string>
 #include <unordered_map>
 
-using LL = long long;
+using LL = std::int64_t;
 
-// ×°±¸ÀàĞÍ
+// è£…å¤‡ç±»å‹
 enum class EqiType : unsigned char {
-    // »¤¼×Àà
-    armor_helmet = 0U,          // Í·¿ø
-    armor_body = 1U,            // Õ½¼×
-    armor_leg = 2U,             // »¤ÍÈ
-    armor_boot = 3U,            // Õ½Ñ¥
+    // æŠ¤ç”²ç±»
+    armor_helmet = 0U,          // å¤´ç›”
+    armor_body = 1U,            // æˆ˜ç”²
+    armor_leg = 2U,             // æŠ¤è…¿
+    armor_boot = 3U,            // æˆ˜é´
     
-    // ÎäÆ÷Àà
-    weapon_primary = 4U,        // Ö÷ÎäÆ÷
-    weapon_secondary = 5U,      // ¸±ÎäÆ÷
+    // æ­¦å™¨ç±»
+    weapon_primary = 4U,        // ä¸»æ­¦å™¨
+    weapon_secondary = 5U,      // å‰¯æ­¦å™¨
 
-    // ÊÎÆ·Àà
-    ornament_earrings = 6U,     // ¶ú»·
-    ornament_rings = 7U,        // ½äÖ¸
-    ornament_necklace = 8U,     // ÏîÁ´
-    ornament_jewelry = 9U,      // ±¦Ê¯
+    // é¥°å“ç±»
+    ornament_earrings = 6U,     // è€³ç¯
+    ornament_rings = 7U,        // æˆ’æŒ‡
+    ornament_necklace = 8U,     // é¡¹é“¾
+    ornament_jewelry = 9U,      // å®çŸ³
 
-    // Ò»´ÎĞÔ
+    // ä¸€æ¬¡æ€§
     single_use = 10U
 };
 
 class equipmentData {
 public:
     LL              id;
-    EqiType         type;                               // ×°±¸ÀàĞÍ
+    EqiType         type;                               // è£…å¤‡ç±»å‹
     std::string     name;
-    LL              atk, def, brk, agi, hp, mp, crt;    // Ô­Ê¼¹¥·ÀÆÆÃôÑªÄ§±© (ÇëÊ¹ÓÃ inventoryData ÖĞ¶ÔÓ¦µÄ getter À´»ñÈ¡¼ÆËãºóµÄÊı¾İ)
-    LL              wear;                               // Ô­Ê¼Ä¥Ëğ
-    LL              price;                              // ³öÊÛ¼Û¸ñ
+    LL              atk, def, brk, agi, hp, mp, crt;    // åŸå§‹æ”»é˜²ç ´æ•è¡€é­”æš´ (è¯·ä½¿ç”¨ inventoryData ä¸­å¯¹åº”çš„ getter æ¥è·å–è®¡ç®—åçš„æ•°æ®)
+    LL              wear;                               // åŸå§‹ç£¨æŸ
+    LL              price;                              // å‡ºå”®ä»·æ ¼
 };
 
 extern std::string                             eqiConfigPath;
-extern std::unordered_map<LL, equipmentData>   allEquipments;   // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
+extern std::unordered_map<LL, equipmentData>   allEquipments;   // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
 
 bool bg_load_equipment_config();

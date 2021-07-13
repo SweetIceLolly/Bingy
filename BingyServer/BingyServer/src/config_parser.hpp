@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ÅäÖÃÎÄ¼ş¶ÁÈ¡½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: config_parser.hpp
+æè¿°: Bingy é…ç½®æ–‡ä»¶è¯»å–æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: config_parser.hpp
 */
 
 #include <string>
@@ -17,29 +17,29 @@ public:
     configParser(std::string path);
 
     /*
-    ¶ÁÈ¡ÅäÖÃÎÄ¼ş. ÒÔÏÂÎªÍ¨ÓÃµÄ»Øµ÷º¯ÊıÔ­ĞÍ:
+    è¯»å–é…ç½®æ–‡ä»¶. ä»¥ä¸‹ä¸ºé€šç”¨çš„å›è°ƒå‡½æ•°åŸå‹:
 
     bool stateChangeCallback(const std::string &line, char &state)
-    ÇĞ»» state »Øµ÷º¯Êı
-    line: ¶ÁÈ¡µ½µÄĞĞ
-    state: ÔÚ»Øµ÷º¯ÊıÖĞ¶Ô¸ÃÖµ½øĞĞĞŞ¸ÄÒÔÇĞ»»µ½ÁíÒ»¸ö state
-    ·µ»Ø false ÒÔÖĞ¶ÏÅäÖÃÎÄ¼ş¶ÁÈ¡
+    åˆ‡æ¢ state å›è°ƒå‡½æ•°
+    line: è¯»å–åˆ°çš„è¡Œ
+    state: åœ¨å›è°ƒå‡½æ•°ä¸­å¯¹è¯¥å€¼è¿›è¡Œä¿®æ”¹ä»¥åˆ‡æ¢åˆ°å¦ä¸€ä¸ª state
+    è¿”å› false ä»¥ä¸­æ–­é…ç½®æ–‡ä»¶è¯»å–
 
     bool propGetCallback(const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo)
-    ÊôĞÔĞĞ¶ÁÈ¡»Øµ÷º¯Êı
-    propName: ÊôĞÔÃû
-    propValue: ÊôĞÔÖµ
-    state: µ±Ç°µÄ state
-    lineNo: µ±Ç°ËùÔÚĞĞ
-    ·µ»Ø false ÒÔÖĞ¶ÏÅäÖÃÎÄ¼ş¶ÁÈ¡
+    å±æ€§è¡Œè¯»å–å›è°ƒå‡½æ•°
+    propName: å±æ€§å
+    propValue: å±æ€§å€¼
+    state: å½“å‰çš„ state
+    lineNo: å½“å‰æ‰€åœ¨è¡Œ
+    è¿”å› false ä»¥ä¸­æ–­é…ç½®æ–‡ä»¶è¯»å–
 
     bool beginCallback(const char &state)
-    ¶ÁÈ¡µ½¿ªÊ¼±ê¼ÇµÄ»Øµ÷º¯Êı
-    state: µ±Ç°µÄ state
+    è¯»å–åˆ°å¼€å§‹æ ‡è®°çš„å›è°ƒå‡½æ•°
+    state: å½“å‰çš„ state
 
     bool endCallback(const char &state)
-    ¶ÁÈ¡µ½½áÊø±ê¼ÇµÄ»Øµ÷º¯Êı
-    state: µ±Ç°µÄ state
+    è¯»å–åˆ°ç»“æŸæ ‡è®°çš„å›è°ƒå‡½æ•°
+    state: å½“å‰çš„ state
     */
     bool load(
         std::function<bool(const std::string &line, char &state)> stateChangeCallback,

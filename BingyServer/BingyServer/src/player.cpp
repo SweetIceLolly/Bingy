@@ -1,4 +1,4 @@
-﻿/*
+/*
 描述: Bingy 玩家相关操作
 作者: 冰棍
 文件: player.cpp
@@ -20,7 +20,7 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
 // 构造函数
 
 player::player() {
-    throw std::exception("创建 player 对象时必须指定 QQ 号!");
+    throw std::runtime_error("创建 player 对象时必须指定 QQ 号!");
 }
 
 player::player(const player &p) {
@@ -87,7 +87,7 @@ bool bg_player_exist(const LL &id) {
 
 // 懒人宏
 // 把玩家属性中 LL 类型的数据设置为0, 并把对应的缓存标识设置为 true
-#define SET_LL_PROP_ZERO(prop) p.##prop = 0; p.##prop##_cache = true;
+#define SET_LL_PROP_ZERO(prop) p. prop = 0; p. prop## _cache = true;
 
 // 无条件添加玩家到数据库和字典中. 抛出的异常需要由外部处理
 bool bg_player_add(const LL &id) {
@@ -169,11 +169,11 @@ bool bg_player_add(const LL &id) {
 #define SET_LL_PROP(prop)                       \
     tmp = doc[#prop];                           \
     if (tmp) {                                  \
-        p.##prop = tmp.get_int64().value;       \
-        p.##prop##_cache = true;                \
+        p. prop = tmp.get_int64().value;        \
+        p. prop## _cache = true;                \
     }                                           \
     else                                        \
-        throw std::exception("获取玩家属性失败");
+        throw std::runtime_error("获取玩家属性失败");
 
 // 从数据库读取所有玩家
 bool bg_get_allplayers_from_db() {
@@ -188,7 +188,7 @@ bool bg_get_allplayers_from_db() {
                 id = tmp.get_int64().value;
             player p(id);
             
-            p.nickname = doc["nickname"].get_utf8().value;  p.nickname_cache = true;
+            p.nickname = doc["nickname"].get_utf8().value.data();  p.nickname_cache = true;
             SET_LL_PROP(signInCount);
             SET_LL_PROP(signInCountCont);
             SET_LL_PROP(lastFight);
@@ -207,21 +207,21 @@ bool bg_get_allplayers_from_db() {
             if (tmp)
                 invListFromBson(tmp, p.inventory);
             else
-                throw std::exception(("获取玩家" + std::to_string(id) + "的 inventory 属性失败").c_str());
+                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 inventory 属性失败").c_str());
 
             // 读取玩家装备
             tmp = doc["equipments"];
             if (tmp)
                 eqiMapFromBson(tmp, p.equipments);
             else
-                throw std::exception(("获取玩家" + std::to_string(id) + "的 equipments 属性失败").c_str());
+                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 equipments 属性失败").c_str());
 
             // 读取一次性装备
             tmp = doc["equipItems"];
             if (tmp)
                 invListFromBson(tmp, p.equipItems);
             else
-                throw std::exception(("获取玩家" + std::to_string(id) + "的 equipItems 属性失败").c_str());
+                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 equipItems 属性失败").c_str());
 
             // todo
             //p.buyCount
@@ -246,41 +246,41 @@ bool bg_get_allplayers_from_db() {
 // 方便编写 LL 类型属性的 getter 和 setter. 其中包括:
 // 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
 #define LL_GET_SET_INC(propName)                                                \
-    LL player::get_##propName##(const bool &use_cache) {                        \
-        if (##propName##_cache && use_cache)                                    \
-            return this->##propName##;                                          \
+    LL player::get_ ##propName (const bool &use_cache) {                        \
+        if ( propName## _cache && use_cache)                                    \
+            return this-> propName ;                                            \
                                                                                 \
         auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, #propName);   \
         if (!result)                                                            \
-            throw std::exception("找不到对应的玩家 ID");                         \
+            throw std::runtime_error("找不到对应的玩家 ID");                     \
         auto field = result->view()[#propName];                                 \
         if (!field.raw())                                                       \
-            throw std::exception("没有找到 " #propName " field");                \
+            throw std::runtime_error("没有找到 " #propName " field");            \
         auto tmp = field.get_int64().value;                                     \
                                                                                 \
         LOCK_CURR_PLAYER;                                                       \
-        this->##propName## = tmp;                                               \
-        this->##propName##_cache = true;                                        \
+        this-> propName  = tmp;                                                 \
+        this-> propName## _cache = true;                                        \
         return tmp;                                                             \
     }                                                                           \
                                                                                 \
-    bool player::set_##propName##(const LL &val) {                              \
+    bool player::set_ ##propName (const LL &val) {                              \
         LOCK_CURR_PLAYER;                                                       \
         if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",               \
             bsoncxx::builder::stream::document{} << #propName << val            \
             << bsoncxx::builder::stream::finalize)) {                           \
                                                                                 \
-            this->##propName## = val;                                           \
-            this->##propName##_cache = true;                                    \
+            this-> propName = val;                                              \
+            this-> propName## _cache = true;                                    \
             return true;                                                        \
         }                                                                       \
         return false;                                                           \
     }                                                                           \
                                                                                 \
-    bool player::inc_##propName##(const LL &val) {                              \
-        if (!##propName##_cache) {                                              \
-            get_##propName##();                                                 \
-            if (!##propName##_cache) {                                          \
+    bool player::inc_ ##propName (const LL &val) {                              \
+        if (! propName## _cache) {                                              \
+            get_ ##propName ();                                                 \
+            if (! propName## _cache) {                                          \
                 return false;                                                   \
             }                                                                   \
         }                                                                       \
@@ -290,7 +290,7 @@ bool bg_get_allplayers_from_db() {
             bsoncxx::builder::stream::document{} << #propName << val            \
             << bsoncxx::builder::stream::finalize)) {                           \
                                                                                 \
-            this->##propName## += val;                                          \
+            this-> propName  += val;                                            \
             return true;                                                        \
         }                                                                       \
         return false;                                                           \
@@ -321,11 +321,11 @@ std::string player::get_nickname(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "nickname");
     if (!result)
-        throw std::exception("找不到对应的玩家 ID");
+        throw std::runtime_error("找不到对应的玩家 ID");
     auto field = result->view()["nickname"];
     if (!field.raw())
-        throw std::exception("没有找到 nickname field");
-    auto tmp = std::string(result->view()["nickname"].get_utf8().value);
+        throw std::runtime_error("没有找到 nickname field");
+    auto tmp = std::string(result->view()["nickname"].get_utf8().value.data());
 
     LOCK_CURR_PLAYER;
     this->nickname = tmp;
@@ -369,10 +369,10 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "inventory");
     if (!result)
-        throw std::exception("找不到对应玩家 ID");
+        throw std::runtime_error("找不到对应玩家 ID");
     auto field = result->view()["inventory"];
     if (!field.raw())
-        throw std::exception("没有找到 inventory field");
+        throw std::runtime_error("没有找到 inventory field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
@@ -556,10 +556,10 @@ std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &us
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipments");
     if (!result)
-        throw std::exception("找不到对应玩家 ID");
+        throw std::runtime_error("找不到对应玩家 ID");
     auto field = result->view()["equipments"];
     if (!field.raw())
-        throw std::exception("没有找到 equipments field");
+        throw std::runtime_error("没有找到 equipments field");
 
     std::unordered_map<EqiType, inventoryData> rtn;
     eqiMapFromBson(field, rtn);
@@ -608,10 +608,10 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "equipItems");
     if (!result)
-        throw std::exception("找不到对应玩家 ID");
+        throw std::runtime_error("找不到对应玩家 ID");
     auto field = result->view()["equipItems"];
     if (!field.raw())
-        throw std::exception("没有找到 equipItems field");
+        throw std::runtime_error("没有找到 equipItems field");
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
@@ -907,7 +907,7 @@ void player::waitConfirmComplete() {
 // 懒人宏
 // 为所有玩家的指定属性增加指定数值
 #define ALL_PLAYER_INC(field)                                           \
-    bool bg_all_player_inc_##field##(const LL &val) {                   \
+    bool bg_all_player_inc_ ##field (const LL &val) {                   \
         /* 更新数据库, 成功后再更新本地缓存 */                            \
         if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
             bsoncxx::builder::stream::document{} << #field << val       \
@@ -915,15 +915,15 @@ void player::waitConfirmComplete() {
                                                                         \
             /* 为所有玩家添加硬币 */                                     \
             for (auto &p : allPlayers) {                                \
-                if (!p.second.##field##_cache) {                        \
-                    p.second.get_##field##();                           \
-                    if (!p.second.##field##_cache) {                    \
+                if (!p.second. field## _cache) {                        \
+                    p.second.get_ ##field ();                           \
+                    if (!p.second. field## _cache) {                    \
                         return false;                                   \
                     }                                                   \
                 }                                                       \
                                                                         \
                 std::unique_lock lock(p.second.mutexPlayer);            \
-                p.second.##field## += val;                              \
+                p.second. field += val;                                 \
                 lock.unlock();                                          \
             }                                                           \
             return true;                                                \

@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ±³°üÀà
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: inventory.hpp
+æè¿°: Bingy èƒŒåŒ…ç±»
+ä½œè€…: å†°æ£
+æ–‡ä»¶: inventory.hpp
 */
 
 #pragma once
@@ -9,30 +9,30 @@
 #include "equipment.hpp"
 #include <cmath>
 
-// ÀÁÈËºê
-// ×°±¸ÊôĞÔ = Ä¬ÈÏÊôĞÔ * 1.14 ^ ×°±¸µÈ¼¶ * (1 - 0.35 * (Ä¥Ëğ¶È / Ô­Ê¼Ä¥Ëğ))
-// Í¨¹ı×°±¸µÄµÈ¼¶À´¼ÆËã¶ÔÓ¦µÄÊôĞÔÖµ
-// ¼ÆËãÖ®ºó»á°Ñ½á¹û´æÈë¾²Ì¬±äÁ¿, Ö»ÓĞÔÚ calc_ÊôĞÔÃû_cache Îª false µÄÊ±ºòÖØĞÂ¼ÆËã
+// æ‡’äººå®
+// è£…å¤‡å±æ€§ = é»˜è®¤å±æ€§ * 1.14 ^ è£…å¤‡ç­‰çº§ * (1 - 0.35 * (ç£¨æŸåº¦ / åŸå§‹ç£¨æŸ))
+// é€šè¿‡è£…å¤‡çš„ç­‰çº§æ¥è®¡ç®—å¯¹åº”çš„å±æ€§å€¼
+// è®¡ç®—ä¹‹åä¼šæŠŠç»“æœå­˜å…¥é™æ€å˜é‡, åªæœ‰åœ¨ calc_å±æ€§å_cache ä¸º false çš„æ—¶å€™é‡æ–°è®¡ç®—
 #define CALC_EQI_PROP(prop)             \
     if (id == -1)                       \
         return 0;                       \
     static double calc_result = 0;      \
     if (!calc_##prop##_cache) {         \
-        calc_result = allEquipments.at(id).##prop## * pow(1.14, level) * (1 - 0.35 * (wear / allEquipments.at(id).wear));   \
+        calc_result = allEquipments.at(id). prop * pow(1.14, level) * (1 - 0.35 * (wear / allEquipments.at(id).wear));   \
         calc_##prop##_cache = true;     \
     }                                   \
     return calc_result;
         
 
-using LL = long long;
+using LL = std::int64_t;
 
 class inventoryData {
 public:
-    LL  id;             // ÎïÆ· ID, -1 ´ú±í¿Õ
-    LL  level;          // µÈ¼¶, -1 ´ú±íÒ»´ÎĞÔÎïÆ·
-    LL  wear;           // Ä¥Ëğ, -1 ´ú±íÒ»´ÎĞÔÎïÆ·
+    LL  id;             // ç‰©å“ ID, -1 ä»£è¡¨ç©º
+    LL  level;          // ç­‰çº§, -1 ä»£è¡¨ä¸€æ¬¡æ€§ç‰©å“
+    LL  wear;           // ç£¨æŸ, -1 ä»£è¡¨ä¸€æ¬¡æ€§ç‰©å“
 
-    // ×°±¸µÄ¹¥·ÀÆÆÃôÑªÄ§±©
+    // è£…å¤‡çš„æ”»é˜²ç ´æ•è¡€é­”æš´
     bool calc_atk_cache = false;
     double calc_atk() {
         if (id == -1)

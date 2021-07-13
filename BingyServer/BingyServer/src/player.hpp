@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy Íæ¼ÒÏà¹Ø²Ù×÷µÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: player.hpp
+æè¿°: Bingy ç©å®¶ç›¸å…³æ“ä½œçš„æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: player.hpp
 */
 
 #pragma once
@@ -11,62 +11,63 @@
 #include <mutex>
 #include <condition_variable>
 #include <list>
+#include <vector>
 #include "inventory.hpp"
 #include "equipment.hpp"
 
-#define INV_DEFAULT_CAPACITY 50                                                     // Ä¬ÈÏ±³°üÈİÁ¿
+#define INV_DEFAULT_CAPACITY 50                                                     // é»˜è®¤èƒŒåŒ…å®¹é‡
 
-// ÀÁÈËºê
-// ¶¨Òå LL ÀàĞÍµÄÊôĞÔµÄ getter, setter, ºÍ inc (Ôö¼ÓÊıÖµ)µÄº¯ÊıÔ­ĞÍ
+// æ‡’äººå®
+// å®šä¹‰ LL ç±»å‹çš„å±æ€§çš„ getter, setter, å’Œ inc (å¢åŠ æ•°å€¼)çš„å‡½æ•°åŸå‹
 #define DEF_LL_GET_SET_INC(propName)                            \
-    LL get_##propName##(const bool &use_cache = true);          \
-    bool set_##propName##(const LL &val);                       \
-    bool inc_##propName##(const LL &val);                       \
+    LL get_ ##propName (const bool &use_cache = true);          \
+    bool set_ ##propName (const LL &val);                       \
+    bool inc_ ##propName (const LL &val);                       \
 
-using LL = long long;
+using LL = std::int64_t;
 
 class player {
 private:
-    LL id;                                                                          // QQ ºÅ
+    LL id;                                                                          // QQ å·
 
-    // ¶à´ÎÇ¿»¯µÄÈ·ÈÏ×´Ì¬
-    std::mutex mutexStatus;                                                         // Ïß³Ì×´Ì¬Ëø
-    bool upgrading;                                                                 // Íæ¼ÒÊÇ·ñÈ·ÈÏÒªÇ¿»¯
-    std::condition_variable cvStatusChange;                                         // ×´Ì¬·¢Éú±ä»¯
-    std::condition_variable cvPrevConfirmCompleted;                                 // ÉÏÒ»´Î²Ù×÷ÊÇ·ñÍê³É
+    // å¤šæ¬¡å¼ºåŒ–çš„ç¡®è®¤çŠ¶æ€
+    std::mutex mutexStatus;                                                         // çº¿ç¨‹çŠ¶æ€é”
+    bool upgrading;                                                                 // ç©å®¶æ˜¯å¦ç¡®è®¤è¦å¼ºåŒ–
+    std::condition_variable cvStatusChange;                                         // çŠ¶æ€å‘ç”Ÿå˜åŒ–
+    std::condition_variable cvPrevConfirmCompleted;                                 // ä¸Šä¸€æ¬¡æ“ä½œæ˜¯å¦å®Œæˆ
 
 public:
-    std::mutex mutexPlayer;                                                         // Íæ¼Ò²Ù×÷Ëø
+    std::mutex mutexPlayer;                                                         // ç©å®¶æ“ä½œé”
 
-    // [×¢Òâ] ÒÔÏÂÊôĞÔÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter ºÍ setter. ³ı·ÇÄãÖªµÀÄãÔÚ×öÊ²Ã´, ·ñÔò²»ÒªÖ±½Ó¶ÁĞ´ËûÃÇµÄÖµ
-    std::string nickname;                   bool nickname_cache = false;            // êÇ³Æ (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL signInCount;                         bool signInCount_cache = false;         // Ç©µ½´ÎÊı (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL signInCountCont;                     bool signInCountCont_cache = false;     // Á¬ĞøÇ©µ½´ÎÊı (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL lastFight;                           bool lastFight_cache = false;           // ÉÏÒ»´Î´ò¹ÖÊ±¼ä. Îª UNIX Ê±¼ä´Á, µ¥Î»ÎªÃë (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL lastSignIn;                          bool lastSignIn_cache = false;          // ÉÏÒ»´ÎÇ©µ½Ê±¼ä. Îª UNIX Ê±¼ä´Á, µ¥Î»ÎªÃë (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL coins;                               bool coins_cache = false;               // Ó²±ÒÊı (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL heroCoin;                            bool heroCoin_cache = false;            // Ó¢ĞÛ±ÒÊı (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL level;                               bool level_cache = false;               // µÈ¼¶ (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL blessing;                            bool blessing_cache = false;            // ×£¸£ (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL energy;                              bool energy_cache = false;              // ÌåÁ¦ (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL exp;                                 bool exp_cache = false;                 // ¾­ÑéÊı (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    LL invCapacity;                         bool invCapacity_cache = false;         // ±³°üÈİÁ¿ (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    std::list<inventoryData> inventory;     bool inventory_cache = false;           // ±³°ü (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
-    std::unordered_map<LL, LL> buyCount;    bool buyCount_cache = false;            // ÉÌÆ·¹ºÂò´ÎÊı (ÉÌÆ· ID -> ´ÎÊı) (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ²Ù×÷º¯Êı)
+    // [æ³¨æ„] ä»¥ä¸‹å±æ€§è¯·ä½¿ç”¨å¯¹åº”çš„ getter å’Œ setter. é™¤éä½ çŸ¥é“ä½ åœ¨åšä»€ä¹ˆ, å¦åˆ™ä¸è¦ç›´æ¥è¯»å†™ä»–ä»¬çš„å€¼
+    std::string nickname;                   bool nickname_cache = false;            // æ˜µç§° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL signInCount;                         bool signInCount_cache = false;         // ç­¾åˆ°æ¬¡æ•° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL signInCountCont;                     bool signInCountCont_cache = false;     // è¿ç»­ç­¾åˆ°æ¬¡æ•° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL lastFight;                           bool lastFight_cache = false;           // ä¸Šä¸€æ¬¡æ‰“æ€ªæ—¶é—´. ä¸º UNIX æ—¶é—´æˆ³, å•ä½ä¸ºç§’ (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL lastSignIn;                          bool lastSignIn_cache = false;          // ä¸Šä¸€æ¬¡ç­¾åˆ°æ—¶é—´. ä¸º UNIX æ—¶é—´æˆ³, å•ä½ä¸ºç§’ (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL coins;                               bool coins_cache = false;               // ç¡¬å¸æ•° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL heroCoin;                            bool heroCoin_cache = false;            // è‹±é›„å¸æ•° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL level;                               bool level_cache = false;               // ç­‰çº§ (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL blessing;                            bool blessing_cache = false;            // ç¥ç¦ (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL energy;                              bool energy_cache = false;              // ä½“åŠ› (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL exp;                                 bool exp_cache = false;                 // ç»éªŒæ•° (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    LL invCapacity;                         bool invCapacity_cache = false;         // èƒŒåŒ…å®¹é‡ (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    std::list<inventoryData> inventory;     bool inventory_cache = false;           // èƒŒåŒ… (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
+    std::unordered_map<LL, LL> buyCount;    bool buyCount_cache = false;            // å•†å“è´­ä¹°æ¬¡æ•° (å•†å“ ID -> æ¬¡æ•°) (è¯·ä½¿ç”¨å¯¹åº”çš„æ“ä½œå‡½æ•°)
     std::unordered_map<EqiType,
-        inventoryData> equipments;          bool equipments_cache = false;          // ÒÑ×°±¸µÄ×°±¸ (×°±¸ÀàĞÍ -> inventoryData) (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ²Ù×÷º¯Êı)
-    std::list<inventoryData> equipItems;    bool equipItems_cache = false;          // ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ· (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ²Ù×÷º¯Êı)
-    LL vip;                                 bool vip_cache = false;                 // VIP (ÇëÊ¹ÓÃ¶ÔÓ¦µÄ getter »ò setter)
+        inventoryData> equipments;          bool equipments_cache = false;          // å·²è£…å¤‡çš„è£…å¤‡ (è£…å¤‡ç±»å‹ -> inventoryData) (è¯·ä½¿ç”¨å¯¹åº”çš„æ“ä½œå‡½æ•°)
+    std::list<inventoryData> equipItems;    bool equipItems_cache = false;          // å·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“ (è¯·ä½¿ç”¨å¯¹åº”çš„æ“ä½œå‡½æ•°)
+    LL vip;                                 bool vip_cache = false;                 // VIP (è¯·ä½¿ç”¨å¯¹åº”çš„ getter æˆ– setter)
 
     // ---------------------------------------------------------
 
-    // Ä¬ÈÏ¹¹Ôìº¯Êı
+    // é»˜è®¤æ„é€ å‡½æ•°
     player();
 
-    // ¸´ÖÆ¹¹Ôìº¯Êı
+    // å¤åˆ¶æ„é€ å‡½æ•°
     player(const player &p);
 
-    // Ö¸¶¨ QQ ºÅµÄ¹¹Ôìº¯Êı
+    // æŒ‡å®š QQ å·çš„æ„é€ å‡½æ•°
     player(const LL &qq);
 
     // ---------------------------------------------------------
@@ -89,83 +90,83 @@ public:
     DEF_LL_GET_SET_INC(invCapacity);
     DEF_LL_GET_SET_INC(vip);
 
-    // »ñÈ¡Íæ¼ÒÊôĞÔ
+    // è·å–ç©å®¶å±æ€§
     bool atk_cache = false;
-    double get_atk();           // ¹¥
+    double get_atk();           // æ”»
 
     bool def_cache = false;
-    double get_def();           // ·À
+    double get_def();           // é˜²
 
     bool brk_cache = false;
-    double get_brk();           // ÆÆ
+    double get_brk();           // ç ´
 
     bool agi_cache = false;
-    double get_agi();           // Ãô
+    double get_agi();           // æ•
 
     bool hp_cache = false;
-    double get_hp();            // Ñª
+    double get_hp();            // è¡€
 
     bool mp_cache = false;
-    double get_mp();            // Ä§
+    double get_mp();            // é­”
 
     bool crt_cache = false;
-    double get_crt();           // ±©
+    double get_crt();           // æš´
 
-    LL get_exp_needed();        // Éı¼¶ËùĞè¾­Ñé
-    LL get_cd();                // ÀäÈ´Ê±¼ä
+    LL get_exp_needed();        // å‡çº§æ‰€éœ€ç»éªŒ
+    LL get_cd();                // å†·å´æ—¶é—´
 
     void resetCache();
 
-    // »ñÈ¡Õû¸ö±³°üÁĞ±í
+    // è·å–æ•´ä¸ªèƒŒåŒ…åˆ—è¡¨
     std::list<inventoryData> get_inventory(const bool &use_cache = true);
-    // »ñÈ¡±³°ü×°±¸ÊıÁ¿
+    // è·å–èƒŒåŒ…è£…å¤‡æ•°é‡
     LL get_inventory_size(const bool &use_cache = true);
-    // °´ÕÕÖ¸¶¨ĞòºÅÒÆ³ı±³°üÎïÆ·. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false. ×¢Òâ, Ö¸¶¨ĞòºÅ±ØĞë´Ó 0 ¿ªÊ¼
+    // æŒ‰ç…§æŒ‡å®šåºå·ç§»é™¤èƒŒåŒ…ç‰©å“. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false. æ³¨æ„, æŒ‡å®šåºå·å¿…é¡»ä» 0 å¼€å§‹
     bool remove_at_inventory(const LL &index);
-    // °´ÕÕÖ¸¶¨µÄĞòºÅÁĞ±íÒÆ³ı±³°üÎïÆ·. Ö¸¶¨µÄĞòºÅ²»µÃÖØ¸´. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false. ×¢Òâ, Ö¸¶¨ĞòºÅ±ØĞë´Ó 0 ¿ªÊ¼
+    // æŒ‰ç…§æŒ‡å®šçš„åºå·åˆ—è¡¨ç§»é™¤èƒŒåŒ…ç‰©å“. æŒ‡å®šçš„åºå·ä¸å¾—é‡å¤. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false. æ³¨æ„, æŒ‡å®šåºå·å¿…é¡»ä» 0 å¼€å§‹
     bool remove_at_inventory(const std::vector<LL> &indexes);
-    // Ìí¼ÓĞÂÎïÆ·µ½±³°üÄ©Î²
+    // æ·»åŠ æ–°ç‰©å“åˆ°èƒŒåŒ…æœ«å°¾
     bool add_inventory_item(const inventoryData &item);
-    // ÉèÖÃÕû¸ö±³°üÁĞ±í
+    // è®¾ç½®æ•´ä¸ªèƒŒåŒ…åˆ—è¡¨
     bool set_inventory(const std::list<inventoryData> &val);
 
-    // »ñÈ¡Õû¸ö¹ºÂò´ÎÊı±í
+    // è·å–æ•´ä¸ªè´­ä¹°æ¬¡æ•°è¡¨
     std::unordered_map<LL, LL> get_buyCount(const bool &use_cache = true);
-    // »ñÈ¡¹ºÂò´ÎÊı±íÖĞÄ³¸öÉÌÆ·µÄ¹ºÂò´ÎÊı. Èç¹ûÕÒ²»µ½¶ÔÓ¦µÄÉÌÆ·¹ºÂò¼ÇÂ¼, Ôò·µ»Ø 0
+    // è·å–è´­ä¹°æ¬¡æ•°è¡¨ä¸­æŸä¸ªå•†å“çš„è´­ä¹°æ¬¡æ•°. å¦‚æœæ‰¾ä¸åˆ°å¯¹åº”çš„å•†å“è´­ä¹°è®°å½•, åˆ™è¿”å› 0
     LL get_buyCount_item(const LL &id, const bool &use_cache = true);
-    // ÉèÖÃ¹ºÂò´ÎÊı±íÖĞÄ³¸öÉÌÆ·µÄ¹ºÂò´ÎÊı. Èç¹û¶ÔÓ¦ÉÌÆ·µÄ¹ºÂò¼ÇÂ¼²»´æÔÚ, Ôò»á´´½¨
+    // è®¾ç½®è´­ä¹°æ¬¡æ•°è¡¨ä¸­æŸä¸ªå•†å“çš„è´­ä¹°æ¬¡æ•°. å¦‚æœå¯¹åº”å•†å“çš„è´­ä¹°è®°å½•ä¸å­˜åœ¨, åˆ™ä¼šåˆ›å»º
     bool set_buyCount_item(const LL &id, const LL &count);
 
-    // »ñÈ¡Õû¸öÒÑ×°±¸µÄ×°±¸±í
+    // è·å–æ•´ä¸ªå·²è£…å¤‡çš„è£…å¤‡è¡¨
     std::unordered_map<EqiType, inventoryData> get_equipments(const bool &use_cache = true);
-    // »ñÈ¡Ä³¸öÀàĞÍµÄ×°±¸
+    // è·å–æŸä¸ªç±»å‹çš„è£…å¤‡
     inventoryData get_equipments_item(const EqiType &type, const bool &use_cache = true);
-    // ÉèÖÃÄ³¸öÀàĞÍµÄ×°±¸. Èç¹ûÒªÒÆ³ı, Ôò°Ñ item µÄ id ÉèÖÃÎª -1
+    // è®¾ç½®æŸä¸ªç±»å‹çš„è£…å¤‡. å¦‚æœè¦ç§»é™¤, åˆ™æŠŠ item çš„ id è®¾ç½®ä¸º -1
     bool set_equipments_item(const EqiType &type, const inventoryData &item);
 
-    // »ñÈ¡Õû¸öÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·±í
+    // è·å–æ•´ä¸ªå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“è¡¨
     std::list<inventoryData> get_equipItems(const bool &use_cache = true);
-    // »ñÈ¡ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·ÊıÁ¿
+    // è·å–å·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“æ•°é‡
     LL get_equipItems_size(const bool &use_cache = true);
-    // ÒÆ³ıÄ³¸öÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·. Èç¹ûÖ¸¶¨ĞòºÅÎŞĞ§, Ôò·µ»Ø false. ×¢Òâ, Ö¸¶¨ĞòºÅ±ØĞë´Ó 0 ¿ªÊ¼
+    // ç§»é™¤æŸä¸ªå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“. å¦‚æœæŒ‡å®šåºå·æ— æ•ˆ, åˆ™è¿”å› false. æ³¨æ„, æŒ‡å®šåºå·å¿…é¡»ä» 0 å¼€å§‹
     bool remove_at_equipItems(const LL &index);
-    // Çå¿ÕÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·
+    // æ¸…ç©ºå·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“
     bool clear_equipItems();
-    // Ìí¼ÓĞÂÎïÆ·µ½ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·ÁĞ±íÄ©Î²
+    // æ·»åŠ æ–°ç‰©å“åˆ°å·²è£…å¤‡çš„ä¸€æ¬¡æ€§ç‰©å“åˆ—è¡¨æœ«å°¾
     bool add_equipItems_item(const inventoryData &item);
 
-    bool confirmInProgress = false;                                                 // ÊÇ·ñÓĞ´ıÈ·ÈÏµÄÇ¿»¯
-    // È¡ÏûÇ¿»¯È·ÈÏ
+    bool confirmInProgress = false;                                                 // æ˜¯å¦æœ‰å¾…ç¡®è®¤çš„å¼ºåŒ–
+    // å–æ¶ˆå¼ºåŒ–ç¡®è®¤
     void abortUpgrade();
-    // È·ÈÏÇ¿»¯È·ÈÏ
+    // ç¡®è®¤å¼ºåŒ–ç¡®è®¤
     void confirmUpgrade();
-    // µÈ´ıÇ¿»¯È·ÈÏ. Èç¹ûÍæ¼ÒÈ·ÈÏÁËÇ¿»¯, ¾Í·µ»Ø true; ·ñÔò·µ»Ø false
+    // ç­‰å¾…å¼ºåŒ–ç¡®è®¤. å¦‚æœç©å®¶ç¡®è®¤äº†å¼ºåŒ–, å°±è¿”å› true; å¦åˆ™è¿”å› false
     bool waitUpgradeConfirm();
-    // µÈ´ıÈ·ÈÏÍê³É
+    // ç­‰å¾…ç¡®è®¤å®Œæˆ
     void waitConfirmComplete();
 };
 
-extern std::unordered_map<long long, player>   allPlayers;
+extern std::unordered_map<std::int64_t, player>   allPlayers;
 extern std::mutex                              mutexAllPlayers;
 
 bool bg_player_exist(const LL &id);

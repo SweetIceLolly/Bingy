@@ -1,26 +1,26 @@
 /*
-ÃèÊö: Bingy ½»Ò×³¡Ïà¹Ø²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: inventory.hpp
+æè¿°: Bingy äº¤æ˜“åœºç›¸å…³æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: inventory.hpp
 */
 
 #include "trade.hpp"
 #include "database.hpp"
 #include <sstream>
 
-std::mutex              mutexAllTradeItems;             // ½»Ò×³¡Ëø
-std::map<LL, tradeData> allTradeItems;                  // ËùÓĞ½»Ò×³¡ÌõÄ¿
-bool                    allTradeItems_cache = false;    // ½»Ò×³¡ÌõÄ¿»º´æ
+std::mutex              mutexAllTradeItems;             // äº¤æ˜“åœºé”
+std::map<LL, tradeData> allTradeItems;                  // æ‰€æœ‰äº¤æ˜“åœºæ¡ç›®
+bool                    allTradeItems_cache = false;    // äº¤æ˜“åœºæ¡ç›®ç¼“å­˜
 
-std::mutex              mutexTradeId;                   // ½»Ò× ID Ëø
-LL                      currTradeId;                    // µ±Ç°½»Ò× ID
-bool                    currTradeId_cache = false;      // ½»Ò× ID »º´æ
+std::mutex              mutexTradeId;                   // äº¤æ˜“ ID é”
+LL                      currTradeId;                    // å½“å‰äº¤æ˜“ ID
+bool                    currTradeId_cache = false;      // äº¤æ˜“ ID ç¼“å­˜
 
-std::mutex              mutexTradeStr;                  // ½»Ò×³¡×Ö·û´®»º´æËø
-std::string             tradeStr;                       // ½»Ò×³¡×Ö·û´®»º´æ, ÒÔ½ÚÊ¡Ã¿´ÎÉú³É½»Ò×³¡×Ö·û´®µÄ¿ªÏú
-bool                    tradeStr_cache = false;         // ½»Ò×³¡×Ö·û´®»º´æ±ê¼Ç
+std::mutex              mutexTradeStr;                  // äº¤æ˜“åœºå­—ç¬¦ä¸²ç¼“å­˜é”
+std::string             tradeStr;                       // äº¤æ˜“åœºå­—ç¬¦ä¸²ç¼“å­˜, ä»¥èŠ‚çœæ¯æ¬¡ç”Ÿæˆäº¤æ˜“åœºå­—ç¬¦ä¸²çš„å¼€é”€
+bool                    tradeStr_cache = false;         // äº¤æ˜“åœºå­—ç¬¦ä¸²ç¼“å­˜æ ‡è®°
 
-bool bg_init_tradeId();                                 // ÔÚÊı¾İ¿âÖĞ³õÊ¼»¯½»Ò× ID ¼ÇÂ¼
+bool bg_init_tradeId();                                 // åœ¨æ•°æ®åº“ä¸­åˆå§‹åŒ–äº¤æ˜“ ID è®°å½•
 
 LL bg_get_tradeId(const bool &use_cache) {
     if (currTradeId_cache && use_cache)
@@ -28,18 +28,18 @@ LL bg_get_tradeId(const bool &use_cache) {
 
     auto result = dbFindOne(DB_COLL_TRADE, "type", "tradeId", "value");
     if (!result) {
-        console_log("Ã»ÓĞÔÚ½»Ò×³¡Êı¾İ¿âÖĞÕÒµ½ tradeId ¼ÇÂ¼, ³¢ÊÔÖØĞÂ´´½¨...", LogType::warning);
+        console_log("æ²¡æœ‰åœ¨äº¤æ˜“åœºæ•°æ®åº“ä¸­æ‰¾åˆ° tradeId è®°å½•, å°è¯•é‡æ–°åˆ›å»º...", LogType::warning);
         if (!bg_init_tradeId())
-            throw std::exception("³¢ÊÔ³õÊ¼»¯½»Ò× ID Ê§°Ü");
-        console_log("tradeId ÒÑÖØÖÃÎª 0", LogType::warning);
+            throw std::runtime_error("å°è¯•åˆå§‹åŒ–äº¤æ˜“ ID å¤±è´¥");
+        console_log("tradeId å·²é‡ç½®ä¸º 0", LogType::warning);
         return 0;
     }
     auto field = result->view()["value"];
     if (!field.raw()) {
-        console_log("Ã»ÓĞÔÚ½»Ò×³¡Êı¾İ¿âÖĞÕÒµ½ tradeId ¼ÇÂ¼, ³¢ÊÔÖØĞÂ´´½¨...", LogType::warning);
+        console_log("æ²¡æœ‰åœ¨äº¤æ˜“åœºæ•°æ®åº“ä¸­æ‰¾åˆ° tradeId è®°å½•, å°è¯•é‡æ–°åˆ›å»º...", LogType::warning);
         if (!bg_init_tradeId())
-            throw std::exception("³¢ÊÔ³õÊ¼»¯½»Ò× ID Ê§°Ü");
-        console_log("tradeId ÒÑÖØÖÃÎª 0", LogType::warning);
+            throw std::runtime_error("å°è¯•åˆå§‹åŒ–äº¤æ˜“ ID å¤±è´¥");
+        console_log("tradeId å·²é‡ç½®ä¸º 0", LogType::warning);
         return 0;
     }
     auto tmp = field.get_int64().value;
@@ -88,10 +88,10 @@ bool bg_inc_tradeId() {
     return false;
 }
 
-// ´¦Àí½»Ò×³¡ÏîÄ¿µÄ BSON Êı¾İ, ²¢°ÑÄÚÈİÌí¼Óµ½Ö¸¶¨µÄÈİÆ÷ÖĞ
-// ×¢Òâ, ¸Ãº¯Êı¼ÙÉè elem ÊÇºÏ·¨µÄÇÒ´æÓĞ½»Ò×³¡ÏîÄ¿Êı¾İ
+// å¤„ç†äº¤æ˜“åœºé¡¹ç›®çš„ BSON æ•°æ®, å¹¶æŠŠå†…å®¹æ·»åŠ åˆ°æŒ‡å®šçš„å®¹å™¨ä¸­
+// æ³¨æ„, è¯¥å‡½æ•°å‡è®¾ elem æ˜¯åˆæ³•çš„ä¸”å­˜æœ‰äº¤æ˜“åœºé¡¹ç›®æ•°æ®
 void tradeMapFromBson(const bsoncxx::document::view &elem, std::map<LL, tradeData> &container) {
-    if (elem.find("type") != elem.end() && elem["type"].get_utf8().value == "tradeId")      // ºöÂÔµôÏÂÒ»¸ö½»Ò× ID µÄ¼ÇÂ¼
+    if (elem.find("type") != elem.end() && elem["type"].get_utf8().value.data() == std::string("tradeId"))      // å¿½ç•¥æ‰ä¸‹ä¸€ä¸ªäº¤æ˜“ ID çš„è®°å½•
         return;
 
     tradeData       tItem;
@@ -124,18 +124,18 @@ std::map<LL, tradeData> bg_trade_get_items(const bool &use_cache) {
 }
 
 bool bg_trade_insert_item(const tradeData &itemData) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!allTradeItems_cache) {
         bg_trade_get_items();
         if (!allTradeItems_cache)
             return false;
     }
 
-    // ¼ì²éÖØ¸´ ID
+    // æ£€æŸ¥é‡å¤ ID
     if (allTradeItems.find(itemData.tradeId) != allTradeItems.end())
         return false;
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     bsoncxx::document::value doc = bsoncxx::builder::stream::document{}
         << "tradeId" << itemData.tradeId
         << "item" << bsoncxx::builder::stream::open_document
@@ -154,7 +154,7 @@ bool bg_trade_insert_item(const tradeData &itemData) {
     if (dbInsertDocument(DB_COLL_TRADE, doc)) {
         allTradeItems.insert({ itemData.tradeId, itemData });
 
-        std::scoped_lock lock(mutexTradeStr);       // Çå³ı»º´æ
+        std::scoped_lock lock(mutexTradeStr);       // æ¸…é™¤ç¼“å­˜
         tradeStr_cache = false;
 
         return true;
@@ -163,23 +163,23 @@ bool bg_trade_insert_item(const tradeData &itemData) {
 }
 
 bool bg_trade_remove_item(const LL &tradeId) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!allTradeItems_cache) {
         bg_trade_get_items();
         if (!allTradeItems_cache)
             return false;
     }
 
-    // ¼ì²é ID ÊÇ·ñ´æÔÚ
+    // æ£€æŸ¥ ID æ˜¯å¦å­˜åœ¨
     if (allTradeItems.find(tradeId) == allTradeItems.end())
         return false;
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     std::scoped_lock lock(mutexAllTradeItems);
     if (dbDeleteOne(DB_COLL_TRADE, "tradeId", tradeId)) {
         allTradeItems.erase(tradeId);
 
-        std::scoped_lock lock(mutexTradeStr);       // Çå³ı»º´æ
+        std::scoped_lock lock(mutexTradeStr);       // æ¸…é™¤ç¼“å­˜
         tradeStr_cache = false;
 
         return true;
@@ -188,14 +188,14 @@ bool bg_trade_remove_item(const LL &tradeId) {
 }
 
 bool bg_trade_remove_item(const std::vector<LL> &tradeIdList) {
-    // ±ØĞëÓĞ»º´æ²ÅÄÜ¼ÌĞø
+    // å¿…é¡»æœ‰ç¼“å­˜æ‰èƒ½ç»§ç»­
     if (!allTradeItems_cache) {
         bg_trade_get_items();
         if (!allTradeItems_cache)
             return false;
     }
 
-    // ¼ì²é ID ÊÇ·ñ´æÔÚ, ²¢Éú³É¹ıÂËÌõ¼ş
+    // æ£€æŸ¥ ID æ˜¯å¦å­˜åœ¨, å¹¶ç”Ÿæˆè¿‡æ»¤æ¡ä»¶
     bsoncxx::builder::basic::array conditions;
     for (const auto &id : tradeIdList) {
         if (allTradeItems.find(id) != allTradeItems.end())
@@ -203,7 +203,7 @@ bool bg_trade_remove_item(const std::vector<LL> &tradeIdList) {
         conditions.append(bsoncxx::builder::stream::document{} << "tradeId" << id << bsoncxx::builder::stream::finalize);
     }
 
-    // ¸üĞÂÊı¾İ¿â, ³É¹¦ºóÔÙ¸üĞÂ±¾µØ»º´æ
+    // æ›´æ–°æ•°æ®åº“, æˆåŠŸåå†æ›´æ–°æœ¬åœ°ç¼“å­˜
     std::scoped_lock lock(mutexAllTradeItems);
     if (dbDeleteAll(DB_COLL_TRADE, "tradeId",
         bsoncxx::builder::stream::document{} << "$or" << conditions << bsoncxx::builder::stream::finalize)) {
@@ -211,7 +211,7 @@ bool bg_trade_remove_item(const std::vector<LL> &tradeIdList) {
             allTradeItems.erase(id);
         }
 
-        std::scoped_lock lock(mutexTradeStr);       // Çå³ı»º´æ
+        std::scoped_lock lock(mutexTradeStr);       // æ¸…é™¤ç¼“å­˜
         tradeStr_cache = false;
 
         return true;
@@ -227,17 +227,17 @@ std::string bg_trade_get_string(const bool &use_cache) {
     std::string rtn;
 
     if (tradeItems.size() == 0) {
-        rtn = "Ä¿Ç°½»Ò×³¡ÖĞÃ»ÓĞ¶«Î÷!";
+        rtn = "ç›®å‰äº¤æ˜“åœºä¸­æ²¡æœ‰ä¸œè¥¿!";
 
-        std::scoped_lock lock(mutexTradeStr);       // ´æµ½»º´æÖĞ
+        std::scoped_lock lock(mutexTradeStr);       // å­˜åˆ°ç¼“å­˜ä¸­
         tradeStr = rtn;
         tradeStr_cache = true;
         return rtn;
     }
 
-    rtn = "---½»Ò×ÎïÆ· (¹²" + std::to_string(tradeItems.size()) +"¸ö)---\n";
+    rtn = "---äº¤æ˜“ç‰©å“ (å…±" + std::to_string(tradeItems.size()) +"ä¸ª)---\n";
     for (const auto &item : tradeItems) {
-        // ¼ì²éÊÇ·ñÎªÒ»´ÎĞÔÎïÆ·
+        // æ£€æŸ¥æ˜¯å¦ä¸ºä¸€æ¬¡æ€§ç‰©å“
         rtn += "ID" + std::to_string(item.first) + ": ";
         if (allEquipments.at(item.second.item.id).type == EqiType::single_use) {
             rtn += "[" + allEquipments.at(item.second.item.id).name + "]";
@@ -247,16 +247,16 @@ std::string bg_trade_get_string(const bool &use_cache) {
                 std::to_string(item.second.item.wear) + "/" + std::to_string(allEquipments.at(item.second.item.id).wear);
         }
         
-        // ¼ÓÉÏ¼Û¸ñ, ¼ì²éÊÇ·ñÎªË½ÃÜ½»Ò×
+        // åŠ ä¸Šä»·æ ¼, æ£€æŸ¥æ˜¯å¦ä¸ºç§å¯†äº¤æ˜“
         rtn += " $" + std::to_string(item.second.price);
         if (item.second.hasPassword) {
-            rtn += " (Ë½)";
+            rtn += " (ç§)";
         }
         rtn += "\n";
     }
-    rtn.pop_back();                             // È¥µôÄ©Î²¶àÓàµÄ '\n'
+    rtn.pop_back();                             // å»æ‰æœ«å°¾å¤šä½™çš„ '\n'
 
-    std::scoped_lock lock(mutexTradeStr);       // ´æµ½»º´æÖĞ
+    std::scoped_lock lock(mutexTradeStr);       // å­˜åˆ°ç¼“å­˜ä¸­
     tradeStr = rtn;
     tradeStr_cache = true;
 

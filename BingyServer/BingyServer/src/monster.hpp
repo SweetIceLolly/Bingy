@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ¹ÖÎïÀà
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: monster.hpp
+æè¿°: Bingy æ€ªç‰©ç±»
+ä½œè€…: å†°æ£
+æ–‡ä»¶: monster.hpp
 */
 
 #pragma once
@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include "utils.hpp"
 
-using LL = long long;
+using LL = std::int64_t;
 
 extern std::string monsterConfigPath;
 
@@ -25,28 +25,28 @@ class monsterData {
 public:
     LL                          id;
     std::string                 name;
-    LL                          atk, def, brk, agi, hp; // ¹¥·ÀÆÆÃôÑª
-    LL                          coin;                   // µôÂäÓ²±Ò
-    LL                          exp;                    // ½±Àø¾­Ñé
-    LL                          dungeonWeight;          // ÔÚ¸±±¾ÖĞµÄ³öÏÖ¸ÅÂÊÈ¨ÖØ
-    LL                          forestWeight;           // ÔÚÉ­ÁÖÖĞµÄ³öÏÖ¸ÅÂÊÈ¨ÖØ
-    std::string                 message;                // ³ö³¡ÏûÏ¢
-    std::vector<monsterDrop>    drop;                   // µôÂä
-    luckyDraw                   dropDraw;               // µôÂä³éÈ¡Æ÷
+    LL                          atk, def, brk, agi, hp; // æ”»é˜²ç ´æ•è¡€
+    LL                          coin;                   // æ‰è½ç¡¬å¸
+    LL                          exp;                    // å¥–åŠ±ç»éªŒ
+    LL                          dungeonWeight;          // åœ¨å‰¯æœ¬ä¸­çš„å‡ºç°æ¦‚ç‡æƒé‡
+    LL                          forestWeight;           // åœ¨æ£®æ—ä¸­çš„å‡ºç°æ¦‚ç‡æƒé‡
+    std::string                 message;                // å‡ºåœºæ¶ˆæ¯
+    std::vector<monsterDrop>    drop;                   // æ‰è½
+    luckyDraw                   dropDraw;               // æ‰è½æŠ½å–å™¨
 
-    void initDropDraw();                                // ¸ù¾İµ±Ç°µÄµôÂäÁĞ±íÖØĞÂÉú³ÉµôÂä³éÈ¡Æ÷
+    void initDropDraw();                                // æ ¹æ®å½“å‰çš„æ‰è½åˆ—è¡¨é‡æ–°ç”Ÿæˆæ‰è½æŠ½å–å™¨
 };
 
 class dungeonData {
 public:
-    LL                              level;              // ¸±±¾ºÅ
-    std::vector<LL>                 monsters;           // ¸±±¾ÖĞµÄ¹ÖÎï ID ÁĞ±í
-    luckyDraw                       monstersDraw;       // ¸±±¾¹ÖÎï³éÈ¡Æ÷
+    LL                              level;              // å‰¯æœ¬å·
+    std::vector<LL>                 monsters;           // å‰¯æœ¬ä¸­çš„æ€ªç‰© ID åˆ—è¡¨
+    luckyDraw                       monstersDraw;       // å‰¯æœ¬æ€ªç‰©æŠ½å–å™¨
 };
 
-extern std::unordered_map<LL, monsterData> allMonsters; // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
-extern std::unordered_map<LL, dungeonData> allDungeons; // ×¢Òâ: ¶ÁÈ¡µÄÊ±ºò¿ÉÒÔ²»ÓÃ¼ÓËø, µ«ÊÇ²»ÒªÊ¹ÓÃ[], ĞèÒªÊ¹ÓÃ at(). ¶àÏß³ÌĞ´ÈëµÄÊ±ºò±ØĞë¼ÓËø
-extern luckyDraw                           forestDraw;  // É­ÁÖ³é½±»ú
+extern std::unordered_map<LL, monsterData> allMonsters; // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
+extern std::unordered_map<LL, dungeonData> allDungeons; // æ³¨æ„: è¯»å–çš„æ—¶å€™å¯ä»¥ä¸ç”¨åŠ é”, ä½†æ˜¯ä¸è¦ä½¿ç”¨[], éœ€è¦ä½¿ç”¨ at(). å¤šçº¿ç¨‹å†™å…¥çš„æ—¶å€™å¿…é¡»åŠ é”
+extern luckyDraw                           forestDraw;  // æ£®æ—æŠ½å¥–æœº
 
-bool bg_load_monster_config();                          // ¶ÁÈ¡¹ÖÎïÅäÖÃ
-void bg_init_monster_chances();                         // ³õÊ¼»¯¹ÖÎï³öÏÖºÍµôÂä¸ÅÂÊ
+bool bg_load_monster_config();                          // è¯»å–æ€ªç‰©é…ç½®
+void bg_init_monster_chances();                         // åˆå§‹åŒ–æ€ªç‰©å‡ºç°å’Œæ‰è½æ¦‚ç‡

@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Ç©µ½»î¶¯ÁĞ±íÏà¹ØµÄ²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: signin_event.cpp
+æè¿°: ç­¾åˆ°æ´»åŠ¨åˆ—è¡¨ç›¸å…³çš„æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: signin_event.cpp
 */
 
 #include "signin_event.hpp"
@@ -135,31 +135,31 @@ bool signInEvent::set_prevActiveTime(const LL &val) {
     return false;
 }
 
-// ¸ù¾İÖ¸¶¨Ê±¼ä×Ô¶¯Æ¥Åä¶ÔÓ¦µÄ»î¶¯, È»ºóĞŞ¸Ä coin ºÍ energy ¶ÔÓ¦µÄÊıÖµ
+// æ ¹æ®æŒ‡å®šæ—¶é—´è‡ªåŠ¨åŒ¹é…å¯¹åº”çš„æ´»åŠ¨, ç„¶åä¿®æ”¹ coin å’Œ energy å¯¹åº”çš„æ•°å€¼
 void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vector<LL> &items, std::string &msg) {
     for (auto &item : allSignInEvents) {
-        // ¼ì²éÄê·İ: Èç¹ûÄê·İ²»Îª -1, Ôò±ØĞëÆ¥ÅäÄê·İ
+        // æ£€æŸ¥å¹´ä»½: å¦‚æœå¹´ä»½ä¸ä¸º -1, åˆ™å¿…é¡»åŒ¹é…å¹´ä»½
         if (item.year != -1 && item.year != time.get_year())
             continue;
-        // ¼ì²éÔÂ·İ: Èç¹ûÔÂ·İ²»Îª -1, Ôò±ØĞëÆ¥ÅäÔÂ·İ
+        // æ£€æŸ¥æœˆä»½: å¦‚æœæœˆä»½ä¸ä¸º -1, åˆ™å¿…é¡»åŒ¹é…æœˆä»½
         if (item.month != -1 && item.month != time.get_month())
             continue;
-        // ¼ì²éÈÕ×Ó: Èç¹ûÈÕ×Ó²»Îª -1, Ôò±ØĞëÆ¥ÅäÈÕ×Ó
+        // æ£€æŸ¥æ—¥å­: å¦‚æœæ—¥å­ä¸ä¸º -1, åˆ™å¿…é¡»åŒ¹é…æ—¥å­
         if (item.day != -1 && item.day != time.get_day())
             continue;
-        // ¼ì²éĞ¡Ê±
+        // æ£€æŸ¥å°æ—¶
         if (item.hour != -1 && item.hour != time.get_hour())
             continue;
-        // ¼ì²é·ÖÖÓ
+        // æ£€æŸ¥åˆ†é’Ÿ
         if (item.minute != -1 && item.minute != time.get_minute())
             continue;
-        // ¼ì²éÇ©µ½ÈËÊı
+        // æ£€æŸ¥ç­¾åˆ°äººæ•°
         if (item.firstN != -1) {
             auto prevActiveTime = dateTime(static_cast<time_t>(item.get_prevActiveTime()));
             bool resetCounter = false;
             bool year_changed = prevActiveTime.get_year() != time.get_year();
 
-            // ÅĞ¶ÏÊÇ·ñĞèÒªÖØÖÃÇ©µ½¼ÆÊıÆ÷
+            // åˆ¤æ–­æ˜¯å¦éœ€è¦é‡ç½®ç­¾åˆ°è®¡æ•°å™¨
             if (item.month != -1)
                 resetCounter = year_changed;
             else if (item.day != -1)
@@ -172,7 +172,7 @@ void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vec
                     continue;
             }
 
-            // ¼ì²éÇ©µ½ÈËÊı
+            // æ£€æŸ¥ç­¾åˆ°äººæ•°
             if (item.get_signInCount() < item.firstN) {
                 if (!item.inc_signInCount(1))
                     continue;
@@ -181,13 +181,13 @@ void bg_match_sign_in_event(const dateTime &time, LL &coin, LL &energy, std::vec
                 continue;
         }
 
-        // ĞŞ¸ÄÓ²±Ò, ÌåÁ¦, ÎïÆ·, ÏûÏ¢
+        // ä¿®æ”¹ç¡¬å¸, ä½“åŠ›, ç‰©å“, æ¶ˆæ¯
         coin = static_cast<LL>(coin * item.coinFactor);
         energy = static_cast<LL>(energy * item.coinFactor);
         for (const auto &eqi : item.items)
             items.push_back(eqi);
 
         msg += "\n" + item.message + (item.firstN == -1 ? "" :
-            "(Ö»ÓĞÇ°" + std::to_string(item.firstN) + "¸öÇ©µ½µÄÍæ¼ÒÄÜÁìÈ¡, ÒÑÁìÈ¡" + std::to_string(item.get_signInCount()) + "¸ö)");
+            "(åªæœ‰å‰" + std::to_string(item.firstN) + "ä¸ªç­¾åˆ°çš„ç©å®¶èƒ½é¢†å–, å·²é¢†å–" + std::to_string(item.get_signInCount()) + "ä¸ª)");
     }
 }

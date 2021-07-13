@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Bingy ÓÎÏ·Ïà¹Øº¯ÊýµÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼þ: game.hpp
+æè¿°: Bingy æ¸¸æˆç›¸å…³å‡½æ•°çš„æŽ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: game.hpp
 */
 
 #pragma once

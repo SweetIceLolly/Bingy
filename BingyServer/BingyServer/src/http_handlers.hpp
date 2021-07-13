@@ -1,36 +1,37 @@
 /*
-ÃèÊö: Bingy ·şÎñÆ÷µÄ HTTP ÇëÇó´¦Àí½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: http_handlers.hpp
+æè¿°: Bingy æœåŠ¡å™¨çš„ HTTP è¯·æ±‚å¤„ç†æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: http_handlers.hpp
 */
 
 #pragma once
 
 #include "rest_server/rest_server.hpp"
 
-#define CMD(cmd) void bg_cmd_##cmd##(mg_connection *connection, int ev, mg_http_message *ev_data, void *fn_data)
+#define CMD(cmd) void bg_cmd_ ##cmd (mg_connection *connection, int ev, mg_http_message *ev_data, void *fn_data)
 
 /**
- * ¿Í»§¶ËÑéÖ¤
- * ²ÎÊı:
- *  appid: Ó¦ÓÃ ID
- *  secret: ÃÜ³×
- * ·µ»ØÖµ:
- *  200: ³É¹¦
- *  400: Ê§°Ü, ÏêÇé¼û·µ»ØµÄ msg
- *  500: ÄÚ²¿´íÎó, ÏêÇé¼û·µ»ØµÄ msg
+ * å®¢æˆ·ç«¯éªŒè¯
+ * å‚æ•°:
+ *  appid: åº”ç”¨ ID
+ *  secret: å¯†åŒ™
+ * è¿”å›å€¼:
+ *  200: æˆåŠŸ
+ *  400: å¤±è´¥, è¯¦æƒ…è§è¿”å›çš„ msg
+ *  500: å†…éƒ¨é”™è¯¯, è¯¦æƒ…è§è¿”å›çš„ msg
  */
 CMD(auth);
 
 /**
- * ĞÂÍæ¼Ò×¢²á
- * ²ÎÊı:
- *  token: ÈÏÖ¤
- *  groupid: ÈººÅ
- *  qq: QQ ºÅ
- * ·µ»ØÖµ:
- *  200: ³É¹¦
- *  400: Ê§°Ü, ÏêÇé¼û·µ»ØµÄ msg
- *  500: ÄÚ²¿´íÎó, ÏêÇé¼û·µ»ØµÄ msg
+ * æ–°ç©å®¶æ³¨å†Œ
+ * å‚æ•°:
+ *  appid: åº”ç”¨ ID
+ *  secret: å¯†åŒ™
+ *  groupid: ç¾¤å·
+ *  qq: QQ å·
+ * è¿”å›å€¼:
+ *  200: æˆåŠŸ
+ *  400: å¤±è´¥, è¯¦æƒ…è§è¿”å›çš„ msg
+ *  500: å†…éƒ¨é”™è¯¯, è¯¦æƒ…è§è¿”å›çš„ msg
  */
 CMD(register);

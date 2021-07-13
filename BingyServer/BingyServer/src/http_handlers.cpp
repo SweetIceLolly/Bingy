@@ -1,11 +1,10 @@
 /*
-ÃèÊö: Bingy ·şÎñÆ÷µÄ HTTP ÇëÇó´¦ÀíÏà¹Øº¯Êı
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: http_handlers.cpp
+æè¿°: Bingy æœåŠ¡å™¨çš„ HTTP è¯·æ±‚å¤„ç†ç›¸å…³å‡½æ•°
+ä½œè€…: å†°æ£
+æ–‡ä»¶: http_handlers.cpp
 */
 
 #include "http_handlers.hpp"
-#include "utils.hpp"
 
 CMD(auth) {
     

@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Êı¾İ¿âÏà¹Ø²Ù×÷
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: database.cpp
+æè¿°: æ•°æ®åº“ç›¸å…³æ“ä½œ
+ä½œè€…: å†°æ£
+æ–‡ä»¶: database.cpp
 */
 
 #include "database.hpp"
@@ -10,7 +10,7 @@
 using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
 
-// Ò»Ğ©Êı¾İ¿â²Ù×÷ĞèÒªµÄÈ«¾Ö±äÁ¿
+// ä¸€äº›æ•°æ®åº“æ“ä½œéœ€è¦çš„å…¨å±€å˜é‡
 std::string             dbUri = DEFAULT_DB_URI;
 std::string             dbName = DB_NAME;
 
@@ -29,11 +29,11 @@ mongocxx::collection dbGetCollection(const char *dbName, const char *collName) {
 
 bool dbInit() {
     try {
-        auto mongoUri = mongocxx::uri(dbUri.c_str());   // ´¦Àí URI
-        static mongocxx::pool pool{ mongoUri };         // ´´½¨Á¬½Ó³Ø
+        auto mongoUri = mongocxx::uri(dbUri.c_str());   // å¤„ç† URI
+        static mongocxx::pool pool{ mongoUri };         // åˆ›å»ºè¿æ¥æ± 
         mongoPool = &pool;
 
-        // ÁĞ³ö¿ÉÓÃÊı¾İ¿âÒÔ¼ì²ìÁ¬½Ó¼°È¨ÏŞ
+        // åˆ—å‡ºå¯ç”¨æ•°æ®åº“ä»¥æ£€å¯Ÿè¿æ¥åŠæƒé™
         auto client = pool.acquire();
         (*client).list_database_names();
 
