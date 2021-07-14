@@ -630,7 +630,6 @@ struct mg_connection {
   struct mg_iobuf send;        // Outgoing data
   mg_event_handler_t fn;       // User-specified event handler function
   void *fn_data;               // User-speficied function parameter
-  int socketpair_socket;       // The non-blocking socket to receive data from thread
   mg_event_handler_t pfn;      // Protocol-specific handler function
   void *pfn_data;              // Protocol-specific function parameter
   char label[50];              // Arbitrary label
@@ -649,6 +648,11 @@ struct mg_connection {
   unsigned is_closing : 1;     // Close and free the connection immediately
   unsigned is_readable : 1;    // Connection is ready to read
   unsigned is_writable : 1;    // Connection is ready to write
+
+  // 以下为多线程的共享内存
+  unsigned bg_res_ready;       // 线程是否已经准备好了该连接的回应, 可以读取返回码和回应字符串了
+  int bg_res_http_code;        // 线程所返回的 HTTP 码
+  char *bg_res_body;           // 线程所返回的 HTTP 回应
 };
 
 void mg_mgr_poll(struct mg_mgr *, int ms);

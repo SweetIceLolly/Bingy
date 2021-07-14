@@ -134,5 +134,8 @@
     <ClInclude Include="src\http_auth.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\error_codes.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

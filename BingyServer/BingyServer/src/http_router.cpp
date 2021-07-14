@@ -12,7 +12,6 @@
 
 // 初始化 HTTP 路由
 bool init_server_router(rest_server &server) {
-    POST("/auth", bg_cmd_auth);
     POST("/register", bg_cmd_register);
 
     return true;

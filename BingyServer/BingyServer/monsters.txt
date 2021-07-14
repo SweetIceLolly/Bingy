@@ -1,6 +1,6 @@
 begin
 id=0
-name=Ò°Öí
+name=é‡çŒª
 atk=20
 def=20
 brk=5
@@ -16,7 +16,7 @@ end
 
 begin
 id=1
-name=¿ñ·çÂí
+name=ç‹‚é£é©¬
 atk=23
 def=18
 brk=8
@@ -31,7 +31,7 @@ end
 
 begin
 id=2
-name=†Ğ¶¾¾Şòş
+name=å–°æ¯’å·¨èŸ’
 atk=27
 def=15
 brk=10
@@ -46,7 +46,7 @@ end
 
 begin
 id=3
-name=ºÚĞÜ
+name=é»‘ç†Š
 atk=25
 def=22
 brk=10
@@ -61,7 +61,7 @@ end
 
 begin
 id=4
-name=¶ñÀÇ
+name=æ¶ç‹¼
 atk=35
 def=25
 brk=20
@@ -76,7 +76,7 @@ end
 
 begin
 id=5
-name=Ê³ËèÄñ
+name=é£Ÿé«“é¸Ÿ
 atk=30
 def=20
 brk=15
@@ -91,7 +91,7 @@ end
 
 begin
 id=6
-name=¸ç²¼ÁÖ
+name=å“¥å¸ƒæ—
 atk=25
 def=20
 brk=8
@@ -106,7 +106,7 @@ end
 
 begin
 id=7
-name=Ê·À³Ä·
+name=å²è±å§†
 atk=5
 def=5
 brk=0
@@ -121,7 +121,7 @@ end
 
 begin
 id=8
-name=»ğÑæ¸ç²¼ÁÖ
+name=ç«ç„°å“¥å¸ƒæ—
 atk=35
 def=27
 brk=15
@@ -136,7 +136,7 @@ end
 
 begin
 id=9
-name=º®±ù¸ç²¼ÁÖ
+name=å¯’å†°å“¥å¸ƒæ—
 atk=35
 def=27
 brk=15
@@ -151,7 +151,7 @@ end
 
 begin
 id=10
-name=BOSS - Ç§Äê¹íÊ÷
+name=BOSS - åƒå¹´é¬¼æ ‘
 atk=40
 def=40
 brk=15
@@ -166,7 +166,7 @@ end
 
 begin
 id=11
-name=BOSS - ¸ç²¼ÁÖÊ×Áì
+name=BOSS - å“¥å¸ƒæ—é¦–é¢†
 atk=43
 def=45
 brk=15
@@ -181,7 +181,7 @@ end
 
 begin
 id=12
-name=BOSS - Øö»¢
+name=BOSS - ä¼¥è™
 atk=46
 def=30
 brk=25
@@ -196,7 +196,7 @@ end
 
 begin
 id=13
-name=BOSS - òÔ±ª
+name=BOSS - è›Ÿè±¹
 atk=50
 def=30
 brk=27
@@ -211,7 +211,7 @@ end
 
 begin
 id=14
-name=BOSS - Ä©Ê¨
+name=BOSS - æœ«ç‹®
 atk=55
 def=35
 brk=27

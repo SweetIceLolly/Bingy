@@ -25,7 +25,7 @@ typedef std::function<void(mg_connection *connection, int &ev, mg_http_message *
 
 // 请求处理函数信息
 typedef struct _handlerInfo {
-    std::string     method;
+    char            method[8];
     handler         eventHandler;
 } handlerInfo;
 
@@ -34,11 +34,19 @@ typedef std::unordered_map<std::string, handlerInfo>::iterator handler_identifie
 
 class rest_server {
 public:
+    handler pollHandler;            // poll 处理回调函数
+
     // 添加请求处理
     handler_identifier addHandler(const std::string &method, const std::string &path, const handler &eventHandler);
 
     // 移除请求处理
     void removeHandler(const handler_identifier &item);
+
+    // 设置 poll 处理
+    void setPollHandler(const handler &eventHandler);
+
+    // 移除 poll 处理
+    void removePollHandler();
 
     // 启动服务器
     void startServer(const std::string &connStr, const int &pollFreq, void *userdata);
@@ -47,7 +55,7 @@ public:
     void stopServer();
 
     // 内部使用, 匹配合适的请求处理函数. 该函数保证返回值不为 NULL
-    handler matchHandler(const std::string &method, const std::string &path);
+    handler matchHandler(const struct mg_str &method, const std::string &path);
 
 private:
     // 路由
@@ -63,3 +71,5 @@ typedef struct _dispatcherInfo {
 } dispatcherInfo;
 
 std::string get_query_param(mg_http_message *ev_data, const char *fieldName);
+std::string get_request_body(mg_http_message *ev_data);
+std::string get_request_query(mg_http_message *ev_data);

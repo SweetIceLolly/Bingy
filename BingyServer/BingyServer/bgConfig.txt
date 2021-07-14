@@ -1,28 +1,28 @@
-[×¢Òâ: ±êµã·ûºÅÖÜÎ§²»ÒªÓĞ¿Õ¸ñ]
-[Â·¾¶ÅäÖÃ]
+[æ³¨æ„: æ ‡ç‚¹ç¬¦å·å‘¨å›´ä¸è¦æœ‰ç©ºæ ¼]
+[è·¯å¾„é…ç½®]
 dbUri=mongodb://bingy:Bingy#23333@127.0.0.1:27017/bingy
 dbName=bingy
 monsters=monsters.txt
 equipments=equipments.txt
 
-[¿Í»§¶ËÅäÖÃ]
+[å®¢æˆ·ç«¯é…ç½®]
 begin
-appid=bingyserver
-secret=123456
+appid=bggame
+secret=123
 end
 
-[¹ÜÀíÔ±]
+[ç®¡ç†å‘˜]
 admin=1257472418
 admin=666
 admin=888
 
-[¸±±¾ÅäÖÃ]
+[å‰¯æœ¬é…ç½®]
 begin
 level=1
 monsters=1,2,3,4,5,6,7,8,9,10,11,12,13,14
 end
 
-[Ç©µ½»î¶¯]
+[ç­¾åˆ°æ´»åŠ¨]
 begin
 id=0
 year=2021
@@ -34,10 +34,10 @@ coinFactor=2
 energyFactor=2
 first=-1
 items=0,1,2,3,4,5,6,7,8,9,10,11,12,13
-message=[»î¶¯] ËÍ²âÊÔÎïÆ·Ò»¶Ñ
+message=[æ´»åŠ¨] é€æµ‹è¯•ç‰©å“ä¸€å †
 end
 
-[×°±¸ºÏ³É]
+[è£…å¤‡åˆæˆ]
 begin
 requirements=1,2,3,4,5
 coins=10000

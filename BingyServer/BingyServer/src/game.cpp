@@ -5,5 +5,11 @@
 */
 
 #include "game.hpp"
+#include "player.hpp"
 
 std::unordered_set<LL> allAdmins;
+std::unordered_set<LL>   blacklist;
+
+bool accountCheck(const bgGameHttpReq& req) {
+    return false;
+}

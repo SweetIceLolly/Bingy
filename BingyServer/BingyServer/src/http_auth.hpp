@@ -8,6 +8,9 @@
 
 #include <string>
 
+// 所有已知的应用 ID
+#define APPID_BINGY_GAME  "bggame"
+
 // 注册新的应用
 // 注意, 该函数不是线程安全的
 void bg_http_add_app(const std::string &appId, const std::string &secret);
