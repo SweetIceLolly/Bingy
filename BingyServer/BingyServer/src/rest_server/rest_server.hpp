@@ -70,6 +70,4 @@ typedef struct _dispatcherInfo {
     void        *userdata;
 } dispatcherInfo;
 
-std::string get_query_param(mg_http_message *ev_data, const char *fieldName);
-std::string get_request_body(mg_http_message *ev_data);
-std::string get_request_query(mg_http_message *ev_data);
+std::string get_query_param(const struct mg_str *query, const char *fieldName);

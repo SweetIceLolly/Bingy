@@ -11,6 +11,7 @@
 #include "game.hpp"
 #include "bingy.hpp"
 #include "error_codes.hpp"
+#include "utils.hpp"
 
 using namespace nlohmann;
 
@@ -18,23 +19,36 @@ using namespace nlohmann;
 inline http_req* get_http_req(mg_connection *connection, mg_http_message *ev_data) {
     http_req *req = static_cast<http_req *>(malloc(sizeof(http_req)));
     if (!req) {
-        mg_http_reply(connection, 500, "Content-Type: application/json\r\n", "申请内存失败, 无法处理请求");
+        mg_http_reply(connection, 500, "Content-Type: application/json\r\n",
+            "{ \"msg\": \"" BG_ERR_STR_MALLOC "\", \"errid\": " BG_ERR_STR_MALLOC_VAL "}");
         return nullptr;
     }
 
     // 复制 body 内容到临时内存
-    char *buf = new char[ev_data->body.len + 1];
-    strncpy(buf, ev_data->body.ptr, ev_data->body.len);
-    buf[ev_data->body.len] = '\0';
-    req->body = strdup(buf);
-    delete[] buf;
+    char prevCh;
+
+    if (ev_data->body.len > 0) {
+        prevCh = ev_data->body.ptr[ev_data->body.len];
+        const_cast<char *>(ev_data->body.ptr)[ev_data->body.len] = '\0';
+        req->body = strdup(ev_data->body.ptr);
+        const_cast<char *>(ev_data->body.ptr)[ev_data->body.len] = prevCh;
+    }
+    else {
+        req->body = strdup("");
+    }
     
     // 复制 query 内容到临时内存
-    buf = new char[ev_data->query.len + 1];
-    strncpy(buf, ev_data->query.ptr, ev_data->query.len);
-    buf[ev_data->query.len] = '\0';
-    req->query = strdup(buf);
-    delete[] buf;
+    if (ev_data->query.len > 0) {
+        prevCh = ev_data->query.ptr[ev_data->query.len];
+        const_cast<char *>(ev_data->query.ptr)[ev_data->query.len] = '\0';
+        req->query.ptr = strdup(ev_data->query.ptr);
+        const_cast<char *>(ev_data->query.ptr)[ev_data->query.len] = prevCh;
+        req->query.len = ev_data->query.len;
+    }
+    else {
+        req->query.ptr = strdup("");
+        req->query.len = 0;
+    }
 
     // 把回应写入的位置记录下来
     req->res_body = &connection->bg_res_body;
@@ -46,7 +60,7 @@ inline http_req* get_http_req(mg_connection *connection, mg_http_message *ev_dat
 // 释放 HTTP 请求信息结构体所占用的内存
 inline void free_http_req(http_req *req) {
     free(req->body);
-    free(req->query);
+    free(const_cast<char*>(req->query.ptr));
     free(req);
 }
 
@@ -72,18 +86,19 @@ CMD(register) {
             auto params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
-            LL          groupId = params["groupId"].get<LL>();
             LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
 
-            if (appid == APPID_BINGY_GAME) {
-                if (bg_http_app_auth(appid, secret)) {
-                    //if (preRegisterCallback())
-                    //    postRegisterCallback();
-                }
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preRegisterCallback(bgReq))
+                    postRegisterCallback(bgReq);
             }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
         }
         catch (...) {
-            bg_http_reply_error(req, 400, "无效的请求内容", BG_ERR_INVALID_REQUEST);
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
         }
 
         free_http_req(req);
@@ -93,4 +108,41 @@ CMD(register) {
     if (!req)
         return;
     threadPool.addJob(thread_pool_job(handler, req));
+}
+
+// 查看硬币
+CMD(view_coins) {
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            std::string appid = get_query_param(&req->query, "appid");
+            std::string secret = get_query_param(&req->query, "secret");
+            LL          playerId = str_to_ll(get_query_param(&req->query, "qq"));
+            LL          groupId = str_to_ll(get_query_param(&req->query, "groupId"));
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preViewCoinsCallback(bgReq))
+                    postViewCoinsCallback(bgReq);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (...) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(handler, req));
+}
+
+// 签到
+CMD(sign_in) {
+    
 }

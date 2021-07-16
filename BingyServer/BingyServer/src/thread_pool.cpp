@@ -8,7 +8,7 @@
 
 void worker(thread_pool *pool);
 
-thread_pool_job::thread_pool_job(std::function<void(void*)> func, void* args) {
+thread_pool_job::thread_pool_job(const std::function<void(void*)> &func, void* args) {
     this->func = func;
     this->args = args;
 }

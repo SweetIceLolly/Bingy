@@ -81,7 +81,7 @@ player::player(const LL &qq) {
 
 // 检查玩家是否存在
 bool bg_player_exist(const LL &id) {
-    auto val = dbFindOne(DB_COLL_USERDATA, "id", id);
+    std::scoped_lock lock(mutexAllPlayers);             // 防止出现另一条线程更新玩家, 这条线程查找玩家的情况
     return allPlayers.end() != allPlayers.find(id);
 }
 
@@ -122,10 +122,6 @@ bool bg_player_add(const LL &id) {
         << "equipItems" << bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
         << "vip" << (LL)0
         << bsoncxx::builder::stream::finalize;
-
-    if (!dbInsertDocument(DB_COLL_USERDATA, doc))
-        return false;
-
     // 初始化玩家属性
     player p(id);
     p.nickname = "";                        p.nickname_cache = true;
@@ -144,7 +140,7 @@ bool bg_player_add(const LL &id) {
     p.inventory_cache = true;
     p.buyCount_cache = true;
     p.equipItems_cache = true;
-    
+
     // 初始化玩家装备
     p.equipments[EqiType::armor_helmet] = { -1, -1, -1 };
     p.equipments[EqiType::armor_body] = { -1, -1, -1 };
@@ -158,8 +154,11 @@ bool bg_player_add(const LL &id) {
     p.equipments[EqiType::ornament_jewelry] = { -1, -1, -1 };
     p.equipments_cache = true;
 
-    std::scoped_lock<std::mutex> lock(mutexAllPlayers);
+    std::scoped_lock lock(mutexAllPlayers);
+    if (!dbInsertDocument(DB_COLL_USERDATA, doc))
+        return false;
     allPlayers.insert(std::make_pair(id, p));
+
     return true;
 }
 

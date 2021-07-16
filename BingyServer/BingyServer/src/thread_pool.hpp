@@ -14,7 +14,7 @@
 
 class thread_pool_job {
 public:
-    thread_pool_job(std::function<void(void *)> func, void *args);
+    thread_pool_job(const std::function<void(void *)> &func, void *args);
     std::function<void(void *)> func;
     void *args;
 };

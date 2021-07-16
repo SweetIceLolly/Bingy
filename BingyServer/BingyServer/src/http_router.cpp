@@ -13,6 +13,8 @@
 // 初始化 HTTP 路由
 bool init_server_router(rest_server &server) {
     POST("/register", bg_cmd_register);
+    GET("/viewcoins", bg_cmd_view_coins);
+    POST("/signin", bg_cmd_sign_in);
 
     return true;
 }

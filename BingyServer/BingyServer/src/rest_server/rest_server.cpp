@@ -119,22 +119,10 @@ static void httpRequestDispatch(struct mg_connection *connection, int ev, void *
     }
 }
 
-std::string get_query_param(mg_http_message *ev_data, const char *fieldName) {
-    char buf[255];
-    int len = mg_http_get_var(&ev_data->query, fieldName, buf, 255);
+std::string get_query_param(const struct mg_str *query, const char *fieldName) {
+    char buf[1024];
+    int len = mg_http_get_var(query, fieldName, buf, 1024);
     if (len < 1)
         return "";
     return std::string(buf, len);
-}
-
-std::string get_request_body(mg_http_message *ev_data) {
-    if (ev_data->body.len < 1)
-        return "";
-    return std::string(ev_data->body.ptr, ev_data->body.len);
-}
-
-std::string get_request_query(mg_http_message *ev_data) {
-    if (ev_data->query.len < 1)
-        return "";
-    return std::string(ev_data->query.ptr, ev_data->query.len);
 }

@@ -80,7 +80,7 @@ std::string str_trim(const std::string &str) {
 std::vector<std::string> str_split(const std::string &str, const char &delimiter) {
     std::vector<std::string> rtn;
     size_t last = 0;
-    size_t next = 0;
+    size_t next;
 
     while ((next = str.find(delimiter, last)) != std::string::npos) {
         rtn.push_back(str.substr(last, next - last));
@@ -220,11 +220,14 @@ LL luckyDraw::massive_draw() {
 }
 
 LL str_to_ll(const std::string &str) {
+    if (str.length() < 1)
+        throw std::runtime_error("无效的字符串");
+
     bool numStarted = false;
     auto start = str.find_first_not_of(' ');
     auto i = start;
 
-    for (i; i <= str.find_last_not_of(' '); ++i) {
+    for (; i <= str.find_last_not_of(' '); ++i) {
         if (str[i] < '0' || str[i] > '9') {
             if (str[i] == '-' && !numStarted)
                 continue;
