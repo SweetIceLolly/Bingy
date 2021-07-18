@@ -79,8 +79,8 @@ CMD(view_coins);
  *  groupid: 群号
  *  qq: QQ 号
  * 返回值:
- *  200: 成功, 返回
- *      errors: 存有所有签到期间发生的错误的数组, 格式为 (错误描述, 错误号)
+ *  200: 成功, 返回:
+ *      errors: 存有所有签到期间发生的错误的数组, 格式为 [[错误描述, 错误号], ...]
  *      signInCountCont: 连续签到天数
  *      signInCount: 签到次数
  *      deltaCoins: 获得硬币
@@ -93,3 +93,39 @@ CMD(view_coins);
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */
 CMD(sign_in);
+
+/**
+ * 查看背包
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回:
+ *      items: 存有所有装备名称的数组. 若没有装备, 则为空数组
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(view_inventory);
+
+/**
+ * 出售装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ *  items: [序号1, 序号2, ...]
+ * 返回值:
+ *  200: 成功, 返回:
+ *      count: 出售的数量
+ *      coins: 获得硬币
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(pawn);

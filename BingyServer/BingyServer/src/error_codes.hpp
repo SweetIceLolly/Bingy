@@ -68,3 +68,26 @@
 
 #define BG_ERR_STR_SIGN_IN_FAILED                   "签到发生错误"
 #define BG_ERR_SIGN_IN_FAILED                       2357
+
+// B-5. 查看背包错误
+// B-5-a. 500 错误
+#define BG_ERR_STR_VIEW_INV_FAILED                  "查看背包失败"
+#define BG_ERR_VIEW_INV_FAILED                      2400
+
+// B-6. 出售错误
+// B-6.a. 400 错误
+#define BG_ERR_STR_ID_OUT_OF_RANGE                  "序号超出了背包范围"
+#define BG_ERR_ID_OUT_OF_RANGE                      2500
+
+#define BG_ERR_STR_ID_REPEATED                      "序号重复了"
+#define BG_ERR_ID_REPEATED                          2501
+
+#define BG_ERR_STR_PRE_PAWN_FAILED                  "出售前检查发生错误"
+#define BG_ERR_PRE_PAWN_FAILED                      2502
+
+// B-7.b. 500 错误
+#define BG_ERR_STR_REMOVE_ITEM_FAILED               "从玩家背包移除物品失败"
+#define BG_ERR_REMOVE_ITEM_FAILED                   2550
+
+#define BG_ERR_STR_PAWN_FAILED                      "出售失败, 未知的内部错误"
+#define BG_ERR_PAWN_FAILED                          2551

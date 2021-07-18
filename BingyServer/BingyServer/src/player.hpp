@@ -24,6 +24,12 @@
     bool set_ ##propName (const LL &val);                       \
     bool inc_ ##propName (const LL &val);                       \
 
+// 玩家列表锁, 防止出现一条线程添加玩家, 另一条线程读取玩家的情况
+#define LOCK_PLAYERS_LIST std::unique_lock _all_players_lock(mutexAllPlayers);
+
+// 解锁玩家列表锁
+#define UNLOCK_PLAYERS_LIST _all_players_lock.unlock();
+
 using LL = std::int64_t;
 
 class player {
@@ -166,12 +172,12 @@ public:
     void waitConfirmComplete();
 };
 
-extern std::unordered_map<std::int64_t, player>   allPlayers;
-extern std::mutex                              mutexAllPlayers;
+extern std::unordered_map<std::int64_t, player>     allPlayers;
+extern std::mutex                                   mutexAllPlayers;
 
 bool bg_player_exist(const LL &id);
 bool bg_player_add(const LL &id);
-bool bg_get_allplayers_from_db();
+bool bg_get_all_players_from_db();
 
 bool bg_all_player_inc_coins(const LL &val);
 bool bg_all_player_inc_heroCoin(const LL &val);

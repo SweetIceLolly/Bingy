@@ -81,7 +81,7 @@ player::player(const LL &qq) {
 
 // 检查玩家是否存在
 bool bg_player_exist(const LL &id) {
-    std::scoped_lock lock(mutexAllPlayers);             // 防止出现另一条线程更新玩家, 这条线程查找玩家的情况
+    LOCK_PLAYERS_LIST;
     return allPlayers.end() != allPlayers.find(id);
 }
 
@@ -122,6 +122,7 @@ bool bg_player_add(const LL &id) {
         << "equipItems" << bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
         << "vip" << (LL)0
         << bsoncxx::builder::stream::finalize;
+
     // 初始化玩家属性
     player p(id);
     p.nickname = "";                        p.nickname_cache = true;
@@ -154,7 +155,7 @@ bool bg_player_add(const LL &id) {
     p.equipments[EqiType::ornament_jewelry] = { -1, -1, -1 };
     p.equipments_cache = true;
 
-    std::scoped_lock lock(mutexAllPlayers);
+    LOCK_PLAYERS_LIST;
     if (!dbInsertDocument(DB_COLL_USERDATA, doc))
         return false;
     allPlayers.insert(std::make_pair(id, p));
@@ -175,9 +176,9 @@ bool bg_player_add(const LL &id) {
         throw std::runtime_error("获取玩家属性失败");
 
 // 从数据库读取所有玩家
-bool bg_get_allplayers_from_db() {
+bool bg_get_all_players_from_db() {
     try {
-        std::scoped_lock<std::mutex> lock(mutexAllPlayers);
+        LOCK_PLAYERS_LIST;
 
         for (const auto &doc : dbFindAll(DB_COLL_USERDATA)) {
             auto tmp = doc["id"];
@@ -246,6 +247,7 @@ bool bg_get_allplayers_from_db() {
 // 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
 #define LL_GET_SET_INC(propName)                                                \
     LL player::get_ ##propName (const bool &use_cache) {                        \
+        LOCK_CURR_PLAYER;                                                       \
         if ( propName## _cache && use_cache)                                    \
             return this-> propName ;                                            \
                                                                                 \
@@ -257,7 +259,6 @@ bool bg_get_allplayers_from_db() {
             throw std::runtime_error("没有找到 " #propName " field");            \
         auto tmp = field.get_int64().value;                                     \
                                                                                 \
-        LOCK_CURR_PLAYER;                                                       \
         this-> propName  = tmp;                                                 \
         this-> propName## _cache = true;                                        \
         return tmp;                                                             \
@@ -315,6 +316,7 @@ LL player::get_id() {
 
 // 获取昵称
 std::string player::get_nickname(const bool &use_cache) {
+    LOCK_CURR_PLAYER;
     if (nickname_cache && use_cache)
         return this->nickname;
 
@@ -325,8 +327,7 @@ std::string player::get_nickname(const bool &use_cache) {
     if (!field.raw())
         throw std::runtime_error("没有找到 nickname field");
     auto tmp = std::string(result->view()["nickname"].get_utf8().value.data());
-
-    LOCK_CURR_PLAYER;
+    
     this->nickname = tmp;
     this->nickname_cache = true;
     return tmp;
@@ -363,6 +364,7 @@ void invListFromBson(const bsoncxx::document::element &elem, T &container) {
 
 // 获取整个背包列表
 std::list<inventoryData> player::get_inventory(const bool &use_cache) {
+    LOCK_CURR_PLAYER;
     if (inventory_cache && use_cache)
         return inventory;
 
@@ -375,7 +377,6 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
-    LOCK_CURR_PLAYER;
     this->inventory = rtn;
     this->inventory_cache = true;
     return rtn;
@@ -390,6 +391,7 @@ LL player::get_inventory_size(const bool &use_cache) {
 
 // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
 bool player::remove_at_inventory(const LL &index) {
+    LOCK_CURR_PLAYER;
     // 必须有缓存才能继续
     if (!inventory_cache) {
         get_inventory();
@@ -402,12 +404,11 @@ bool player::remove_at_inventory(const LL &index) {
         return false;
 
     // 更新数据库, 成功后再更新本地缓存
-    LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "inventory." + std::to_string(index) << bsoncxx::types::b_null()
         << bsoncxx::builder::stream::finalize)) {
 
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
             bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
@@ -431,6 +432,7 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
     }
 
     // 检查序号是否有效, 并添加到 document 中
+    LOCK_CURR_PLAYER;
     bsoncxx::builder::basic::document doc;
     for (const auto &index : indexes) {
         if (index >= inventory.size())
@@ -439,9 +441,8 @@ bool player::remove_at_inventory(const std::vector<LL> &indexes) {
     }
 
     // 更新数据库, 成功后再更新本地缓存
-    LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set", doc)) {
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
             bsoncxx::builder::stream::document{} << "inventory" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
@@ -550,6 +551,7 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
 
 // 获取整个已装备的装备表
 std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &use_cache) {
+    LOCK_CURR_PLAYER;
     if (equipments_cache && use_cache)
         return equipments;
 
@@ -562,7 +564,6 @@ std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &us
 
     std::unordered_map<EqiType, inventoryData> rtn;
     eqiMapFromBson(field, rtn);
-    LOCK_CURR_PLAYER;
     this->equipments = rtn;
     this->equipments_cache = true;
     return rtn;
@@ -602,6 +603,7 @@ bool player::set_equipments_item(const EqiType &type, const inventoryData &item)
 
 // 获取整个已装备的一次性物品表
 std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
+    LOCK_CURR_PLAYER;
     if (equipItems_cache && use_cache)
         return equipItems;
 
@@ -614,7 +616,6 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 
     std::list<inventoryData> rtn;
     invListFromBson(field, rtn);
-    LOCK_CURR_PLAYER;
     this->equipItems = rtn;
     this->equipItems_cache = true;
     return rtn;
@@ -622,6 +623,7 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 
 // 获取已装备的一次性物品数量
 LL player::get_equipItems_size(const bool &use_cache) {
+    LOCK_CURR_PLAYER;
     if (equipItems_cache && use_cache)
         return equipItems.size();
     return get_equipItems().size();
@@ -637,16 +639,16 @@ bool player::remove_at_equipItems(const LL &index) {
     }
 
     // 检查序号是否有效
+    LOCK_CURR_PLAYER;
     if (index >= equipItems.size())
         return false;
 
     // 更新数据库, 成功后再更新本地缓存
-    LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "equipItems." + std::to_string(index) << bsoncxx::types::b_null()
         << bsoncxx::builder::stream::finalize)) {
 
-        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pu",
+        if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$pull",
             bsoncxx::builder::stream::document{} << "equipItems" << bsoncxx::types::b_null()
             << bsoncxx::builder::stream::finalize)) {
 
@@ -670,6 +672,7 @@ bool player::clear_equipItems() {
     }
 
     // 更新数据库, 成功后再更新本地缓存
+    LOCK_CURR_PLAYER;
     if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "equipItems" <<
         bsoncxx::builder::stream::open_array << bsoncxx::builder::stream::close_array
@@ -845,12 +848,12 @@ double player::get_crt() {
 
 // 升级所需经验 = 100 + 玩家等级 * 10 + 8 * 1.18 ^ 玩家等级
 LL player::get_exp_needed() {
-    return (LL)(100.0 + level * 10.0 + 8 * pow(1.18, level));
+    return static_cast<LL>(100.0 + level * 10.0 + 8 * pow(1.18, level));
 }
 
 // 冷却时间 = Min(200 - 玩家等级 * 1.2, 40)
 LL player::get_cd() {
-    LL cd = (LL)(200.0 - level * 1.2);
+    LL cd = static_cast<LL>(200.0 - level * 1.2);
     if (cd < 40)
         return 40;
     else
@@ -908,6 +911,7 @@ void player::waitConfirmComplete() {
 #define ALL_PLAYER_INC(field)                                           \
     bool bg_all_player_inc_ ##field (const LL &val) {                   \
         /* 更新数据库, 成功后再更新本地缓存 */                            \
+        LOCK_PLAYERS_LIST;                                              \
         if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
             bsoncxx::builder::stream::document{} << #field << val       \
             << bsoncxx::builder::stream::finalize)) {                   \

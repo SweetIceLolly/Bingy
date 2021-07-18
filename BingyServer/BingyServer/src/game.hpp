@@ -31,3 +31,6 @@ bool accountCheck(const bgGameHttpReq &req);
 PRE_POST(Register);
 PRE_POST(ViewCoins);
 PRE_POST(SignIn);
+PRE_POST(ViewInventory);
+bool prePawnCallback(const bgGameHttpReq &bgReq, const std::vector<LL> &items);
+void postPawnCallback(const bgGameHttpReq &bgReq, const std::vector<LL> &items);

@@ -62,7 +62,7 @@ bool bg_init() {
 
     // 加载玩家信息
     console_log("正在读取所有玩家数据...");
-    if (!bg_get_allplayers_from_db()) {
+    if (!bg_get_all_players_from_db()) {
         console_log("读取玩家数据失败!", LogType::error);
         return false;
     }

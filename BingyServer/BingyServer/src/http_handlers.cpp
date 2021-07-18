@@ -77,10 +77,13 @@ void bg_server_poll(mg_connection *connection, int &ev, mg_http_message *ev_data
     }
 }
 
-// 新玩家注册
-CMD(register) {
-    auto handler = [](void *_req) {
-        http_req *req = static_cast<http_req*>(_req);
+// 无附加参数的 POST 请求处理线程函数
+inline std::function<void(void*)> make_bg_post_handler(
+    const std::function<bool(const bgGameHttpReq&)> &preCallback,
+    const std::function<void(const bgGameHttpReq&)> &postCallback
+) {
+    return [=](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
 
         try {
             auto params = json::parse(req->body);
@@ -91,8 +94,8 @@ CMD(register) {
 
             if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
                 bgGameHttpReq bgReq = { req, playerId, groupId };
-                if (preRegisterCallback(bgReq))
-                    postRegisterCallback(bgReq);
+                if (preCallback(bgReq))
+                    postCallback(bgReq);
             }
             else
                 bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
@@ -103,16 +106,14 @@ CMD(register) {
 
         free_http_req(req);
     };
-
-    auto req = get_http_req(connection, ev_data);
-    if (!req)
-        return;
-    threadPool.addJob(thread_pool_job(handler, req));
 }
 
-// 查看硬币
-CMD(view_coins) {
-    auto handler = [](void *_req) {
+// 无附加参数的 GET 请求处理线程函数
+inline std::function<void(void*)> make_bg_get_handler(
+    const std::function<bool(const bgGameHttpReq&)> &preCallback,
+    const std::function<void(const bgGameHttpReq&)> &postCallback
+) {
+    return [=](void *_req) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
@@ -123,8 +124,8 @@ CMD(view_coins) {
 
             if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
                 bgGameHttpReq bgReq = { req, playerId, groupId };
-                if (preViewCoinsCallback(bgReq))
-                    postViewCoinsCallback(bgReq);
+                if (preCallback(bgReq))
+                    postCallback(bgReq);
             }
             else
                 bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
@@ -135,14 +136,80 @@ CMD(view_coins) {
 
         free_http_req(req);
     };
+}
 
+// 有一个附加参数的 POST 请求处理线程函数
+template <typename ParamType>
+std::function<void(void *)> make_bg_post_handler_param(
+    const std::function<bool(const bgGameHttpReq&, const ParamType&)> &preCallback,
+    const std::function<void(const bgGameHttpReq&, const ParamType&)> &postCallback,
+    const char *jsonFieldName
+) {
+    return [=](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            ParamType   param = params[jsonFieldName].get<ParamType>();
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preCallback(bgReq, param))
+                    postCallback(bgReq, param);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (...) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+}
+
+// 新玩家注册
+CMD(register) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(handler, req));
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preRegisterCallback, postRegisterCallback), req));
+}
+
+// 查看硬币
+CMD(view_coins) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewCoinsCallback, postViewCoinsCallback), req));
 }
 
 // 签到
 CMD(sign_in) {
-    
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preSignInCallback, postSignInCallback), req));
+}
+
+// 查看背包
+CMD(view_inventory) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewInventoryCallback, postViewInventoryCallback), req));
+}
+
+// 出售
+CMD(pawn) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler_param<std::vector<LL>>(prePawnCallback, postPawnCallback, "items"), req)
+    );
 }
