@@ -34,3 +34,5 @@ PRE_POST(SignIn);
 PRE_POST(ViewInventory);
 bool prePawnCallback(const bgGameHttpReq &bgReq, const std::vector<LL> &items);
 void postPawnCallback(const bgGameHttpReq &bgReq, const std::vector<LL> &items);
+PRE_POST(ViewProperties);
+PRE_POST(ViewEquipments);

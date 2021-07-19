@@ -4,6 +4,8 @@
 文件: game.cpp
 */
 
+#include <sstream>
+#include <iomanip>
 #include "game.hpp"
 #include "player.hpp"
 #include "signin_event.hpp"
@@ -15,7 +17,7 @@
 using namespace nlohmann;
 
 // 懒人宏
-// 获取当前对应的玩家
+// 获取当前对应的玩家 (非线程安全, 请确保调用该宏时玩家列表没有被修改)
 #define PLAYER allPlayers.at(bgReq.playerId)
 
 std::unordered_set<LL>  allAdmins;
@@ -85,7 +87,6 @@ void postViewCoinsCallback(const bgGameHttpReq &bgReq) {
 
 // 签到前检查
 bool preSignInCallback(const bgGameHttpReq &bgReq) {
-    return true;
     if (!accountCheck(bgReq))
         return false;
 
@@ -309,5 +310,138 @@ void postPawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) 
     }
     catch (...) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_PAWN_FAILED, BG_ERR_PAWN_FAILED);
+    }
+}
+
+// 查看属性前检查
+bool preViewPropertiesCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 懒人宏
+// 获取某个属性的 JSON 字段
+#define GET_EQI_PROP_STR(prop)                                                                          \
+    {                                                                                                   \
+        #prop, {                                                                                        \
+            { "total",                                                 /* 最终值 */                      \
+                allPlayers.at(id).get_ ##prop()                                                         \
+            },                                                                                          \
+            { "weapons",                                               /* 武器属性总和 */                \
+                allPlayers.at(id).get_equipments().at(EqiType::weapon_primary).calc_ ##prop() +         \
+                allPlayers.at(id).get_equipments().at(EqiType::weapon_secondary).calc_ ##prop()         \
+            },                                                                                          \
+            { "armors",                                                /* 护甲属性总和 */                \
+                allPlayers.at(id).get_equipments().at(EqiType::armor_helmet).calc_ ##prop() +           \
+                allPlayers.at(id).get_equipments().at(EqiType::armor_body).calc_ ##prop () +            \
+                allPlayers.at(id).get_equipments().at(EqiType::armor_leg).calc_ ##prop () +             \
+                allPlayers.at(id).get_equipments().at(EqiType::armor_boot).calc_ ##prop ()              \
+            },                                                                                          \
+            { "ornaments",                                             /* 饰品属性总和 */                \
+                allPlayers.at(id).get_equipments().at(EqiType::ornament_earrings).calc_ ##prop() +      \
+                allPlayers.at(id).get_equipments().at(EqiType::ornament_rings).calc_ ##prop () +        \
+                allPlayers.at(id).get_equipments().at(EqiType::ornament_necklace).calc_ ##prop () +     \
+                allPlayers.at(id).get_equipments().at(EqiType::ornament_jewelry).calc_ ##prop ()        \
+            }                                                                                           \
+        }                                                                                               \
+    }
+
+// 通用查看属性函数
+std::string getPropertiesStr(const LL &id) {
+    LOCK_PLAYERS_LIST;
+
+    return json {
+        { "qq", id },
+        { "level", allPlayers.at(id).get_level() },
+        { "blessing", allPlayers.at(id).get_blessing() },
+        { "exp", allPlayers.at(id).get_exp() },
+        { "expNeeded", allPlayers.at(id).get_exp_needed() },
+        { GET_EQI_PROP_STR(hp) },
+        { GET_EQI_PROP_STR(atk) },
+        { GET_EQI_PROP_STR(def) },
+        { GET_EQI_PROP_STR(mp) },
+        { GET_EQI_PROP_STR(crt) },
+        { GET_EQI_PROP_STR(brk) },
+        { GET_EQI_PROP_STR(agi) },
+        { "energy", allPlayers.at(id).get_energy() },
+        { "coins", allPlayers.at(id).get_coins() },
+        { "heroCoin", allPlayers.at(id).get_heroCoin() }
+    }.dump();
+}
+
+// 查看属性
+void postViewPropertiesCallback(const bgGameHttpReq& bgReq) {
+    try {
+        bg_http_reply(bgReq.req, 200, getPropertiesStr(bgReq.playerId).c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_PROP_FAILED + std::string(": ") + e.what(), BG_ERR_VIEW_PROP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_PROP_FAILED, BG_ERR_VIEW_PROP_FAILED);
+    }
+}
+
+// 查看装备前检查
+bool preViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 懒人宏
+// 生成对应类型的装备的 JSON 字段. 若 ID = -1, 则显示"未装备"; 否则显示 装备名称+等级 (磨损/原始磨损)
+#define GET_EQI_STR(eqitype)                                                                                       \
+    {                                                                                                              \
+        #eqitype,                                                                                                  \
+        (eqitype.id == -1 ? "未装备" : allEquipments.at(eqitype.id).name + "+" + std::to_string(eqitype.level) +   \
+            " (" + std::to_string(eqitype.wear) + "/" + std::to_string(allEquipments.at(eqitype.id).wear) + ")")   \
+    }
+
+// 通用查看装备函数
+std::string getEquipmentsStr(const LL &id) {
+    LOCK_PLAYERS_LIST;
+    const auto eqi = allPlayers.at(id).get_equipments();
+    const auto singleUseEqi = allPlayers.at(id).get_equipItems();
+    UNLOCK_PLAYERS_LIST;
+
+    const auto &armor_helmet = eqi.at(EqiType::armor_helmet);
+    const auto &armor_body = eqi.at(EqiType::armor_body);
+    const auto &armor_leg = eqi.at(EqiType::armor_leg);
+    const auto &armor_boot = eqi.at(EqiType::armor_boot);
+    const auto &weapon_primary = eqi.at(EqiType::weapon_primary);
+    const auto &weapon_secondary = eqi.at(EqiType::weapon_secondary);
+    const auto &ornament_earrings = eqi.at(EqiType::ornament_earrings);
+    const auto &ornament_rings = eqi.at(EqiType::ornament_rings);
+    const auto &ornament_necklace = eqi.at(EqiType::ornament_necklace);
+    const auto &ornament_jewelry = eqi.at(EqiType::ornament_jewelry);
+    
+    std::vector<std::string> singleUseItems;
+    for (const auto &item : singleUseEqi) {
+        singleUseItems.push_back(allEquipments.at(item.id).name);
+    }
+
+    return json{
+        GET_EQI_STR(armor_helmet),
+        GET_EQI_STR(armor_body),
+        GET_EQI_STR(armor_leg),
+        GET_EQI_STR(armor_boot),
+        GET_EQI_STR(weapon_primary),
+        GET_EQI_STR(weapon_secondary),
+        GET_EQI_STR(ornament_earrings),
+        GET_EQI_STR(ornament_rings),
+        GET_EQI_STR(ornament_necklace),
+        GET_EQI_STR(ornament_jewelry),
+        { "single_use", singleUseItems }
+    }.dump();
+}
+
+//查看装备
+void postViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
+    try {
+        bg_http_reply(bgReq.req, 200, getEquipmentsStr(bgReq.playerId).c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_EQI_FAILED + std::string(": ") + e.what(), BG_ERR_VIEW_PROP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_EQI_FAILED, BG_ERR_VIEW_EQI_FAILED);
     }
 }

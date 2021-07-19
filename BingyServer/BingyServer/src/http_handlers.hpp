@@ -129,3 +129,35 @@ CMD(view_inventory);
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */
 CMD(pawn);
+
+/**
+ * 查看属性
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回包含属性值的 JSON
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(view_properties);
+
+/**
+ * 查看装备
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回包含所有装备序号和等级的 JSON
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(view_equipments);

@@ -213,3 +213,19 @@ CMD(pawn) {
         make_bg_post_handler_param<std::vector<LL>>(prePawnCallback, postPawnCallback, "items"), req)
     );
 }
+
+// 查看属性
+CMD(view_properties) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewPropertiesCallback, postViewPropertiesCallback), req));
+}
+
+// 查看装备
+CMD(view_equipments) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewEquipmentsCallback, postViewEquipmentsCallback), req));
+}

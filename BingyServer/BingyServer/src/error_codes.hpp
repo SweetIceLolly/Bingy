@@ -19,6 +19,7 @@
 
 // B. 游戏层面错误
 // B-1. 通用账户检查错误
+// B-1.a. 400 错误
 #define BG_ERR_STR_UNREGISTERED                     "玩家未注册"
 #define BG_ERR_UNREGISTERED                         2000
 
@@ -37,7 +38,7 @@
 // B-3. 查看硬币
 // B-3-a. 500 错误
 #define BG_ERR_STR_GET_COINS_FAILED                 "读取玩家硬币数失败"
-#define BG_ERR_GET_COINS_FAILED                     2200
+#define BG_ERR_GET_COINS_FAILED                     2250
 
 // B-4. 签到错误
 // B-4-a. 400 错误
@@ -72,7 +73,7 @@
 // B-5. 查看背包错误
 // B-5-a. 500 错误
 #define BG_ERR_STR_VIEW_INV_FAILED                  "查看背包失败"
-#define BG_ERR_VIEW_INV_FAILED                      2400
+#define BG_ERR_VIEW_INV_FAILED                      2450
 
 // B-6. 出售错误
 // B-6.a. 400 错误
@@ -85,9 +86,19 @@
 #define BG_ERR_STR_PRE_PAWN_FAILED                  "出售前检查发生错误"
 #define BG_ERR_PRE_PAWN_FAILED                      2502
 
-// B-7.b. 500 错误
+// B-6.b. 500 错误
 #define BG_ERR_STR_REMOVE_ITEM_FAILED               "从玩家背包移除物品失败"
 #define BG_ERR_REMOVE_ITEM_FAILED                   2550
 
 #define BG_ERR_STR_PAWN_FAILED                      "出售失败, 未知的内部错误"
 #define BG_ERR_PAWN_FAILED                          2551
+
+// B.7. 查看属性错误
+// B.7.a. 500 错误
+#define BG_ERR_STR_VIEW_PROP_FAILED                 "查看属性失败"
+#define BG_ERR_VIEW_PROP_FAILED                     2650
+
+// B.8. 查看装备错误
+// B.8.a. 500 错误
+#define BG_ERR_STR_VIEW_EQI_FAILED                  "查看装备失败"
+#define BG_ERR_VIEW_EQI_FAILED                      2750

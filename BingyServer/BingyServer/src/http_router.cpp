@@ -17,6 +17,8 @@ bool init_server_router(rest_server &server) {
     POST("/signin", bg_cmd_sign_in);
     GET("/viewinv", bg_cmd_view_inventory);
     POST("/pawn", bg_cmd_pawn);
+    GET("/viewprop", bg_cmd_view_properties);
+    GET("/vieweqi", bg_cmd_view_equipments);
 
     return true;
 }
