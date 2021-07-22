@@ -6,8 +6,6 @@
 
 #pragma once
 
-#define MG_ENABLE_SOCKETPAIR 1
-
 #if !defined(_MSC_VER)
 #include "mongoose.h"
 #else

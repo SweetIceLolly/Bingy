@@ -19,6 +19,12 @@ bool init_server_router(rest_server &server) {
     POST("/pawn", bg_cmd_pawn);
     GET("/viewprop", bg_cmd_view_properties);
     GET("/vieweqi", bg_cmd_view_equipments);
+    POST("/equip", bg_cmd_equip);
+    POST("/unequip", bg_cmd_unequip);
+    POST("/unequipweapon", bg_cmd_unequip_weapon);
+    POST("/unequiparmor", bg_cmd_unequip_armor);
+    POST("/unequipornament", bg_cmd_unequip_ornament);
+    POST("/unequipall", bg_cmd_unequip_all);
 
     return true;
 }

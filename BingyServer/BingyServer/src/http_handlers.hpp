@@ -120,7 +120,7 @@ CMD(view_inventory);
  *  secret: 密匙
  *  groupid: 群号
  *  qq: QQ 号
- *  items: [序号1, 序号2, ...]
+ *  items: [背包序号1, 背包序号2, ...] (从 0 开始)
  * 返回值:
  *  200: 成功, 返回:
  *      count: 出售的数量
@@ -161,3 +161,64 @@ CMD(view_properties);
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */
 CMD(view_equipments);
+
+/**
+ * 装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ *  item: 背包序号 (从 0 开始)
+ * 返回值:
+ *  200: 成功, 返回:
+ *      type: 装备类型
+ *      name: 装备名字
+ *      level: (type != EqiType::single_use 时出现) 装备等级
+ *      wear: (type != EqiType::single_use 时出现) 磨损
+ *      defWear: (type != EqiType::single_use 时出现) 原始磨损
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(equip);
+
+/**
+ * 卸下装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ *  type: 装备类型
+ *  index: (type == EqiType::single_use 时出现) 要卸下的一次性装备序号
+ * 返回值:
+ *  200: 成功, 返回:
+ *      item: 卸下的装备名称
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(unequip);
+
+/**
+ * 卸下所有指定类型的装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回:
+ *      items: 卸下的所有装备列表. 如果为空列表, 说明当前没有装备指定类型的装备
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(unequip_weapon);
+CMD(unequip_armor);
+CMD(unequip_ornament);
+CMD(unequip_all);

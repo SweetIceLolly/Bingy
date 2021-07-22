@@ -102,3 +102,45 @@
 // B.8.a. 500 错误
 #define BG_ERR_STR_VIEW_EQI_FAILED                  "查看装备失败"
 #define BG_ERR_VIEW_EQI_FAILED                      2750
+
+// B.9. 装备错误
+// B.9.a. 400 错误
+#define BG_ERR_STR_PRE_EQUIP_FAILED                 "装备前检查发生错误"
+#define BG_ERR_PRE_EQUIP_FAILED                     2800
+
+// B.9.b. 500 错误
+#define BG_ERR_STR_EQUIP_REMOVE_FAILED              "把将要装备的装备从背包中移除时发生错误"
+#define BG_ERR_EQUIP_REMOVE_FAILED                  2850
+
+#define BG_ERR_STR_EQUIP_UPDATE_FAILED              "修改玩家装备时发生错误"
+#define BG_ERR_EQUIP_UPDATE_FAILED                  2851
+
+#define BG_ERR_STR_EQUIP_ADD_FAILED                 "把之前的装备放回背包时发生错误"
+#define BG_ERR_EQUIP_ADD_FAILED                     2852
+
+#define BG_ERR_STR_EQUIP_FAILED                     "装备时发生错误"
+#define BG_ERR_EQUIP_FAILED                         2854
+
+// B.10. 卸下装备错误
+// B.10.a. 400 错误
+#define BG_ERR_STR_NOT_EQUIPPED                     "当前未装备对应类型的装备"
+#define BG_ERR_NOT_EQUIPPED                         2900
+
+#define BG_ERR_STR_SINGLE_OUT_OF_RANGE              "指定了无效的一次性物品序号"
+#define BG_ERR_SINGLE_OUT_OF_RANGE                  2901
+
+#define BG_ERR_STR_PRE_UNEQUIP_FAILED               "卸下装备前检查发生错误"
+#define BG_ERR_PRE_UNEQUIP_FAILED                   2902
+
+// B.10.b. 500 错误
+#define BG_ERR_STR_UNEQUIP_FAILED                   "卸下装备失败"
+#define BG_ERR_UNEQUIP_FAILED                       2950
+
+#define BG_ERR_STR_CLEAR_SINGLE_FAILED              "清空一次性装备时发生错误"
+#define BG_ERR_CLEAR_SINGLE_FAILED                  2951
+
+#define BG_ERR_STR_SINGLE_ADD_FAILED                "把一次性装备添加到背包时发生错误"
+#define BG_ERR_SINGLE_ADD_FAILED                    2952
+
+#define BG_ERR_STR_REMOVE_SINGLE_FAILED             "移除一次性装备时发生错误"
+#define BG_ERR_REMOVE_SINGLE_FAILED                 2953

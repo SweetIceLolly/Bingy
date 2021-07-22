@@ -164,7 +164,7 @@ std::function<void(void *)> make_bg_post_handler_param(
             else
                 bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
         }
-        catch (...) {
+        catch (const std::exception &e) {
             bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
         }
 
@@ -228,4 +228,97 @@ CMD(view_equipments) {
     if (!req)
         return;
     threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewEquipmentsCallback, postViewEquipmentsCallback), req));
+}
+
+// 装备
+CMD(equip) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler_param<LL>(preEquipCallback, postEquipCallback, "item"), req)
+    );
+}
+
+// 卸下装备
+CMD(unequip) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            EqiType     type = params["type"].get<EqiType>();
+            LL          index;
+
+            if (type == EqiType::single_use)
+                index = params["index"].get<LL>();
+            else
+                index = -1;
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (type == EqiType::single_use) {                      // 卸下一次性装备
+                    if (preUnequipSingleCallback(bgReq, index))
+                        postUnequipSingleCallback(bgReq, index);
+                }
+                else {                                                  // 卸下普通装备
+                    if (preUnequipCallback(bgReq, type))
+                        postUnequipCallback(bgReq, type);
+                }
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addJob(thread_pool_job(handler, req));
+}
+
+// 卸下武器/护甲/饰品/全部
+CMD(unequip_weapon) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler(preUnequipWeaponCallback, postUnequipWeaponCallback), req)
+    );
+}
+
+CMD(unequip_armor) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler(preUnequipArmorCallback, postUnequipArmorCallback), req)
+    );
+}
+
+CMD(unequip_ornament) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler(preUnequipOrnamentCallback, postUnequipOrnamentCallback), req)
+    );
+}
+
+CMD(unequip_all) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler(preUnequipAllCallback, postUnequipAllCallback), req)
+    );
 }

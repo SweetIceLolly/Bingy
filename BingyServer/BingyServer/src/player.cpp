@@ -623,7 +623,6 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 
 // 获取已装备的一次性物品数量
 LL player::get_equipItems_size(const bool &use_cache) {
-    LOCK_CURR_PLAYER;
     if (equipItems_cache && use_cache)
         return equipItems.size();
     return get_equipItems().size();

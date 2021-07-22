@@ -246,7 +246,7 @@ bool prePawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) {
         std::unordered_set<LL> sellList;
         LOCK_PLAYERS_LIST;
         for (const auto &item : items) {
-            if (item > PLAYER.get_inventory_size() || item < 1) {               // 检查是否超出背包范围
+            if (item >= PLAYER.get_inventory_size() || item < 0) {              // 检查是否超出背包范围
                 bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(item), BG_ERR_ID_OUT_OF_RANGE);
                 return false;
             }
@@ -443,5 +443,334 @@ void postViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
     }
     catch (...) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_EQI_FAILED, BG_ERR_VIEW_EQI_FAILED);
+    }
+}
+
+// 装备前检查
+bool preEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    try {
+        if (equipItem >= PLAYER.get_inventory_size() || equipItem < 0) {        // 检查是否超出背包范围
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(equipItem), BG_ERR_ID_OUT_OF_RANGE);
+            return false;
+        }
+        return true;
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_EQUIP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_EQUIP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_EQUIP_FAILED, BG_ERR_PRE_EQUIP_FAILED);
+        return false;
+    }
+}
+
+// 装备
+void postEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
+    LOCK_PLAYERS_LIST;
+
+    PLAYER.resetCache();                                            // 重算玩家属性
+
+    // 获取背包里该序号的对应物品
+    auto invItems = PLAYER.get_inventory();
+    auto it = invItems.begin();
+    std::advance(it, equipItem);
+
+    // 把装备上去了的装备从背包移除
+    if (!PLAYER.remove_at_inventory({ equipItem })) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_REMOVE_FAILED, BG_ERR_EQUIP_REMOVE_FAILED);
+        return;
+    }
+
+    // 根据装备类型来装备
+    auto eqiType = allEquipments.at(it->id).type;
+    if (eqiType != EqiType::single_use) {                               // 不是一次性物品
+        auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
+
+        // 把新装备装备上去
+        if (!PLAYER.set_equipments_item(eqiType, *it)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_UPDATE_FAILED, BG_ERR_EQUIP_UPDATE_FAILED);
+            return;
+        }
+
+        // 如果玩家之前的装备不为空, 就放回背包中
+        if (prevEquipItem.id != -1) {
+            if (!PLAYER.add_inventory_item(prevEquipItem)) {
+                bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_ADD_FAILED, BG_ERR_EQUIP_ADD_FAILED);
+                return;
+            }
+        }
+
+        json reply = {
+            { "type", eqiType_to_str(eqiType) },
+            { "name", allEquipments.at(it->id).name },
+            { "level", it->level },
+            { "wear", it->wear },
+            { "defWear", allEquipments.at(it->id).wear }
+        };
+        bg_http_reply(bgReq.req, 200, reply.dump().c_str());
+    }
+    else {                                                              // 是一次性物品
+        // 把物品添加到一次性列表
+        if (!PLAYER.add_equipItems_item(*it)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_UPDATE_FAILED, BG_ERR_EQUIP_UPDATE_FAILED);
+            return;
+        }
+
+        json reply = {
+            { "type", eqiType_to_str(eqiType) },
+            { "name", allEquipments.at(it->id).name }
+        };
+        bg_http_reply(bgReq.req, 200, reply.dump().c_str());
+    }
+}
+
+// 把指定玩家的指定类型的装备卸下并放回包里.
+// 如果卸下了装备, 则返回对应的名称; 否则返回空字符串
+// 注意, 该函数不能处理卸下一次性物品
+std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
+    auto &p = allPlayers.at(qq);
+    inventoryData eqi = p.get_equipments().at(eqiType);
+
+    if (eqi.id == -1)
+        return "";
+    else {
+        p.resetCache();                                            // 重算玩家属性
+        if (!p.set_equipments_item(eqiType, { -1, -1, -1 })) {
+            throw std::runtime_error("设置玩家装备时失败!");
+        }
+        if (!p.add_inventory_item(eqi)) {
+            throw std::runtime_error("为玩家添加装备到背包时失败!");
+        }
+
+        return allEquipments.at(eqi.id).name + "+" + std::to_string(eqi.level);
+    }
+}
+
+// 卸下多个指定类型的装备并返回所有卸下了的装备的列表
+template <typename ... Ts>
+std::vector<std::string> UnequipMultiple(const LL &qq, const Ts&&... types) {
+    return { (unequipPlayer(qq, types), ...) };
+}
+
+// 卸下指定玩家的一次性物品并放回包里
+std::vector<std::string> UnequipAllSingles(const LL &qq) {
+    auto items = allPlayers.at(qq).get_equipItems();
+    if (!allPlayers.at(qq).clear_equipItems()) {
+        throw std::runtime_error(BG_ERR_STR_CLEAR_SINGLE_FAILED);
+    }
+
+    std::vector<std::string> rtn;
+    for (const auto &item : items) {
+        if (!allPlayers.at(qq).add_inventory_item(item))
+            rtn.push_back(allEquipments.at(item.id).name);
+        else
+            throw BG_ERR_STR_SINGLE_ADD_FAILED + std::string(": ") + allEquipments.at(item.id).name;
+    }
+    return rtn;
+}
+
+// 卸下指定类型的装备前检查
+bool preUnequipCallback(const bgGameHttpReq& bgReq, const EqiType& type) {
+    if (!accountCheck(bgReq))
+        return false;
+    LOCK_PLAYERS_LIST;
+    if (PLAYER.get_equipments().at(type).id == -1) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NOT_EQUIPPED + std::string(": ") +
+            eqiType_to_str(type), BG_ERR_NOT_EQUIPPED);
+        return false;
+    }
+    return true;
+}
+
+// 卸下指定类型的装备
+void postUnequipCallback(const bgGameHttpReq& bgReq, const EqiType& type) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                                            // 重算玩家属性
+        auto rtn = unequipPlayer(bgReq.playerId, type);
+        bg_http_reply(bgReq.req, 200, json{ { "item", rtn } }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+    }
+}
+
+// 卸下武器前检查
+bool preUnequipWeaponCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 卸下所有武器
+void postUnequipWeaponCallback(const bgGameHttpReq& bgReq) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                                            // 重算玩家属性
+        bg_http_reply(bgReq.req, 200, json{
+            { "items", UnequipMultiple(
+                bgReq.playerId,
+                EqiType::weapon_primary,
+                EqiType::weapon_secondary
+                )
+            }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+    }
+}
+
+// 卸下护甲前检查
+bool preUnequipArmorCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 卸下所有护甲
+void postUnequipArmorCallback(const bgGameHttpReq& bgReq) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                                            // 重算玩家属性
+        bg_http_reply(bgReq.req, 200, json{
+            { "items", UnequipMultiple(
+                bgReq.playerId,
+                EqiType::armor_body,
+                EqiType::armor_boot,
+                EqiType::armor_helmet,
+                EqiType::armor_leg
+                )
+            }
+            }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+    }
+}
+
+bool preUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+void postUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                                            // 重算玩家属性
+        bg_http_reply(bgReq.req, 200, json{
+            { "items", UnequipMultiple(
+                bgReq.playerId,
+                EqiType::ornament_earrings,
+                EqiType::ornament_jewelry,
+                EqiType::ornament_necklace,
+                EqiType::ornament_rings
+                )
+            }
+            }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+    }
+}
+
+bool preUnequipAllCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                                            // 重算玩家属性
+        bg_http_reply(bgReq.req, 200, json{
+            { "eqi", UnequipMultiple(
+                bgReq.playerId,
+                EqiType::weapon_primary,
+                EqiType::weapon_secondary,
+                EqiType::armor_body,
+                EqiType::armor_boot,
+                EqiType::armor_helmet,
+                EqiType::armor_leg,
+                EqiType::ornament_earrings,
+                EqiType::ornament_jewelry,
+                EqiType::ornament_necklace,
+                EqiType::ornament_rings
+                )
+            },
+            { "single", UnequipAllSingles(bgReq.playerId) }
+            }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+    }
+}
+
+bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    LOCK_PLAYERS_LIST;
+    try {
+        if (index < 0 || index >= PLAYER.get_equipItems_size()) {               // 检查序号是否超出装备范围
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_SINGLE_OUT_OF_RANGE + std::string(": ") + std::to_string(index), BG_ERR_SINGLE_OUT_OF_RANGE);
+            return false;
+        }
+        return true;
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UNEQUIP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_UNEQUIP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UNEQUIP_FAILED, BG_ERR_PRE_UNEQUIP_FAILED);
+        return false;
+    }
+}
+
+void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
+    try {
+        LOCK_PLAYERS_LIST;
+        PLAYER.resetCache();                    // 重算玩家属性
+
+        // 先把要卸下的装备记录下来, 方便之后添加到背包
+        auto items = PLAYER.get_equipItems();
+        auto it = items.begin();
+        std::advance(it, index);
+
+        if (!PLAYER.remove_at_equipItems(index)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_REMOVE_SINGLE_FAILED, BG_ERR_REMOVE_SINGLE_FAILED);
+            return;
+        }
+        if (!PLAYER.add_inventory_item(*it)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SINGLE_ADD_FAILED, BG_ERR_SINGLE_ADD_FAILED);
+            return;
+        }
+        bg_http_reply(bgReq.req, 200, ("{item:" + allEquipments.at(it->id).name + "}").c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
+            e.what(), BG_ERR_UNEQUIP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
     }
 }
