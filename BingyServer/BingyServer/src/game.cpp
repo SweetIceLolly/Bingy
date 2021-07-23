@@ -661,10 +661,12 @@ void postUnequipArmorCallback(const bgGameHttpReq& bgReq) {
     }
 }
 
+// 卸下饰品前检查
 bool preUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
     return accountCheck(bgReq);
 }
 
+// 卸下所有饰品
 void postUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
     try {
         LOCK_PLAYERS_LIST;
@@ -689,10 +691,12 @@ void postUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
     }
 }
 
+// 卸下所有装备前检查
 bool preUnequipAllCallback(const bgGameHttpReq& bgReq) {
     return accountCheck(bgReq);
 }
 
+// 卸下所有装备
 void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
     try {
         LOCK_PLAYERS_LIST;
@@ -724,6 +728,7 @@ void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
     }
 }
 
+// 卸下指定的一次性装备前检查
 bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
     if (!accountCheck(bgReq))
         return false;
@@ -746,6 +751,7 @@ bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
     }
 }
 
+// 卸下指定的一次性装备
 void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
     try {
         LOCK_PLAYERS_LIST;
@@ -773,4 +779,160 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
     catch (...) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
     }
+}
+
+// 强化装备前检查
+bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL& upgradeTimes, LL& coinsNeeded) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    // 检查是否有装备对应类型的装备
+    LOCK_PLAYERS_LIST;
+    if (PLAYER.get_equipments().at(type).id == -1) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NOT_EQUIPPED + std::string(": ") +
+            eqiType_to_str(type), BG_ERR_NOT_EQUIPPED);
+        return false;
+    }
+
+    // 从字符串获取升级次数
+    try {
+        if (upgradeTimes < 1) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_UPGRADE_TIMES, BG_ERR_INVALID_UPGRADE_TIMES);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UPGRADE_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_UPGRADE_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UPGRADE_FAILED, BG_ERR_PRE_UPGRADE_FAILED);
+        return false;
+    }
+    if (upgradeTimes > 20) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_MAX_UPGRADE_TIMES, BG_ERR_MAX_UPGRADE_TIMES);
+        return false;
+    }
+
+    // 计算升级所需硬币
+    double currEqiLevel = static_cast<double>(PLAYER.get_equipments().at(type).level);
+    if (upgradeTimes == 1) {
+        // 装备升一级价格 = 210 * 1.61 ^ 当前装备等级
+        coinsNeeded = static_cast<LL>(210.0 * pow(1.61, currEqiLevel));
+        if (PLAYER.get_coins() < coinsNeeded) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                std::string(": 还需要") + std::to_string(coinsNeeded - PLAYER.get_coins()) + "硬币",
+                BG_ERR_INSUFFICIENT_COINS
+            );
+            return false;
+        }
+    }
+    else {
+        //   装备升 n 级价格
+        // = sum(210 * 1.61 ^ x, x, 当前等级, 当前等级 + n - 1)
+        // = 21000 * (1.61 ^ (当前等级 + n) - 1.61 ^ 当前等级) / 61
+        // ≈ -344.262295082 * exp(0.476234178996 * 当前等级) + 344.262295082 * exp(0.476234178996 * (当前等级 + n))
+        coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
+        LL currCoins = PLAYER.get_coins();
+        if (currCoins < coinsNeeded) {
+            // 如果不够硬币, 则计算用户可以升级多少级, 即对下列方程中的 n 求解:
+            // 21000 * (1.61 ^ (当前等级 + n) - 1.61 ^ 当前等级) / 61 = 当前硬币
+            // 解得:
+            // n = (当前等级 * ln(7) - 2 * 当前等级 * ln(10) + 当前等级 * ln(23) + ln(3) + ln(7) + 3 * ln(10) - ln(61 * 当前硬币 + 21000 * (161 / 100) ^ 当前等级)) / (-ln(7) + 2 * ln(10) - ln(23))
+            //   ≈ -2.09980728831 * (-ln(21000.0 * exp(0.476234178996 * 当前等级) + 61.0 * 当前硬币) + 0.476234178996 * 当前等级 + 9.95227771671)
+            // 再取 floor
+            upgradeTimes = static_cast<LL>(floor(
+                -2.09980728831 * (-log(21000.0 * exp(0.476234178996 * currEqiLevel) + 61.0 * currCoins) + 0.476234178996 * currEqiLevel + 9.95227771671)
+            ));
+
+            if (upgradeTimes < 1) {
+                // 玩家的钱一次都升级不了
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                    std::string(": 还需要") + std::to_string(coinsNeeded - currCoins) + "硬币",
+                    BG_ERR_INSUFFICIENT_COINS
+                );
+            }
+            else {
+                // 重算需要硬币
+                coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                    std::string(": 当前硬币只够升级") + std::to_string(upgradeTimes) + "次, 强化完之后还剩" +
+                    std::to_string(currCoins - coinsNeeded) + "硬币",
+                    BG_ERR_INSUFFICIENT_COINS
+                );
+            }
+            return false;
+        }
+        else {
+            // 够钱进行多次升级, 创建一个确认操作
+            bg_http_reply(bgReq.req, 200, json {
+                { "type", eqiType_to_str(type) },
+                { "times", upgradeTimes },
+                { "coins", coinsNeeded }
+            }.dump().c_str());
+
+            if (PLAYER.confirmInProgress) {
+                // 如果玩家当前有进行中的确认, 那么取消掉正在进行的确认, 并等待那个确认退出
+                PLAYER.abortUpgrade();
+                PLAYER.waitConfirmComplete();
+            }
+            return PLAYER.waitUpgradeConfirm();         // 等待玩家进行确认
+        }
+    }
+    return true;
+}
+
+// 强化装备
+void postUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, const LL& upgradeTimes, const LL& coinsNeeded) {
+    try {
+        LOCK_PLAYERS_LIST;
+
+        // 扣硬币
+        if (!PLAYER.inc_coins(-coinsNeeded)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_COINS_FAILED, BG_ERR_DEC_COINS_FAILED);
+            return;
+        }
+
+        // 升级
+        auto currItem = PLAYER.get_equipments_item(type);
+        currItem.level += upgradeTimes;
+        if (!PLAYER.set_equipments_item(type, currItem)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SET_EQI_FAILED, BG_ERR_SET_EQI_FAILED);
+            return;
+        }
+
+        // 发送确认消息
+        bg_http_reply(bgReq.req, 200, json{
+            { "times", upgradeTimes },
+            { "name", allEquipments.at(currItem.id).name + "+" + std::to_string(currItem.level) },
+            { "coins", coinsNeeded },
+            { "coinsLeft", PLAYER.get_coins() }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_UPGRADE_FAILED + std::string(": ") + e.what(), BG_ERR_UPGRADE_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_UPGRADE_FAILED, BG_ERR_UPGRADE_FAILED);
+    }
+}
+
+// 确认强化前检查
+bool preConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    LOCK_PLAYERS_LIST;
+    if (!PLAYER.confirmInProgress) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NO_PENDING_UPGRADE, BG_ERR_NO_PENDING_UPGRADE);
+        return false;
+    }
+    return true;
+}
+
+// 确认强化
+void postConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
+    LOCK_PLAYERS_LIST;
+    PLAYER.confirmUpgrade();
+    bg_http_reply(bgReq.req, 200, "");
 }

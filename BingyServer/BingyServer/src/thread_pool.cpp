@@ -7,6 +7,7 @@
 #include "thread_pool.hpp"
 
 void worker(thread_pool *pool);
+void detachedWorker(thread_pool *pool, thread_pool_job newJob);
 
 thread_pool_job::thread_pool_job(const std::function<void(void*)> &func, void* args) {
     this->func = func;
@@ -47,6 +48,10 @@ void thread_pool::addJob(const thread_pool_job &newJob) {
     this->jobs.push(newJob);
     this->condNewJob.notify_all();
     this->mutexQueue.unlock();
+}
+
+void thread_pool::addDetachedJob(const thread_pool_job& newJob) {
+    std::thread(detachedWorker, this, newJob).detach();
 }
 
 void thread_pool::waitForAllJobsDone() {
@@ -99,4 +104,16 @@ void worker(thread_pool *pool) {
         }
         lock.unlock();
     }
+}
+
+void detachedWorker(thread_pool *pool, thread_pool_job newJob) {
+    std::unique_lock _count_lock(pool->mutexDetached);
+    pool->detachedCount++;
+    _count_lock.unlock();
+
+    newJob.func(newJob.args);
+
+    _count_lock.lock();
+    pool->detachedCount--;
+    _count_lock.unlock();
 }

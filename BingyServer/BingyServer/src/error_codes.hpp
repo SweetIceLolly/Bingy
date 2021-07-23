@@ -144,3 +144,33 @@
 
 #define BG_ERR_STR_REMOVE_SINGLE_FAILED             "移除一次性装备时发生错误"
 #define BG_ERR_REMOVE_SINGLE_FAILED                 2953
+
+// B.11. 装备强化错误
+// B.11.a. 400 错误
+#define BG_ERR_STR_INVALID_UPGRADE_TIMES            "无效的升级次数"
+#define BG_ERR_INVALID_UPGRADE_TIMES                3000
+
+#define BG_ERR_STR_PRE_UPGRADE_FAILED               "强化前检查发生错误"
+#define BG_ERR_PRE_UPGRADE_FAILED                   3001
+
+#define BG_ERR_STR_MAX_UPGRADE_TIMES                "超出了升级次数限制"
+#define BG_ERR_MAX_UPGRADE_TIMES                    3002
+
+#define BG_ERR_STR_INSUFFICIENT_COINS               "硬币不足"
+#define BG_ERR_INSUFFICIENT_COINS                   3003
+
+#define BG_ERR_STR_UPGRADE_CANCELED                 "连续升级被取消"
+#define BG_ERR_UPGRADE_CANCELED                     3004
+
+#define BG_ERR_STR_NO_PENDING_UPGRADE               "目前没有需要确认的连续强化操作"
+#define BG_ERR_NO_PENDING_UPGRADE                   3005
+
+// B.11.b. 500 错误
+#define BG_ERR_STR_DEC_COINS_FAILED                 "扣除玩家硬币时发生错误"
+#define BG_ERR_DEC_COINS_FAILED                     3050
+
+#define BG_ERR_STR_SET_EQI_FAILED                   "设置玩家装备时发生错误"
+#define BG_ERR_SET_EQI_FAILED                       3051
+
+#define BG_ERR_STR_UPGRADE_FAILED                   "强化期间发生错误"
+#define BG_ERR_UPGRADE_FAILED                       3052

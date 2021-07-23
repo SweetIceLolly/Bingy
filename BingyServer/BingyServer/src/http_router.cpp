@@ -26,5 +26,6 @@ bool init_server_router(rest_server &server) {
     POST("/unequipornament", bg_cmd_unequip_ornament);
     POST("/unequipall", bg_cmd_unequip_all);
 
+
     return true;
 }

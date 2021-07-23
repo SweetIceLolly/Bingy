@@ -222,3 +222,39 @@ CMD(unequip_weapon);
 CMD(unequip_armor);
 CMD(unequip_ornament);
 CMD(unequip_all);
+
+/**
+ * 强化装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ *  type: 装备类型
+ *  times: 强化次数
+ * 返回值:
+ *  200: 成功, 返回:
+ *      如果为多次强化: type: 装备类型; times: 强化次数; coins: 将花费硬币
+ *      如果为单次强化: name: 装备名称; times: 强化次数; coins: 花费硬币; coinsLeft: 剩余硬币
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(upgrade);
+
+/**
+ * 确认强化
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupid: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 无其余内容
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(confirm_upgrade);

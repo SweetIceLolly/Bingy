@@ -286,7 +286,7 @@ CMD(unequip) {
     threadPool.addJob(thread_pool_job(handler, req));
 }
 
-// 卸下武器/护甲/饰品/全部
+// 卸下武器
 CMD(unequip_weapon) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
@@ -296,6 +296,7 @@ CMD(unequip_weapon) {
     );
 }
 
+// 卸下护甲
 CMD(unequip_armor) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
@@ -305,6 +306,7 @@ CMD(unequip_armor) {
     );
 }
 
+// 卸下饰品
 CMD(unequip_ornament) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
@@ -314,11 +316,59 @@ CMD(unequip_ornament) {
     );
 }
 
+// 卸下全部装备
 CMD(unequip_all) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
     threadPool.addJob(thread_pool_job(
         make_bg_post_handler(preUnequipAllCallback, postUnequipAllCallback), req)
+    );
+}
+
+// 强化装备
+CMD(upgrade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            EqiType     type = params["type"].get<EqiType>();
+            LL          times = params["times"].get<LL>();
+            
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                LL coinsNeeded;                                         // 强化需要硬币数
+
+                if (preUpgradeCallback(bgReq, type, times, coinsNeeded))
+                    postUpgradeCallback(bgReq, type, times, coinsNeeded);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addDetachedJob(thread_pool_job(handler, req));
+}
+
+// 确认强化
+CMD(confirm_upgrade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(
+        make_bg_post_handler(preConfirmUpgradeCallback, postConfirmUpgradeCallback), req)
     );
 }

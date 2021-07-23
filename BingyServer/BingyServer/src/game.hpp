@@ -7,6 +7,7 @@
 #pragma once
 
 #include <unordered_set>
+#include <set>
 #include "inventory.hpp"
 #include "http_handlers.hpp"
 
@@ -46,3 +47,15 @@ PRE_POST(UnequipOrnament);
 PRE_POST(UnequipAll);
 bool preUnequipSingleCallback(const bgGameHttpReq &bgReq, const LL &index);
 void postUnequipSingleCallback(const bgGameHttpReq &bgReq, const LL &index);
+bool preUpgradeCallback(const bgGameHttpReq &bgReq, const EqiType &type, LL &upgradeTimes, LL &coinsNeeded);
+void postUpgradeCallback(const bgGameHttpReq &bgReq, const EqiType &type, const LL &upgradeTimes, const LL &coinsNeeded);
+PRE_POST(ConfirmUpgrade);
+PRE_POST(ViewTrade);
+//bool preBuyTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId, const std::string password);
+//void postBuyTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId);
+//bool preSellTradeCallback(const bgGameHttpReq &bgReq, const LL &invId, const LL &price, const bool &hasPassword, const std::string &password);
+//void postSellTradeCallback(const bgGameHttpReq &bgReq, const LL &invId, const LL &price, const bool &hasPassword, const std::string &password);
+//bool preRecallTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId);
+//void postRecallTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId);
+//bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
+//void postSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
