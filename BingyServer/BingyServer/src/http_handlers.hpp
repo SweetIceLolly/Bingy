@@ -44,7 +44,7 @@ inline void bg_http_reply_error(http_req *req, const int &http_code, const std::
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 无其余内容
@@ -60,7 +60,7 @@ CMD(register);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回 coins
@@ -76,7 +76,7 @@ CMD(view_coins);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回:
@@ -101,7 +101,7 @@ CMD(sign_in);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回:
@@ -118,7 +118,7 @@ CMD(view_inventory);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  *  items: [背包序号1, 背包序号2, ...] (从 0 开始)
  * 返回值:
@@ -137,7 +137,7 @@ CMD(pawn);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回包含属性值的 JSON
@@ -153,7 +153,7 @@ CMD(view_properties);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回包含所有装备序号和等级的 JSON
@@ -169,7 +169,7 @@ CMD(view_equipments);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  *  item: 背包序号 (从 0 开始)
  * 返回值:
@@ -191,7 +191,7 @@ CMD(equip);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  *  type: 装备类型
  *  index: (type == EqiType::single_use 时出现) 要卸下的一次性装备序号
@@ -210,7 +210,7 @@ CMD(unequip);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 返回:
@@ -230,7 +230,7 @@ CMD(unequip_all);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  *  type: 装备类型
  *  times: 强化次数
@@ -250,7 +250,7 @@ CMD(upgrade);
  * 参数:
  *  appid: 应用 ID
  *  secret: 密匙
- *  groupid: 群号
+ *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
  *  200: 成功, 无其余内容
@@ -258,3 +258,100 @@ CMD(upgrade);
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */
 CMD(confirm_upgrade);
+
+/**
+ * 查看交易场
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回 items, 为交易场内容的字符串
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(view_trade);
+
+/**
+ * 购买交易场商品
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  tradeId: 交易 ID
+ *  password: 交易密码. 如果没密码则设置为空字符串
+ * 返回值:
+ *  200: 成功, 返回:
+ *      如果为一次性物品: name: 装备名称; coins: 花费硬币
+ *      否则: name: 装备名称; coins: 花费硬币; wear: 装备磨损; originalWear: 原始磨损
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(buy_trade);
+
+/**
+ * 上架交易场商品
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  invId: 背包序号
+ *  price: 价格
+ *  hasPassword: 是否为私密交易
+ * 返回值:
+ *  200: 成功, 返回:
+ *      tradeId: 交易 ID
+ *      tax: 税收
+ *      password: 自动生成的密码
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(sell_trade);
+
+/**
+ * 下架交易场商品
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  tradeId: 交易 ID
+ * 返回值:
+ *  200: 成功, 返回:
+ *      tradeId: 交易 ID
+ *      name: 装备名称
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(recall_trade);
+
+/**
+ * 合成装备
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  invList: 存有背包序号的数组. 不可有重复序号
+ *  targetId: 合成目标装备 ID
+ * 返回值:
+ *  200: 成功, 返回:
+ *      name: 装备名称
+ *      coins: 花费硬币
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(synthesis);

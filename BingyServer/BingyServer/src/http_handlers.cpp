@@ -209,9 +209,7 @@ CMD(pawn) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler_param<std::vector<LL>>(prePawnCallback, postPawnCallback, "items"), req)
-    );
+    threadPool.addJob(thread_pool_job( make_bg_post_handler_param<std::vector<LL>>(prePawnCallback, postPawnCallback, "items"), req));
 }
 
 // 查看属性
@@ -235,9 +233,7 @@ CMD(equip) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler_param<LL>(preEquipCallback, postEquipCallback, "item"), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler_param<LL>(preEquipCallback, postEquipCallback, "item"), req));
 }
 
 // 卸下装备
@@ -291,9 +287,7 @@ CMD(unequip_weapon) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler(preUnequipWeaponCallback, postUnequipWeaponCallback), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preUnequipWeaponCallback, postUnequipWeaponCallback), req));
 }
 
 // 卸下护甲
@@ -301,9 +295,7 @@ CMD(unequip_armor) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler(preUnequipArmorCallback, postUnequipArmorCallback), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preUnequipArmorCallback, postUnequipArmorCallback), req));
 }
 
 // 卸下饰品
@@ -311,9 +303,7 @@ CMD(unequip_ornament) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler(preUnequipOrnamentCallback, postUnequipOrnamentCallback), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preUnequipOrnamentCallback, postUnequipOrnamentCallback), req));
 }
 
 // 卸下全部装备
@@ -321,9 +311,7 @@ CMD(unequip_all) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler(preUnequipAllCallback, postUnequipAllCallback), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preUnequipAllCallback, postUnequipAllCallback), req));
 }
 
 // 强化装备
@@ -368,7 +356,129 @@ CMD(confirm_upgrade) {
     auto req = get_http_req(connection, ev_data);
     if (!req)
         return;
-    threadPool.addJob(thread_pool_job(
-        make_bg_post_handler(preConfirmUpgradeCallback, postConfirmUpgradeCallback), req)
-    );
+    threadPool.addJob(thread_pool_job(make_bg_post_handler(preConfirmUpgradeCallback, postConfirmUpgradeCallback), req));
+}
+
+// 查看交易场
+CMD(view_trade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewTradeCallback, postViewTradeCallback), req));
+}
+
+// 购买交易场商品
+CMD(buy_trade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            LL          tradeId = params["tradeId"].get<LL>();
+            std::string password = params["password"].get<std::string>();
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preBuyTradeCallback(bgReq, tradeId, password))
+                    postBuyTradeCallback(bgReq, tradeId);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addDetachedJob(thread_pool_job(handler, req));
+}
+
+// 上架交易场商品
+CMD(sell_trade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            LL          invId = params["invId"].get<LL>();
+            LL          price = params["price"].get<LL>();
+            bool        hasPassword = params["hasPassword"].get<bool>();
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preSellTradeCallback(bgReq, invId, price, hasPassword))
+                    postSellTradeCallback(bgReq, invId, price, hasPassword);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addDetachedJob(thread_pool_job(handler, req));
+}
+
+// 下架交易场商品
+CMD(recall_trade) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_post_handler_param<LL>(preRecallTradeCallback, postRecallTradeCallback, "tradeId"), req));
+}
+
+// 合成装备
+CMD(synthesis) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            std::set<LL, std::greater<LL>> invList = params["invList"].get<std::set<LL, std::greater<LL>>>();
+            LL          targetId = params["targetId"].get<LL>();
+            LL          coins = 0;
+            LL          level = 0;
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preSynthesisCallback(bgReq, invList, targetId, coins, level))
+                    postSynthesisCallback(bgReq, invList, targetId, coins, level);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addDetachedJob(thread_pool_job(handler, req));
 }

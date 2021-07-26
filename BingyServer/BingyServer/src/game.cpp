@@ -10,6 +10,8 @@
 #include "player.hpp"
 #include "signin_event.hpp"
 #include "equipment.hpp"
+#include "trade.hpp"
+#include "synthesis.hpp"
 #include "error_codes.hpp"
 #include "json.hpp"
 #include "utils.hpp"
@@ -55,13 +57,13 @@ void postRegisterCallback(const bgGameHttpReq &bgReq) {
         if (bg_player_add(bgReq.playerId))
             bg_http_reply(bgReq.req, 200, "");
         else
-            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADDING_NEW_PLAYER_FAILED, BG_ERR_ADDING_NEW_PLAYER_FAILED);
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADDING_NEW_PLAYER_FAILED + std::string(": ") + e.what(), BG_ERR_ADDING_NEW_PLAYER_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADDING_NEW_PLAYER_FAILED, BG_ERR_ADDING_NEW_PLAYER_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -78,10 +80,10 @@ void postViewCoinsCallback(const bgGameHttpReq &bgReq) {
             ("{coins: " + std::to_string(PLAYER.get_coins()) + "}").c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_GET_COINS_FAILED + std::string(": ") + e.what(), BG_ERR_GET_COINS_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_GET_COINS_FAILED, BG_ERR_GET_COINS_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -154,21 +156,18 @@ void postSignInCallback(const bgGameHttpReq &bgReq) {
             itemData.level = 0;
             itemData.wear = allEquipments.at(item).wear;
             if (!PLAYER.add_inventory_item(itemData)) {
-                errors.push_back({
-                    BG_ERR_STR_SIGN_IN_ADD_ITEM_FAILED + std::string(": ") + allEquipments.at(item).name,
-                    BG_ERR_SIGN_IN_ADD_ITEM_FAILED
-                });
+                errors.push_back({ BG_ERR_STR_ADD_ITEM_FAILED + std::string(": ") + allEquipments.at(item).name, BG_ERR_ADD_ITEM_FAILED });
             }
         }
 
         if (!PLAYER.inc_coins(deltaCoins)) {
-            errors.push_back({ BG_ERR_STR_SIGN_IN_INC_COINS_FAILED , BG_ERR_SIGN_IN_INC_COINS_FAILED });
+            errors.push_back({ BG_ERR_STR_INC_COINS_FAILED , BG_ERR_INC_COINS_FAILED });
         }
         if (!PLAYER.set_energy(static_cast<LL>(PLAYER.get_energy() * 0.75) + deltaEnergy)) {
-            errors.push_back({ BG_ERR_STR_SIGN_IN_INC_ENERGY_FAILED , BG_ERR_SIGN_IN_INC_ENERGY_FAILED });
+            errors.push_back({ BG_ERR_STR_INC_ENERGY_FAILED , BG_ERR_INC_ENERGY_FAILED });
         }
         if (!PLAYER.inc_exp(deltaExp)) {
-            errors.push_back({ BG_ERR_STR_SIGN_IN_INC_EXP_FAILED , BG_ERR_SIGN_IN_INC_EXP_FAILED });
+            errors.push_back({ BG_ERR_STR_INC_EXP_FAILED , BG_ERR_INC_EXP_FAILED });
         }
 
         json reply = {
@@ -184,12 +183,11 @@ void postSignInCallback(const bgGameHttpReq &bgReq) {
         };
         bg_http_reply(bgReq.req, 200, reply.dump().c_str());
     }
-
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SIGN_IN_INC_COUNT_FAILED + std::string(": ") + e.what(), BG_ERR_SIGN_IN_INC_COUNT_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SIGN_IN_INC_COUNT_FAILED, BG_ERR_SIGN_IN_INC_COUNT_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -230,10 +228,10 @@ void postViewInventoryCallback(const bgGameHttpReq& bgReq) {
         bg_http_reply(bgReq.req, 200, reply.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_INV_FAILED + std::string(": ") + e.what(), BG_ERR_VIEW_INV_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_INV_FAILED, BG_ERR_VIEW_INV_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -261,11 +259,11 @@ bool prePawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) {
         return true;
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_PAWN_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_PAWN_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
         return false;
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_PAWN_FAILED, BG_ERR_PRE_PAWN_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
         return false;
     }
 }
@@ -295,7 +293,7 @@ void postPawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) 
             return;
         }
         if (!PLAYER.inc_coins(static_cast<LL>(price))) {
-            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SIGN_IN_INC_COINS_FAILED, BG_ERR_SIGN_IN_INC_COINS_FAILED);
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_INC_COINS_FAILED, BG_ERR_INC_COINS_FAILED);
             return;
         }
 
@@ -306,10 +304,10 @@ void postPawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) 
         bg_http_reply(bgReq.req, 200, reply.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_PAWN_FAILED + std::string(e.what()), BG_ERR_PAWN_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(e.what()), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_PAWN_FAILED, BG_ERR_PAWN_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -374,10 +372,10 @@ void postViewPropertiesCallback(const bgGameHttpReq& bgReq) {
         bg_http_reply(bgReq.req, 200, getPropertiesStr(bgReq.playerId).c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_PROP_FAILED + std::string(": ") + e.what(), BG_ERR_VIEW_PROP_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_PROP_FAILED, BG_ERR_VIEW_PROP_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -439,10 +437,10 @@ void postViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
         bg_http_reply(bgReq.req, 200, getEquipmentsStr(bgReq.playerId).c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_EQI_FAILED + std::string(": ") + e.what(), BG_ERR_VIEW_PROP_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_VIEW_EQI_FAILED, BG_ERR_VIEW_EQI_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -459,11 +457,11 @@ bool preEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
         return true;
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_EQUIP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_EQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
         return false;
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_EQUIP_FAILED, BG_ERR_PRE_EQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
         return false;
     }
 }
@@ -595,11 +593,10 @@ void postUnequipCallback(const bgGameHttpReq& bgReq, const EqiType& type) {
         bg_http_reply(bgReq.req, 200, json{ { "item", rtn } }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -623,11 +620,10 @@ void postUnequipWeaponCallback(const bgGameHttpReq& bgReq) {
         }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -653,11 +649,10 @@ void postUnequipArmorCallback(const bgGameHttpReq& bgReq) {
             }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -683,11 +678,10 @@ void postUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
             }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -720,11 +714,10 @@ void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
             }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -742,11 +735,11 @@ bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
         return true;
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UNEQUIP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
         return false;
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UNEQUIP_FAILED, BG_ERR_PRE_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
         return false;
     }
 }
@@ -773,11 +766,10 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
         bg_http_reply(bgReq.req, 200, ("{item:" + allEquipments.at(it->id).name + "}").c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED + std::string(": ") +
-            e.what(), BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNEQUIP_FAILED, BG_ERR_UNEQUIP_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -802,11 +794,11 @@ bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL& upg
         }
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UPGRADE_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_UPGRADE_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
         return false;
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_UPGRADE_FAILED, BG_ERR_PRE_UPGRADE_FAILED);
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
         return false;
     }
     if (upgradeTimes > 20) {
@@ -910,10 +902,10 @@ void postUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, const 
         }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_UPGRADE_FAILED + std::string(": ") + e.what(), BG_ERR_UPGRADE_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_UPGRADE_FAILED, BG_ERR_UPGRADE_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
@@ -935,4 +927,421 @@ void postConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
     LOCK_PLAYERS_LIST;
     PLAYER.confirmUpgrade();
     bg_http_reply(bgReq.req, 200, "");
+}
+
+// 查看交易场前检查
+bool preViewTradeCallback(const bgGameHttpReq& bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 查看交易场
+void postViewTradeCallback(const bgGameHttpReq& bgReq) {
+    try {
+        bg_http_reply(bgReq.req, 200, ("{items: " + bg_trade_get_string() + "}").c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// 购买交易场商品前检查
+bool preBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId, const std::string &password) {
+        try {
+        if (!accountCheck(bgReq))
+            return false;
+        
+        // 检查指定 ID 是否存在
+        if (allTradeItems.find(tradeId) == allTradeItems.end()) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_TRADEID_INVALID, BG_ERR_TRADEID_INVALID);
+            return false;
+        }
+
+        // 检查是否有密码
+        if (allTradeItems.at(tradeId).hasPassword) {
+            if (password.empty()) {
+                // 有密码但是玩家没有提供密码
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PASSWORD_REQUIRED, BG_ERR_PASSWORD_REQUIRED);
+                return false;
+            }
+            else {
+                // 检查密码是否匹配
+                if (password != allTradeItems.at(tradeId).password) {
+                    bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PASSWORD_INCORRECT, BG_ERR_PASSWORD_INCORRECT);
+                    return false;
+                }
+            }
+        }
+        else {
+            if (!password.empty()) {
+                // 没有密码但是玩家提供了密码
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PASSWORD_NOT_REQUIRED, BG_ERR_PASSWORD_NOT_REQUIRED);
+                return false;
+            }
+        }
+
+        // 检查是否够钱买
+        if (PLAYER.get_coins() < allTradeItems.at(tradeId).price) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                std::string(": 还差") + std::to_string(PLAYER.get_coins()) + "硬币",
+                BG_ERR_INSUFFICIENT_COINS);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    return true;
+}
+
+// 购买交易场商品
+void postBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+    try {
+        tradeData item = allTradeItems.at(tradeId);
+
+        // 交易场移除对应条目
+        if (!bg_trade_remove_item(tradeId)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_REMOVE_TRADE_FAILED, BG_ERR_REMOVE_TRADE_FAILED);
+            return;
+        }
+
+        // 买方扣钱
+        if (!PLAYER.inc_coins(-item.price)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_COINS_FAILED, BG_ERR_DEC_COINS_FAILED);
+            return;
+        }
+
+        // 背包添加相应物品
+        if (!PLAYER.add_inventory_item(item.item)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADD_ITEM_FAILED, BG_ERR_ADD_ITEM_FAILED);
+            return;
+        }
+
+        // 卖方加钱
+        if (!allPlayers.at(item.sellerId).inc_coins(item.price)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_INC_COINS_FAILED, BG_ERR_INC_COINS_FAILED);
+            return;
+        }
+
+        // 按照装备类型发送购买成功消息
+        if (allEquipments.at(item.item.id).type == EqiType::single_use) {
+            bg_http_reply(bgReq.req, 200, json{
+                { "name", allEquipments.at(item.item.id).name },
+                { "coins", item.price }
+            }.dump().c_str());
+        }
+        else {
+            bg_http_reply(bgReq.req, 200, json{
+                { "name", allEquipments.at(item.item.id).name + "+" + std::to_string(item.item.level) },
+                { "wear", item.item.wear },
+                { "originalWear", allEquipments.at(item.item.id).wear },
+                { "coins", item.price }
+            }.dump().c_str());
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// 上架交易场商品前检查
+bool preSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL& price, const bool& hasPassword) {
+    try {
+        if (!accountCheck(bgReq))
+            return false;
+
+        // todo 检查玩家是否已经私密交易过
+
+        // 检查背包序号是否超出范围
+        if (invId >= PLAYER.get_inventory_size() || invId < 0) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(invId), BG_ERR_ID_OUT_OF_RANGE);
+            return false;
+        }
+
+        // 检查价格是否合理
+        // 默认价格 * 0.25 <= 价格 <= 默认价格 * 10
+        auto playerInv = PLAYER.get_inventory();
+        auto it = playerInv.begin();
+        std::advance(it, invId);                                                                                    // 获取 ID 对应的背包物品
+        LL defPrice = static_cast<LL>(allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6);    // 获取该物品的默认出售价格
+        if (defPrice / 4 > price || price > defPrice * 10) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INAPPROPRIATE_PRICE + std::string("价格不可低于出售价格的25% (") +
+                std::to_string(defPrice / 4) + "), 也不可高于出售价格的十倍 (" + std::to_string(defPrice * 10) + ")",
+                BG_ERR_INAPPROPRIATE_PRICE);
+            return false;
+        }
+
+        // 检查是否够钱交税
+        if (PLAYER.get_coins() < price * 0.05) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_CANT_AFFORD_TAX + std::string(": 还需要") +
+                std::to_string(static_cast<LL>(price * 0.05 - PLAYER.get_coins())) + "硬币",
+                BG_ERR_CANT_AFFORD_TAX);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    return true;
+}
+
+// 上架交易场商品
+void postSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL& price, const bool &hasPassword) {
+    try {
+        // 如果是有密码的交易, 则随机生成一个密码
+        std::string password = "";
+        if (hasPassword) {
+            password = std::to_string(rndRange(100000, 999999));
+        }
+
+        // 从玩家背包移除指定项目
+        auto playerInv = PLAYER.get_inventory();
+        auto it = playerInv.begin();
+        std::advance(it, invId);                        // 获取 ID 对应的背包物品
+        if (!PLAYER.remove_at_inventory(invId)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_REMOVE_ITEM_FAILED, BG_ERR_REMOVE_ITEM_FAILED);
+            return;
+        }
+
+        // 扣除税款
+        LL tax = static_cast<LL>(price * 0.05);
+        if (tax < 1)
+            tax = 1;
+        if (!PLAYER.inc_coins(-tax)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_COINS_FAILED, BG_ERR_DEC_COINS_FAILED);
+            return;
+        }
+
+        // 获取并更新交易场 ID
+        tradeData   item;
+        item.item = *it;
+        item.password = password;
+        item.hasPassword = hasPassword;
+        item.price = price;
+        item.sellerId = bgReq.playerId;
+        item.tradeId = bg_get_tradeId();
+        item.addTime = dateTime().get_timestamp();
+        if (!bg_inc_tradeId()) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_TRADEID_UPDATE_FAILED, BG_ERR_TRADEID_UPDATE_FAILED);
+            return;
+        }
+
+        // 添加物品到交易场
+        if (!bg_trade_insert_item(item)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADD_TRADE_FAILED, BG_ERR_ADD_TRADE_FAILED);
+            return;
+        }
+
+        // 发送消息
+        bg_http_reply(bgReq.req, 200, json{
+            { "tradeId", item.tradeId },
+            { "tax", tax },
+            { "password", password }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// 下架交易场商品前检查
+bool preRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    try {
+        // 检查交易 ID 是否在交易场中
+        if (allTradeItems.find(tradeId) == allTradeItems.end()) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_TRADEID_INVALID, BG_ERR_TRADEID_INVALID);
+            return false;
+        }
+
+        // 检查卖方是否是玩家
+        if (allTradeItems.at(tradeId).sellerId != bgReq.playerId) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PLAYER_MISMATCH, BG_ERR_PLAYER_MISMATCH);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    return true;
+}
+
+// 下架交易场商品
+void postRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+    try {
+        // 从交易场移除对应物品
+        tradeData item = allTradeItems.at(tradeId);
+        if (!bg_trade_remove_item(tradeId)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_REMOVE_TRADE_FAILED, BG_ERR_REMOVE_TRADE_FAILED);
+            return;
+        }
+
+        // 添加物品到玩家背包
+        if (!PLAYER.add_inventory_item(item.item)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADD_ITEM_FAILED, BG_ERR_ADD_ITEM_FAILED);
+            return;
+        }
+
+        const auto& eqi = allEquipments.at(item.item.id);
+        if (eqi.type == EqiType::single_use) {
+            bg_http_reply(bgReq.req, 200, json{
+                { "tradeId", tradeId },
+                { "name", eqi.name }
+            }.dump().c_str());
+        }
+        else {
+            bg_http_reply(bgReq.req, 200, json{
+                { "tradeId", tradeId },
+                { "name", eqi.name + std::to_string(item.item.level) }
+            }.dump().c_str());
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// 合成前检查
+bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, const LL& targetId, LL& coins, LL& level) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    try {
+        // 检查目标装备是否存在
+        if (allEquipments.find(targetId) == allEquipments.end()) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_EQI_ID +
+                std::string(": ") + std::to_string(targetId), BG_ERR_INVALID_EQI_ID);
+            return false;
+        }
+
+        // 如果只指定了目标装备, 则列出可用的合成
+        if (targetId == -1) {
+            const auto result = allSyntheses.equal_range(targetId);       // 获取可行的合成方案
+            if (std::distance(result.first, result.second) == 0) {          // 没有合成方案
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_CANT_SYNTHESIS +
+                    std::string(": ") + allEquipments.at(targetId).name, BG_ERR_CANT_SYNTHESIS);
+                return false;
+            }
+            std::string msg = "装备\"" + allEquipments.at(targetId).name + "\"的合成方式:\n";
+            for (auto it = result.first; it != result.second; ++it) {       // 生成所有合成方案的字串
+                for (const auto &item : it->second.requirements) {
+                    msg += allEquipments.at(item).name + "+";
+                }
+                msg += "$" + std::to_string(it->second.coins) + "\n";
+            }
+            msg.pop_back();                                                 // 去掉末尾的 '\n'
+            bg_http_reply(bgReq.req, 200, json{ {"method", msg} }.dump().c_str());
+            return false;
+        }
+
+        auto inventory = PLAYER.get_inventory();                            // 获取玩家背包
+        for (const auto &index : invList) {
+            if (index < 0 || index >= inventory.size()) {                   // 不允许序号超出背包范围
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE +
+                    std::string(": ") + std::to_string(index), BG_ERR_ID_OUT_OF_RANGE);
+                return false;
+            }
+        }
+
+        std::unordered_multiset<LL> materials;                              // 所有提供的材料
+        auto invIter = inventory.begin();
+        LL prevInvId = 0;
+        for (auto invIdIter = invList.begin(); invIdIter != invList.end(); ++invIdIter) {
+            std::advance(invIter, *invIdIter - prevInvId);
+            materials.insert(invIter->id);
+            if (invIter->level > level)                                     // 获取材料的最高等级
+                level = invIter->level;
+            prevInvId = *invIdIter;
+        }
+
+        if (!bg_match_synthesis(targetId, materials, coins)) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_SYNTHESIS_NOT_EXIST, BG_ERR_SYNTHESIS_NOT_EXIST);
+            return false;
+        }
+
+        if (PLAYER.get_coins() < coins) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                std::string(": 还需要") + std::to_string(coins - PLAYER.get_coins()) + "硬币", BG_ERR_INSUFFICIENT_COINS);
+            return false;
+        }
+        return true;
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+}
+
+// 合成
+void postSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, const LL& targetId, const LL& coins, const LL& level) {
+    try {
+        // 扣除硬币
+        if (!PLAYER.inc_coins(-coins)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_COINS_FAILED, BG_ERR_DEC_COINS_FAILED);
+            return;
+        }
+
+        // 从玩家背包移除装备
+        std::vector<LL> invId;
+        for (const auto &inv : invList)
+            invId.push_back(inv);
+        if (!PLAYER.remove_at_inventory(invId)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_REMOVE_ITEM_FAILED, BG_ERR_REMOVE_ITEM_FAILED);
+            return;
+        }
+
+        // 添加合成后的装备到玩家背包
+        inventoryData newItem;
+        newItem.id = targetId;
+        newItem.level = level;
+        newItem.wear = allEquipments.at(targetId).wear;
+        if (!PLAYER.add_inventory_item(newItem)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_ADD_ITEM_FAILED +
+                std::string(": ") + allEquipments.at(targetId).name + "+" + std::to_string(level), BG_ERR_ADD_ITEM_FAILED);
+            return;
+        }
+
+        bg_http_reply(bgReq.req, 200, json{
+            { "name", allEquipments.at(targetId).name + "+" + std::to_string(level) },
+            { "coins", coins }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
 }

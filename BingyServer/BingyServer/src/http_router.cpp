@@ -12,12 +12,14 @@
 
 // 初始化 HTTP 路由
 bool init_server_router(rest_server &server) {
-    POST("/register", bg_cmd_register);
     GET("/viewcoins", bg_cmd_view_coins);
-    POST("/signin", bg_cmd_sign_in);
     GET("/viewinv", bg_cmd_view_inventory);
-    POST("/pawn", bg_cmd_pawn);
     GET("/viewprop", bg_cmd_view_properties);
+
+    POST("/register", bg_cmd_register);
+    POST("/signin", bg_cmd_sign_in);
+    POST("/pawn", bg_cmd_pawn);
+
     GET("/vieweqi", bg_cmd_view_equipments);
     POST("/equip", bg_cmd_equip);
     POST("/unequip", bg_cmd_unequip);
@@ -26,6 +28,15 @@ bool init_server_router(rest_server &server) {
     POST("/unequipornament", bg_cmd_unequip_ornament);
     POST("/unequipall", bg_cmd_unequip_all);
 
+    POST("/upgrade", bg_cmd_upgrade);
+    POST("/confirm", bg_cmd_confirm_upgrade);
+
+    GET("/viewtrade", bg_cmd_view_trade);
+    POST("/buytrade", bg_cmd_buy_trade);
+    POST("/selltrade", bg_cmd_buy_trade);
+    POST("/recalltrade", bg_cmd_buy_trade);
+
+    POST("/synthesis", bg_cmd_synthesis);
 
     return true;
 }
