@@ -17,10 +17,6 @@ function(cq_add_app OUT_NAME)
         file(GLOB_RECURSE bingy_headers src/*.hpp)
         add_executable(${OUT_NAME} ${ARGN} ${bingy_headers})
         target_link_libraries(${OUT_NAME} cqcppsdk_dev_mode)
-
-        # 添加 MongoDB 相关库
-        target_link_libraries(${OUT_NAME} "C:/Program Files (x86)/mongo-cxx-driver/lib/mongocxx.lib")
-        target_link_libraries(${OUT_NAME} "C:/Program Files (x86)/mongo-cxx-driver/lib/bsoncxx.lib")
     elseif (NOT CQ_CAN_BUILD_STD_MODE)
         # 试图构建 std 模式, 但当前工具链无法构建
         message(SEND_ERROR "can not build std mode dll with the current toolchain")
@@ -33,10 +29,6 @@ function(cq_add_app OUT_NAME)
         file(GLOB_RECURSE bingy_headers src/*.hpp)
         add_library(${OUT_NAME} MODULE ${ARGN} ${bingy_headers})
         target_link_libraries(${OUT_NAME} cqcppsdk_std_mode)
-
-        # 添加 MongoDB 相关库
-        target_link_libraries(${OUT_NAME} "C:/Program Files (x86)/mongo-cxx-driver/lib/mongocxx.lib")
-        target_link_libraries(${OUT_NAME} "C:/Program Files (x86)/mongo-cxx-driver/lib/bsoncxx.lib")
 
         set_target_properties(${OUT_NAME} PROPERTIES PREFIX "") # 去除 lib 前缀
     endif ()

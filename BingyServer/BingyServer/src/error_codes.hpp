@@ -190,7 +190,7 @@
 #define BG_ERR_STR_REMOVE_TRADE_FAILED              "把物品添加到交易场失败"
 #define BG_ERR_REMOVE_TRADE_FAILED                  3351
 
-// B.16. 合成装备
+// B.16. 合成装备错误
 // B.16.a. 400 错误
 #define BG_ERR_STR_INVALID_EQI_ID                   "指定装备ID无效"
 #define BG_ERR_INVALID_EQI_ID                       3400
@@ -200,3 +200,14 @@
 
 #define BG_ERR_STR_SYNTHESIS_NOT_EXIST              "没有指定的合成"
 #define BG_ERR_SYNTHESIS_NOT_EXIST                  3402
+
+// B.17. 挑战副本错误
+// B.17.a. 400 错误
+#define BG_ERR_STR_INVALID_DUNGEON                  "无效的副本号"
+#define BG_ERR_INVALID_DUNGEON                      3500
+
+#define BG_ERR_STR_NO_ENERGY                        "玩家体力已耗尽"
+#define BG_ERR_NO_ENERGY                            3501
+
+#define BG_ERR_STR_IN_CD                            "挑战冷却还没结束"
+#define BG_ERR_IN_CD                                3502

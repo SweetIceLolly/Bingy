@@ -7,9 +7,6 @@ include(extern/cqcppsdk/cqcppsdk.cmake) # 包含 SDK 的 CMake 脚本, 必须
 
 include_directories(src) # 设置 src 目录为包含目录, 可根据实际情况修改
 
-# 添加 MongoDB 相关文件
-include_directories("C:/Program Files (x86)/mongo-cxx-driver/include/bsoncxx/v_noabi" "C:/Program Files (x86)/mongo-cxx-driver/include/mongocxx/v_noabi")
-
 # 从 app_id.txt 文件读取 app id, 也可以直接设置
 file(READ "app_id.txt" APP_ID)
 string(STRIP "${APP_ID}" APP_ID)

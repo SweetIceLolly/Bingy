@@ -12,6 +12,7 @@
 #include "equipment.hpp"
 #include "trade.hpp"
 #include "synthesis.hpp"
+#include "monster.hpp"
 #include "error_codes.hpp"
 #include "json.hpp"
 #include "utils.hpp"
@@ -1344,4 +1345,46 @@ void postSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::g
     catch (...) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
+}
+
+// 挑战副本前检查
+bool preFightCallback(const bgGameHttpReq& bgReq, const LL& dungeonLevel) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    try {
+        // 检查等级是否有效
+        if (allDungeons.find(dungeonLevel) == allDungeons.end()) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_DUNGEON, BG_ERR_INVALID_DUNGEON);
+            return false;
+        }
+
+        // 检查玩家是否还有体力
+        if (PLAYER.get_energy() < 10) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NO_ENERGY, BG_ERR_NO_ENERGY);
+            return false;
+        }
+
+        // 检查冷却时间
+        const auto timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
+        if (timeDiff < PLAYER.get_cd()) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_IN_CD +
+                std::string("还剩") + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60), BG_ERR_IN_CD);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    return true;
+}
+
+// 挑战副本
+void postFightCallback(const bgGameHttpReq& bgReq, const LL& dungeonLevel) {
+    bg_http_reply(bgReq.req, 200, std::to_string(dungeonLevel).c_str());
 }
