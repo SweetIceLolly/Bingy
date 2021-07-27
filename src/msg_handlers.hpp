@@ -1,15 +1,15 @@
 /*
-ÃèÊö: Ìá¹© Bingy Ö¸ÁîµÄ´¦Àíº¯ÊıµÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: msg_handlers.hpp
+æè¿°: æä¾› Bingy æŒ‡ä»¤çš„å¤„ç†å‡½æ•°çš„æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: msg_handlers.hpp
 */
 
 #pragma once
 
 #include <cqcppsdk/cqcppsdk.hpp>
 
-// ÀÁÈËºê
-// ¶¨ÒåÃüÁî´¦Àíº¯Êı
+// æ‡’äººå®
+// å®šä¹‰å‘½ä»¤å¤„ç†å‡½æ•°
 #define CMD(cmd) void bg_cmd_##cmd##(const cq::MessageEvent &ev)
 
 CMD(bg);

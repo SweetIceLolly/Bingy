@@ -1,7 +1,7 @@
 /*
-ÃèÊö: ×ÖµäÊ÷Í·ÎÄ¼ş, Îª Bingy Ìá¹©×ÖµäÊ÷Ïà¹Ø½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: trie.hpp
+æè¿°: å­—å…¸æ ‘å¤´æ–‡ä»¶, ä¸º Bingy æä¾›å­—å…¸æ ‘ç›¸å…³æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: trie.hpp
 */
 
 #pragma once
@@ -9,16 +9,16 @@
 #include <unordered_map>
 #include <string>
 
-// ×ÖµäÊ÷½Úµã
+// å­—å…¸æ ‘èŠ‚ç‚¹
 template <typename T>
 class trieNode {
 public:
     trieNode() {};
     std::unordered_map<char, trieNode *> child;
-    T handler;                        // ÃüÁî¶ÔÓ¦µÄÄÚÈİ
+    T handler;                        // å‘½ä»¤å¯¹åº”çš„å†…å®¹
 };
 
-// ×ÖµäÊ÷Àà
+// å­—å…¸æ ‘ç±»
 template <typename T>
 class bg_trie {
 public:
@@ -30,10 +30,10 @@ public:
         delete root;
     }
 
-    // Íù×ÖµäÊ÷ÖĞÌí¼ÓĞÂÏîÄ¿
+    // å¾€å­—å…¸æ ‘ä¸­æ·»åŠ æ–°é¡¹ç›®
     void addMsg(const std::string &str, const T &handler);
 
-    // ´Ó×ÖµäÊ÷ÖĞ»ñÈ¡ÃüÁî¶ÔÓ¦ÄÚÈİ. Èç¹ûÃ»ÓĞÕÒµ½¶ÔÓ¦µÄÄÚÈİ, Ôò·µ»Ø nullptr
+    // ä»å­—å…¸æ ‘ä¸­è·å–å‘½ä»¤å¯¹åº”å†…å®¹. å¦‚æœæ²¡æœ‰æ‰¾åˆ°å¯¹åº”çš„å†…å®¹, åˆ™è¿”å› nullptr
     T getMsgHandler(const std::string &str) const;
 
 private:
@@ -43,51 +43,51 @@ private:
 template <typename T>
 void bg_trie<T>::addMsg(const std::string &str, const T &handler) {
     if (!root)
-        throw std::exception("Trie root is NULL!");         // Ï£Íû²»»á·¢ÉúÕâÖÖÊÂ°É
+        throw std::exception("Trie root is NULL!");         // å¸Œæœ›ä¸ä¼šå‘ç”Ÿè¿™ç§äº‹å§
     if (str.empty())
         return;
 
     trieNode<T> *curr = root;
     for (const auto &ch : str) {
-        // ´Ó×ÖµäÊ÷Ò»²ãÒ»²ã²éÕÒ¶ÔÓ¦µÄ×Ö·û
+        // ä»å­—å…¸æ ‘ä¸€å±‚ä¸€å±‚æŸ¥æ‰¾å¯¹åº”çš„å­—ç¬¦
         auto it = curr->child.find(ch);
         if (curr->child.end() == it) {
-            // ÕÒ²»µ½¶ÔÓ¦×Ö·û, ²åÈëĞÂ½Úµã
+            // æ‰¾ä¸åˆ°å¯¹åº”å­—ç¬¦, æ’å…¥æ–°èŠ‚ç‚¹
             auto newNode = new trieNode<T>();
             curr->child.insert({ ch, newNode });
             curr = newNode;
         }
         else {
-            // ÕÒµ½¶ÔÓ¦×Ö·û, Ê¹ÓÃËüÀ´×÷Îª½Úµã
+            // æ‰¾åˆ°å¯¹åº”å­—ç¬¦, ä½¿ç”¨å®ƒæ¥ä½œä¸ºèŠ‚ç‚¹
             curr = it->second;
         }
     }
 
-    // ÉèÖÃ¶ÔÓ¦ÃüÁîµÄ´¦Àíº¯Êı
+    // è®¾ç½®å¯¹åº”å‘½ä»¤çš„å¤„ç†å‡½æ•°
     curr->handler = handler;
 }
 
 template <typename T>
 T bg_trie<T>::getMsgHandler(const std::string &str) const {
     if (!root)
-        throw std::exception("Trie root is NULL!");         // Ï£Íû²»»á·¢ÉúÕâÖÖÊÂ°É
+        throw std::exception("Trie root is NULL!");         // å¸Œæœ›ä¸ä¼šå‘ç”Ÿè¿™ç§äº‹å§
     if (str.empty())
         return nullptr;
 
     trieNode<T> *curr = root;
     for (const auto &ch : str) {
-        // ´Ó×ÖµäÊ÷Ò»²ãÒ»²ã²éÕÒ¶ÔÓ¦µÄ×Ö·û
+        // ä»å­—å…¸æ ‘ä¸€å±‚ä¸€å±‚æŸ¥æ‰¾å¯¹åº”çš„å­—ç¬¦
         auto it = curr->child.find(ch);
         if (curr->child.end() == it) {
-            // ÕÒ²»µ½¶ÔÓ¦×Ö·û
+            // æ‰¾ä¸åˆ°å¯¹åº”å­—ç¬¦
             return nullptr;
         }
         else {
-            // ÕÒµ½¶ÔÓ¦×Ö·û, Ê¹ÓÃËüÀ´×÷Îª½Úµã
+            // æ‰¾åˆ°å¯¹åº”å­—ç¬¦, ä½¿ç”¨å®ƒæ¥ä½œä¸ºèŠ‚ç‚¹
             curr = it->second;
         }
     }
 
-    // »ñÈ¡¶ÔÓ¦ÃüÁîµÄ´¦Àíº¯Êı
+    // è·å–å¯¹åº”å‘½ä»¤çš„å¤„ç†å‡½æ•°
     return curr->handler;
 }

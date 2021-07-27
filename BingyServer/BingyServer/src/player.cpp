@@ -57,6 +57,7 @@ player::player(const player &p) {
     this->equipments_cache = p.equipments_cache;
     this->equipItems = p.equipItems;
     this->equipItems_cache = p.equipItems_cache;
+    this->upgrading = false;
 }
 
 player::player(const LL &qq) {
@@ -74,6 +75,7 @@ player::player(const LL &qq) {
     this->exp = 0;
     this->invCapacity = INV_DEFAULT_CAPACITY;
     this->vip = 0;
+    this->upgrading = false;
 }
 
 // --------------------------------------------------
@@ -163,75 +165,100 @@ bool bg_player_add(const LL &id) {
     return true;
 }
 
-// 懒人宏
-// 把玩家属性中 LL 类型的数据设置为从数据库中读取到的内容, 并把对应的缓存标识设置为 true
-// 顺便把可能发生的异常处理一下
-#define SET_LL_PROP(prop)                       \
-    tmp = doc[#prop];                           \
-    if (tmp) {                                  \
-        p. prop = tmp.get_int64().value;        \
-        p. prop## _cache = true;                \
-    }                                           \
-    else                                        \
-        throw std::runtime_error("获取玩家属性失败");
-
 // 从数据库读取所有玩家
 bool bg_get_all_players_from_db() {
+    LL id = 0;
+
     try {
         LOCK_PLAYERS_LIST;
 
         for (const auto &doc : dbFindAll(DB_COLL_USERDATA)) {
-            auto tmp = doc["id"];
-            LL id;
+            player *p = nullptr;
 
-            if (tmp)
-                id = tmp.get_int64().value;
-            player p(id);
-            
-            p.nickname = doc["nickname"].get_utf8().value.data();  p.nickname_cache = true;
-            SET_LL_PROP(signInCount);
-            SET_LL_PROP(signInCountCont);
-            SET_LL_PROP(lastFight);
-            SET_LL_PROP(lastSignIn);
-            SET_LL_PROP(coins);
-            SET_LL_PROP(heroCoin);
-            SET_LL_PROP(level);
-            SET_LL_PROP(blessing);
-            SET_LL_PROP(energy);
-            SET_LL_PROP(exp);
-            SET_LL_PROP(invCapacity);
-            SET_LL_PROP(vip);
-
-            // 读取背包内容
-            tmp = doc["inventory"];
-            if (tmp)
-                invListFromBson(tmp, p.inventory);
-            else
-                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 inventory 属性失败").c_str());
-
-            // 读取玩家装备
-            tmp = doc["equipments"];
-            if (tmp)
-                eqiMapFromBson(tmp, p.equipments);
-            else
-                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 equipments 属性失败").c_str());
-
-            // 读取一次性装备
-            tmp = doc["equipItems"];
-            if (tmp)
-                invListFromBson(tmp, p.equipItems);
-            else
-                throw std::runtime_error(("获取玩家" + std::to_string(id) + "的 equipItems 属性失败").c_str());
-
-            // todo
-            //p.buyCount
-
-            allPlayers.insert(std::make_pair(id, p));
+            for (const auto &entry : doc) {
+                if (entry.key() == "id") {
+                    id = entry.get_int64().value;
+                    p = new player(id);
+                }
+                else if (entry.key() == "nickname") {
+                    p->nickname = entry.get_utf8().value.data();
+                    p->nickname_cache = true;
+                }
+                else if (entry.key() == "signInCount") {
+                    p->signInCount = entry.get_int64().value;
+                    p->signInCount_cache = true;
+                }
+                else if (entry.key() == "signInCountCont") {
+                    p->signInCountCont = entry.get_int64().value;
+                    p->signInCountCont_cache = true;
+                }
+                else if (entry.key() == "lastFight") {
+                    p->lastFight = entry.get_int64().value;
+                    p->lastFight_cache = true;
+                }
+                else if (entry.key() == "lastSignIn") {
+                    p->lastSignIn = entry.get_int64().value;
+                    p->lastSignIn_cache = true;
+                }
+                else if (entry.key() == "coins") {
+                    p->coins = entry.get_int64().value;
+                    p->coins_cache = true;
+                }
+                else if (entry.key() == "heroCoin") {
+                    p->heroCoin = entry.get_int64().value;
+                    p->heroCoin_cache = true;
+                }
+                else if (entry.key() == "level") {
+                    p->level = entry.get_int64().value;
+                    p->level_cache = true;
+                }
+                else if (entry.key() == "blessing") {
+                    p->blessing = entry.get_int64().value;
+                    p->blessing_cache = true;
+                }
+                else if (entry.key() == "energy") {
+                    p->energy = entry.get_int64().value;
+                    p->energy_cache = true;
+                }
+                else if (entry.key() == "exp") {
+                    p->exp = entry.get_int64().value;
+                    p->exp_cache = true;
+                }
+                else if (entry.key() == "invCapacity") {
+                    p->invCapacity = entry.get_int64().value;
+                    p->invCapacity_cache = true;
+                }
+                else if (entry.key() == "vip") {
+                    p->vip = entry.get_int64().value;
+                    p->vip_cache = true;
+                }
+                else if (entry.key() == "inventory") {
+                    invListFromBson(entry, p->inventory);
+                    p->inventory_cache = true;
+                }
+                else if (entry.key() == "equipments") {
+                    eqiMapFromBson(entry, p->equipments);
+                    p->equipments_cache = true;
+                }
+                else if (entry.key() == "equipItems") {
+                    invListFromBson(entry, p->equipItems);
+                    p->equipItems_cache = true;
+                }
+                else if (entry.key() == "buyCount") {
+                    // todo
+                }
+                else {
+                    throw std::runtime_error("未知的玩家属性: " + std::string(entry.key().data()));
+                }
+            }
+            allPlayers.insert(std::make_pair(id, *p));
+            delete p;
         }
         return true;
     }
     catch (const std::exception &e) {
         console_log(e.what(), LogType::error);
+        console_log("读取玩家" + std::to_string(id) + "失败", LogType::error);
         return false;
     }
     catch (...) {
@@ -353,11 +380,20 @@ void invListFromBson(const bsoncxx::document::element &elem, T &container) {
     // 数组格式: [{id: x, level: x, wear: x}, {id: x, level: x, wear: x}, ...]
     inventoryData invItem;
     for (const auto &item : tmpArray) {
-        auto tmpObj = item.get_document().view();
-
-        invItem.id = tmpObj["id"].get_int64().value;            // 装备 ID
-        invItem.level = tmpObj["level"].get_int64().value;      // 装备等级
-        invItem.wear = tmpObj["wear"].get_int64().value;        // 装备磨损度
+        for (const auto &entry : item.get_document().view()) {
+            if (entry.key() == "id") {                          // 装备 ID
+                invItem.id = entry.get_int64().value;
+            }
+            else if (entry.key() == "level") {                  // 装备等级
+                invItem.level = entry.get_int64().value;
+            }
+            else if (entry.key() == "wear") {                   // 装备磨损度
+                invItem.wear = entry.get_int64().value;
+            }
+            else {
+                throw std::runtime_error("未知的玩家背包装备属性: " + std::string(entry.key().data()));
+            }
+        }
         container.push_back(invItem);
     }
 }
@@ -537,13 +573,24 @@ bool player::set_buyCount_item(const LL &id, const LL &count) {
 // 注意, 该函数假设 elem 是合法的且存有已装备的装备数据. 本函数不会获取已装备的一次性装备
 void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container) {
     // 数据格式: equipments: {1: {id: x, level: x, wear: x}, ...}
-    auto tmp = elem.get_document().view();
-    for (const auto &it : tmp) {
+    inventoryData invData;
+
+    for (const auto &it : elem.get_document().view()) {
         if (it.type() == bsoncxx::type::k_document) {         // 只处理 object 类型的元素
-            inventoryData invData;
-            invData.id = it.get_document().value["id"].get_int64().value;
-            invData.level = it.get_document().value["level"].get_int64().value;
-            invData.wear = it.get_document().value["wear"].get_int64().value;
+            for (const auto &entry : it.get_document().view()) {
+                if (entry.key() == "id") {
+                    invData.id = entry.get_int64().value;
+                }
+                else if (entry.key() == "level") {
+                    invData.level = entry.get_int64().value;
+                }
+                else if (entry.key() == "wear") {
+                    invData.wear = entry.get_int64().value;
+                }
+                else {
+                    throw std::runtime_error("未知的玩家装备属性: " + std::string(entry.key().data()));
+                }
+            }
             container.insert({ static_cast<EqiType>(std::stoll(it.key().data())), invData });
         }
     }

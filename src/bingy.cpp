@@ -8,7 +8,6 @@
 #include "init.hpp"
 #include "msg_router.hpp"
 #include "utils.hpp"
-#include <mongocxx/exception/exception.hpp>
 
 using namespace cq;
 
@@ -29,9 +28,6 @@ CQ_INIT{
         try {
             bg_groupmsg_dispatch(event);
         }
-        catch (const mongocxx::exception &e) {
-            console_log(std::string("处理群聊消息时发生错误!\n") + std::string(e.what()), LogType::error);
-        }
         catch (const std::exception &e) {
             console_log(std::string("处理群聊消息时发生错误!\n") + std::string(e.what()), LogType::error);
         }
@@ -44,9 +40,6 @@ CQ_INIT{
     on_private_message([](const auto &event) {
         try {
             bg_privatemsg_dispatch(event);
-        }
-        catch (const mongocxx::exception &e) {
-            console_log(std::string("处理群聊消息时发生错误!\n") + std::string(e.what()), LogType::error);
         }
         catch (const std::exception &e) {
             console_log(std::string("处理私聊消息时发生错误!\n") + std::string(e.what()), LogType::error);

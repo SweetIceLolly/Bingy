@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Ò»Ğ©¸¨Öúº¯Êı
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: utlis.cpp
+æè¿°: ä¸€äº›è¾…åŠ©å‡½æ•°
+ä½œè€…: å†°æ£
+æ–‡ä»¶: utlis.cpp
 */
 
 #include "utils.hpp"
@@ -20,13 +20,13 @@
 #define WHITE   15
 #endif
 
-// ³õÊ¼»¯Ëæ»úÊı²úÉúÆ÷
+// åˆå§‹åŒ–éšæœºæ•°äº§ç”Ÿå™¨
 std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 std::mutex mutexRndGen;
 
 void console_log(const std::string &msg, const LogType &type) {
 #ifdef WIN32
-    // Îª Windows ¿ØÖÆÌ¨ĞŞ¸ÄÊä³öÑÕÉ«
+    // ä¸º Windows æ§åˆ¶å°ä¿®æ”¹è¾“å‡ºé¢œè‰²
     static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     switch (type) {
     case LogType::info:
@@ -43,23 +43,23 @@ void console_log(const std::string &msg, const LogType &type) {
     }
 #endif
 
-    // ÖĞÎÄ²»Ê¹ÓÃ string_to_coolq ×ªÂë»áÂÒÂë
+    // ä¸­æ–‡ä¸ä½¿ç”¨ string_to_coolq è½¬ç ä¼šä¹±ç 
     switch (type) {
     case LogType::info:
-        std::cout << cq::utils::string_to_coolq("[ĞÅÏ¢] " + msg) << "\n";
+        std::cout << cq::utils::string_to_coolq("[ä¿¡æ¯] " + msg) << "\n";
         break;
 
     case LogType::warning:
-        std::cout << cq::utils::string_to_coolq("[¾¯¸æ] " + msg) << "\n";
+        std::cout << cq::utils::string_to_coolq("[è­¦å‘Š] " + msg) << "\n";
         break;
 
     case LogType::error:
-        std::cout << cq::utils::string_to_coolq("[´íÎó] " + msg) << "\n";
+        std::cout << cq::utils::string_to_coolq("[é”™è¯¯] " + msg) << "\n";
         break;
     }
 
 #ifdef WIN32
-    // Îª Windows ¿ØÖÆÌ¨»Ö¸´Êä³öÑÕÉ«
+    // ä¸º Windows æ§åˆ¶å°æ¢å¤è¾“å‡ºé¢œè‰²
     SetConsoleTextAttribute(hConsole, WHITE);
 #endif
 }
@@ -93,140 +93,19 @@ std::vector<std::string> str_split(const std::string &str, const char &delimiter
 void str_lcase(std::string &str) {
     for (size_t i = 0; i < str.length(); ++i) {
         if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'))
-            str[i] |= 32;           // Èç¹ûÊÇ×ÖÄ¸, Ôò×ª»»ÎªĞ¡Ğ´×ÖÄ¸
+            str[i] |= 32;           // å¦‚æœæ˜¯å­—æ¯, åˆ™è½¬æ¢ä¸ºå°å†™å­—æ¯
     }
 }
 
 LL qq_parse(const std::string &str) {
     if (str[0] == '[') {
         if (str.length() < 11)
-            throw std::exception("ÎŞĞ§µÄ at Ö¸Áî");
+            throw std::exception("æ— æ•ˆçš„ at æŒ‡ä»¤");
         else
             return std::stoll(str.substr(10));
     }
     else
         return std::stoll(str);
-}
-
-// --------------------------------------------------------------
-
-LL rndRange(const LL &min, const LL &max) {
-    std::scoped_lock<std::mutex> lock(mutexRndGen);
-    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(min, max);
-    return rnd(rndGen);
-}
-
-LL rndRange(const LL &max) {
-    std::scoped_lock<std::mutex> lock(mutexRndGen);
-    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(0, max);
-    return rnd(rndGen);
-}
-
-// --------------------------------------------------------------
-
-bool is_leap_year(const int &year) {
-    if (year % 4 == 0) {
-        if (year % 100 == 0)
-            return (year % 400 == 0);
-        else
-            return true;
-    }
-    else
-        return false;
-}
-
-bool is_day_sequential(const dateTime &a, const dateTime &b) {
-    const int year_a = a.get_year(), month_a = a.get_month(), day_a = a.get_day(),
-        year_b = b.get_year(), month_b = b.get_month(), day_b = b.get_day();
-
-    if (day_b == 1) {
-        // Èç¹û b µÄÌìÊıÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»¸öÔÂµÄ×îºóÒ»Ìì
-
-        if (month_b == 1) {
-            // Èç¹û b µÄÔÂ·İÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»ÄêµÄ 12 ÔÂ 31 ÈÕ
-            return (year_b == year_a + 1 && month_a == 12 && day_a == 31);
-        }
-        else {
-            // Èç¹û b µÄÔÂ·İ²»ÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÉÏÒ»ÔÂµÄ×îºóÒ»Ìì
-            unsigned char month_days[] = { 0, 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-            month_days[2] = is_leap_year(year_a) ? 29 : 28;             // ´¦ÀíÈóÄêµÄ¶şÔÂÌìÊı
-
-            return (year_b == year_a && month_b == month_a + 1 && day_a == static_cast<int>(month_days[month_a]));
-        }
-    }
-    else {
-        // Èç¹û b µÄÌìÊı²»ÊÇ 1, ÄÇÃ´¼ì²é a ÊÇ·ñÎªÕâ¸öÔÂ¶ÔÓ¦µÄÉÏÒ»Ìì
-        return (year_b == year_a && month_b == month_a && day_b == day_a + 1);
-    }
-}
-
-// --------------------------------------------------------------
-
-void luckyDraw::insertItem(const LL &itemId, const LL &weight) {
-    std::scoped_lock<std::mutex> lock(mutexItems);
-    maxIndex = currIndex + weight;
-    items.push_back(std::make_pair(itemId, std::make_pair(currIndex, maxIndex)));
-    currIndex = maxIndex;
-}
-
-bool luckyDraw::removeItem(const LL &itemId) {
-    std::scoped_lock<std::mutex> lock(mutexItems);
-    for (auto it = items.begin(); it != items.end(); ++it) {
-        if (it->first == itemId) {
-            // °ÑºóÃæÌõÄ¿µÄĞòºÅÇ°ÒÆ
-            LL weight = it->second.second - it->second.first;
-            for (auto it_after = it + 1; it_after != items.end(); ++it_after) {
-                it_after->second.first -= weight;
-                it_after->second.second -= weight;
-            }
-
-            // ĞŞ¸Ä×ÜÊıÁ¿
-            maxIndex -= weight;
-            currIndex -= weight;
-
-            // ÒÆ³ıÌõÄ¿
-            items.erase(it);
-
-            return true;
-        }
-    }
-    return false;
-}
-
-LL luckyDraw::draw() {
-    LL rnd = rndRange(maxIndex - 1);
-
-    for (const auto &it : items) {
-        // ¸ñÊ½: (ÎïÆ· ID, (ÆğÊ¼ĞòºÅ, ½áÊøĞòºÅ))
-        if (it.second.first <= rnd && rnd < it.second.second)
-            return it.first;
-    }
-    return LLONG_MIN;       // Ï£Íû²»»áÀ´µ½ÕâÀï°É...
-}
-
-LL luckyDraw::massive_draw() {
-    LL rnd = rndRange(maxIndex - 1);
-
-    // ¶ÔÎïÆ·½øĞĞ¶ş·ÖËÑË÷
-    // ¸ñÊ½: (ÎïÆ· ID, (ÆğÊ¼ĞòºÅ, ½áÊøĞòºÅ))
-    // Èô ÆğÊ¼ĞòºÅ <= rnd < ½áÊøĞòºÅ, Ôò³éÖĞ¶ÔÓ¦ÎïÆ·
-    size_t start = 0, end = items.size(), curr = (start + end) / 2;
-    while (end > start) {
-        if (items[curr].second.first <= rnd && rnd < items[curr].second.second)
-            // ¸ÕºÃÂäÔÚ·¶Î§ÄÚ
-            return items[curr].first;
-        else if (rnd < items[curr].second.first) {
-            // Ä¿±ê·¶Î§ÔÚµ±Ç°·¶Î§µÄÇ°Ãæ
-            end = curr - 1;
-            curr = (start + end) / 2;
-        }
-        else {
-            // Ä¿±ê·¶Î§ÔÚµ±Ç°·¶Î§µÄºóÃæ
-            start = curr + 1;
-            curr = (start + end) / 2;
-        }
-    }
-    return LLONG_MIN;       // Ï£Íû²»»áÀ´µ½ÕâÀï°É...
 }
 
 LL str_to_ll(const std::string &str) {
@@ -239,14 +118,9 @@ LL str_to_ll(const std::string &str) {
             if (str[i] == '-' && !numStarted)
                 continue;
             else
-                throw std::exception("ÎŞĞ§µÄ×Ö·û´®");
+                throw std::exception("æ— æ•ˆçš„å­—ç¬¦ä¸²");
         }
         numStarted = true;
     }
     return std::stoll(str.substr(start, i - start + 1));
-}
-
-std::string eqiType_to_str(const EqiType &type) {
-    const std::string names[] = { "Í·¿ø", "Õ½¼×", "»¤ÍÈ", "Õ½Ñ¥", "Ö÷ÎäÆ÷", "¸±ÎäÆ÷", "¶ú»·", "½äÖ¸", "ÏîÁ´", "±¦Ê¯" };
-    return names[static_cast<LL>(type)];
 }

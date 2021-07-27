@@ -1,7 +1,7 @@
 /*
-ÃèÊö: ÏûÏ¢Â·ÓÉÍ·ÎÄ¼ş, Ìá¹©ÏûÏ¢·Ö·¢½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: msg_router.hpp
+æè¿°: æ¶ˆæ¯è·¯ç”±å¤´æ–‡ä»¶, æä¾›æ¶ˆæ¯åˆ†å‘æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: msg_router.hpp
 */
 
 #pragma once
@@ -11,6 +11,6 @@
 void bg_groupmsg_dispatch(const cq::MessageEvent &ev);
 void bg_privatemsg_dispatch(const cq::MessageEvent &ev);
 
-// msg ²ÎÊı¸ñÊ½Îª: bg ÃüÁî
+// msg å‚æ•°æ ¼å¼ä¸º: bg å‘½ä»¤
 void bg_groupmsg_router_add(const std::string &msg, const std::function<void(const cq::MessageEvent &ev)> &handler);
 void bg_privatemsg_router_add(const std::string &msg, const std::function<void(const cq::MessageEvent &ev)> &handler);

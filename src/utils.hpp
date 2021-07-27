@@ -1,7 +1,7 @@
 /*
-ÃèÊö: Ò»Ğ©¸¨Öúº¯ÊıµÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: utlis.cpp
+æè¿°: ä¸€äº›è¾…åŠ©å‡½æ•°çš„æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: utlis.cpp
 */
 
 #pragma once
@@ -16,40 +16,40 @@
 
 using LL = long long;
 
-// ¿ØÖÆÌ¨ÈÕÖ¾ÀàĞÍ
+// æ§åˆ¶å°æ—¥å¿—ç±»å‹
 enum class LogType : unsigned char {
     info,
     warning,
     error
 };
 
-// ÈÕÖ¾Ïà¹Ø
+// æ—¥å¿—ç›¸å…³
 void console_log(const std::string &msg, const LogType &type = LogType::info);
 
-// ×Ö·û´®Ïà¹Ø
+// å­—ç¬¦ä¸²ç›¸å…³
 std::string str_trim(const std::string &str);
 std::vector<std::string> str_split(const std::string &str, const char &delimiter);
 void str_lcase(std::string &str);
 LL qq_parse(const std::string &str);
 
-// Ê±¼äÈÕÆÚÀà
+// æ—¶é—´æ—¥æœŸç±»
 class dateTime {
 private:
     tm      _date;
     time_t  _timestamp;
 
 public:
-    // Ê¹ÓÃµ±Ç°ÏµÍ³Ê±¼ä
+    // ä½¿ç”¨å½“å‰ç³»ç»Ÿæ—¶é—´
     dateTime() {
         _timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         _date = *std::localtime(&_timestamp);
     }
 
-    // Ê¹ÓÃ×Ô¶¨ÒåÈÕÆÚÊ±¼ä
-    // ×¢Òâ, ±¾³ÌĞò²»»á°ïÄã´¦ÀíÎŞĞ§µÄÊ±¼ä. Çë±£Ö¤ÊäÈëµÄ²ÎÊıÓĞĞ§
+    // ä½¿ç”¨è‡ªå®šä¹‰æ—¥æœŸæ—¶é—´
+    // æ³¨æ„, æœ¬ç¨‹åºä¸ä¼šå¸®ä½ å¤„ç†æ— æ•ˆçš„æ—¶é—´. è¯·ä¿è¯è¾“å…¥çš„å‚æ•°æœ‰æ•ˆ
     dateTime(const int &year, const int &month, const int &day, const int &hour = 0, const int &minute = 0, const int &second = 0) {
-        _date.tm_year = year - 1900;    // ×¢Òâ, tm_year ´Ó 1900 Äê¿ªÊ¼¼ÆËã
-        _date.tm_mon = month - 1;       // ×¢Òâ, tm_month ´Ó 0 ¿ªÊ¼¼ÆËã
+        _date.tm_year = year - 1900;    // æ³¨æ„, tm_year ä» 1900 å¹´å¼€å§‹è®¡ç®—
+        _date.tm_mon = month - 1;       // æ³¨æ„, tm_month ä» 0 å¼€å§‹è®¡ç®—
         _date.tm_mday = day;
         _date.tm_hour = hour;
         _date.tm_min = minute;
@@ -57,13 +57,13 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    // ½ÓÊÜÊ±¼ä´Á(ÒÔÃëÎªµ¥Î»)×÷Îª²ÎÊı
+    // æ¥å—æ—¶é—´æˆ³(ä»¥ç§’ä¸ºå•ä½)ä½œä¸ºå‚æ•°
     dateTime(const time_t &timestamp) {
         _timestamp = timestamp;
         _date = *std::localtime(&_timestamp);
     }
 
-    // ¸´ÖÆÀà
+    // å¤åˆ¶ç±»
     dateTime(const dateTime &dt) {
         _timestamp = dt._timestamp;
         _date = dt._date;
@@ -123,12 +123,12 @@ public:
         _timestamp = std::mktime(&_date);
     }
 
-    // ¼ÙÈôµ±Ç°ÀàËù´ú±íµÄÊÇ±¾µØÊ±¼ä, ·µ»Øµ±Ç°Ê±¼ä´ÁËù¶ÔÓ¦µÄ UTC Ê±¼ä´Á
+    // å‡è‹¥å½“å‰ç±»æ‰€ä»£è¡¨çš„æ˜¯æœ¬åœ°æ—¶é—´, è¿”å›å½“å‰æ—¶é—´æˆ³æ‰€å¯¹åº”çš„ UTC æ—¶é—´æˆ³
     time_t get_utc_timestamp() const {
         return std::mktime(std::gmtime(&_timestamp));
     }
 
-    // Ö±½Ó»ñÈ¡µ±Ç°ÀàËù´ú±íµÄÊ±¼ä´Á
+    // ç›´æ¥è·å–å½“å‰ç±»æ‰€ä»£è¡¨çš„æ—¶é—´æˆ³
     time_t get_timestamp() const {
         return _timestamp;
     }
@@ -158,43 +158,43 @@ public:
     }
 };
 
-// ¼ì²éÁ½¸ö dateTime ÊÇ·ñÎªÁ¬ĞøÈÕÆÚ. b Ëù´ú±íµÄÈÕÆÚ±ØĞëÔÚ a Ö®ºó
+// æ£€æŸ¥ä¸¤ä¸ª dateTime æ˜¯å¦ä¸ºè¿ç»­æ—¥æœŸ. b æ‰€ä»£è¡¨çš„æ—¥æœŸå¿…é¡»åœ¨ a ä¹‹å
 bool is_day_sequential(const dateTime &a, const dateTime &b);
 
-// Ïß³Ì°²È«µØ»ñÈ¡Ò»¸ö [min, max] ÄÚµÄËæ»úÊı
+// çº¿ç¨‹å®‰å…¨åœ°è·å–ä¸€ä¸ª [min, max] å†…çš„éšæœºæ•°
 LL rndRange(const LL &min, const LL &max);
 
-// Ïß³Ì°²È«µØ»ñÈ¡Ò»¸ö [0, max] ÄÚµÄËæ»úÊı
+// çº¿ç¨‹å®‰å…¨åœ°è·å–ä¸€ä¸ª [0, max] å†…çš„éšæœºæ•°
 LL rndRange(const LL &max);
 
-// Ïß³Ì°²È«µÄ³é½±»ú
+// çº¿ç¨‹å®‰å…¨çš„æŠ½å¥–æœº
 class luckyDraw {
 private:
-    std::vector<std::pair<LL, std::pair<LL, LL>>>   items;  // (ÎïÆ· ID, (ÆğÊ¼ĞòºÅ, ½áÊøĞòºÅ))
-    LL          maxIndex;                                   // ³é½±ĞòºÅ·¶Î§
-    LL          currIndex;                                  // µ±Ç°³é½±ĞòºÅ
-    std::mutex  mutexItems;                                 // Ïß³ÌËø
+    std::vector<std::pair<LL, std::pair<LL, LL>>>   items;  // (ç‰©å“ ID, (èµ·å§‹åºå·, ç»“æŸåºå·))
+    LL          maxIndex;                                   // æŠ½å¥–åºå·èŒƒå›´
+    LL          currIndex;                                  // å½“å‰æŠ½å¥–åºå·
+    std::mutex  mutexItems;                                 // çº¿ç¨‹é”
 
 public:
     luckyDraw() : maxIndex(0), currIndex(0) {};
     luckyDraw(const luckyDraw &b) : items(b.items), maxIndex(b.maxIndex), currIndex(b.currIndex) {};
 
-    // Ìí¼ÓÒ»¸öÌõÄ¿µ½³é½±»ú. ³éÖĞËüµÄ¸ÅÂÊÎª: weight / (ËùÓĞÌõÄ¿µÄ weight ×ÜºÍ)
+    // æ·»åŠ ä¸€ä¸ªæ¡ç›®åˆ°æŠ½å¥–æœº. æŠ½ä¸­å®ƒçš„æ¦‚ç‡ä¸º: weight / (æ‰€æœ‰æ¡ç›®çš„ weight æ€»å’Œ)
     void insertItem(const LL &itemId, const LL &weight);
 
-    // ´Ó³é½±»úÒÆ³ıÒ»¸öÌõÄ¿. ÈôÕÒ²»µ½Ö¸¶¨µÄÌõÄ¿, º¯Êı·µ»Ø false
+    // ä»æŠ½å¥–æœºç§»é™¤ä¸€ä¸ªæ¡ç›®. è‹¥æ‰¾ä¸åˆ°æŒ‡å®šçš„æ¡ç›®, å‡½æ•°è¿”å› false
     bool removeItem(const LL &itemId);
 
-    // ´Ó³é½±»úÖĞ³éÈ¡Ò»¸öÌõÄ¿
+    // ä»æŠ½å¥–æœºä¸­æŠ½å–ä¸€ä¸ªæ¡ç›®
     LL draw();
 
-    // Èç¹ûÎïÆ·ÁĞ±íÀïÓĞ´óÁ¿ÎïÆ·, ¶øÇÒÒª½øĞĞ·Ç³£¶à (ÀıÈçÉÏÍò) ´ÎµÄ³é½±, ÔòÊ¹ÓÃÕâ¸öº¯ÊıÄÜÏÔÖøÌáÉıÖ´ĞĞĞ§ÂÊ
-    // ²»½¨Òé¶ÔÓÚÉÙÁ¿ÎïÆ· (ÀıÈçÒ»°Ù¸ö) ºÍ´ÎÊıÉÙ (ÀıÈçÊ®´Î) µÄ³é½±Ê¹ÓÃÕâ¸öº¯Êı, ÒòÎª¶ş·ÖËÑË÷¶ÔÓÚÉÙÁ¿ÎïÆ·µÄĞÔÄÜ²»ÈçÏßĞÔËÑË÷
+    // å¦‚æœç‰©å“åˆ—è¡¨é‡Œæœ‰å¤§é‡ç‰©å“, è€Œä¸”è¦è¿›è¡Œéå¸¸å¤š (ä¾‹å¦‚ä¸Šä¸‡) æ¬¡çš„æŠ½å¥–, åˆ™ä½¿ç”¨è¿™ä¸ªå‡½æ•°èƒ½æ˜¾è‘—æå‡æ‰§è¡Œæ•ˆç‡
+    // ä¸å»ºè®®å¯¹äºå°‘é‡ç‰©å“ (ä¾‹å¦‚ä¸€ç™¾ä¸ª) å’Œæ¬¡æ•°å°‘ (ä¾‹å¦‚åæ¬¡) çš„æŠ½å¥–ä½¿ç”¨è¿™ä¸ªå‡½æ•°, å› ä¸ºäºŒåˆ†æœç´¢å¯¹äºå°‘é‡ç‰©å“çš„æ€§èƒ½ä¸å¦‚çº¿æ€§æœç´¢
     LL massive_draw();
 };
 
-// ¼ì²éÒ»¸ö×Ö·û´®ÊÇ·ñÎªÕûÊı. Èç¹û²»ÊÇ, ÔòÅ×³öÒì³£; Èç¹ûÊÇ, Ôò·µ»Ø¶ÔÓ¦µÄÕûÊı
+// æ£€æŸ¥ä¸€ä¸ªå­—ç¬¦ä¸²æ˜¯å¦ä¸ºæ•´æ•°. å¦‚æœä¸æ˜¯, åˆ™æŠ›å‡ºå¼‚å¸¸; å¦‚æœæ˜¯, åˆ™è¿”å›å¯¹åº”çš„æ•´æ•°
 LL str_to_ll(const std::string &str);
 
-// »ñÈ¡ type Ëù¶ÔÓ¦µÄ×°±¸ÀàĞÍµÄÃû³Æ
+// è·å– type æ‰€å¯¹åº”çš„è£…å¤‡ç±»å‹çš„åç§°
 std::string eqiType_to_str(const EqiType &type);

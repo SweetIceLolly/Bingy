@@ -1,23 +1,44 @@
 /*
-ÃèÊö: Bingy ÓÎÏ·Ïà¹ØµÄº¯Êı. Õû¸öÓÎÏ·µÄÖ÷ÒªÂß¼­
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: game.cpp
+æè¿°: Bingy æ¸¸æˆç›¸å…³çš„å‡½æ•°. æ•´ä¸ªæ¸¸æˆçš„ä¸»è¦é€»è¾‘
+ä½œè€…: å†°æ£
+æ–‡ä»¶: game.cpp
 */
 
 #include "game.hpp"
-#include "player.hpp"
 #include "utils.hpp"
-#include "signin_event.hpp"
-#include "trade.hpp"
-#include "synthesis.hpp"
-#include "monster.hpp"
-#include <unordered_set>
-#include <sstream>
+#include "HTTPRequest.hpp"
+#include "json.hpp"
+#include "error_codes.hpp"
 
-std::unordered_set<LL>  blacklist;          // ºÚÃûµ¥ (ĞŞ¸ÄÏîÄ¿Ç°¼ÇµÃ¼ÓËø)
-std::unordered_set<LL>  allAdmins;          // ¹ÜÀíÔ± (ĞŞ¸ÄÏîÄ¿Ç°¼ÇµÃ¼ÓËø)
+std::string serverUri = DEFAULT_SERVER_URI;
+std::string appId;
+std::string appSecret;
 
-// È¡µÃ°¬ÌØÍæ¼Ò×Ö·û´®
+// æ‡’äººå®
+// æ¯ä¸ª Bingy çš„ HTTP è¯·æ±‚éƒ½æœ‰å¦‚ä¸‹å†…å®¹, ä½¿ç”¨è¿™ä¸ªå®æ¥æ›¿ä»£é‡å¤éƒ¨åˆ†
+#define MAKE_BG_JSON { "appid", appId }, { "secret", appSecret }, { "groupId", GROUP_ID }, { "qq", USER_ID }
+
+// Bingy çš„ HTTP è¯·æ±‚å›åº”
+typedef struct _bg_http_response {
+    int             code;                               // çŠ¶æ€ç 
+    nlohmann::json  content;                            // å›åº”å†…å®¹
+} bg_http_response;
+
+// è¿›è¡Œ POST è¯·æ±‚. æ³¨æ„: éœ€è¦è°ƒç”¨æ–¹å¤„ç†å¼‚å¸¸
+bg_http_response bg_http_post(const std::string &path, const nlohmann::json &body, const int &timeout = 50000) {
+    http::Request request(serverUri + path);
+    const auto response = request.send("POST", body.dump(),
+        { "Content-Type: application/json" }, std::chrono::milliseconds(timeout));
+    return bg_http_response{ response.status, nlohmann::json::parse(response.body.begin(), response.body.end()) };
+}
+
+// è¿›è¡Œ GET è¯·æ±‚. æ³¨æ„: éœ€è¦è°ƒç”¨æ–¹å¤„ç†å¼‚å¸¸
+//template <typename ... Args>
+//bg_http_response bg_http_get(const std::string &path, const int &timeout = 50000, const Args&&... params) {
+//    
+//}
+
+// å–å¾—è‰¾ç‰¹ç©å®¶å­—ç¬¦ä¸²
 std::string bg_at(const cq::MessageEvent &ev) {
     try {
         auto gmi = cq::get_group_member_info(GROUP_ID, USER_ID);
@@ -28,1399 +49,211 @@ std::string bg_at(const cq::MessageEvent &ev) {
     }
 }
 
-// Í¨ÓÃÕËºÅ¼ì²é
-bool accountCheck(const cq::MessageEvent &ev) {
-    // ¼ì²éÍæ¼ÒÊÇ·ñÒÑ¾­×¢²á
-    if (!bg_player_exist(USER_ID)) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒªÏÈ×¢²áÅ¶! ¿ì·¢ËÍ\"bg ×¢²á\"¼ÓÈëÓÎÏ·°É!");
-        return false;
-    }
-
-    // ¼ì²éÍæ¼ÒÊÇ·ñÔÚĞ¡ºÚÎİ
-    if (blacklist.find(USER_ID) != blacklist.end()) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Äã±»À­ºÚÁË!");
-        return false;
-    }
-
-    return true;
-}
-
-// ×¢²áÇ°¼ì²é
-bool preRegisterCallback(const cq::MessageEvent &ev) {
-    if (bg_player_exist(USER_ID)) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÄãÒÑ¾­×¢²á¹ıÀ²!");
-        return false;
-    }
-    return true;
-}
-
-// ×¢²á
-void postRegisterCallback(const cq::MessageEvent &ev) {
+// æ–°ç©å®¶æ³¨å†Œ
+void registerCallback(const cq::MessageEvent& ev) {
     try {
-        if (bg_player_add(USER_ID))
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "×¢²á³É¹¦! ·¢ËÍ\"bg Ç©µ½\"»ñÈ¡ÌåÁ¦, È»ºó·¢ËÍ\"bg ÌôÕ½1\"¿ªÊ¼¸±±¾Ö®ÂÃ°É! Èç¹ûĞèÒª°ïÖú, ¿ÉÒÔ·¢ËÍ\"bg °ïÖú\"Å¶!");
-        else
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "×¢²áÆÚ¼ä·¢Éú´íÎó!");
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("×¢²áÆÚ¼ä·¢Éú´íÎó: ") + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "×¢²áÆÚ¼ä·¢Éú´íÎó!");
-    }
-}
-
-// ²é¿´Ó²±ÒÇ°¼ì²é
-bool preViewCoinsCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
-}
-
-// ²é¿´Ó²±Ò
-void postViewCoinsCallback(const cq::MessageEvent &ev) {
-    try {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ó²±ÒÊı: " +
-            std::to_string(PLAYER.get_coins())
-        );
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("²é¿´Ó²±Ò·¢Éú´íÎó: ") + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´Ó²±Ò·¢Éú´íÎó!");
-    }
-}
-
-// Ç©µ½Ç°¼ì²é
-bool preSignInCallback(const cq::MessageEvent &ev) {
-    if (!accountCheck(ev))
-        return false;
-
-    // Èç¹ûÍæ¼ÒÉÏ´ÎÇ©µ½ÈÕÆÚ¸ú½ñÌìÒ»ÑùÔò¾Ü¾øÇ©µ½
-    dateTime signInDate = dateTime(PLAYER.get_lastSignIn());
-    dateTime today = dateTime();
-
-    if (signInDate.get_year() == today.get_year() && signInDate.get_month() == today.get_month() && signInDate.get_day() == today.get_day()) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Äã½ñÌìÒÑ¾­Ç©µ½¹ıÀ²!");
-        return false;
-    }
-    return true;
-}
-
-// Ç©µ½
-void postSignInCallback(const cq::MessageEvent &ev) {
-    try {
-        dateTime now;
-
-        // ¼ì²éÁ¬ĞøÇ©µ½
-        if (is_day_sequential(dateTime(PLAYER.get_lastFight()), now)) {
-            if (!PLAYER.inc_signInCountCont(1)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: ÉèÖÃÁ¬ĞøÇ©µ½ÌìÊıÊ§°Ü"));
-                return;
-            }
+        auto res = bg_http_post("/register", { MAKE_BG_JSON });
+        if (res.code == 200) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "æ³¨å†ŒæˆåŠŸ! å‘é€\"bg ç­¾åˆ°\"è·å–ä½“åŠ›, ç„¶åå‘é€\"bg æŒ‘æˆ˜1\"å¼€å§‹å‰¯æœ¬ä¹‹æ—…å§! å¦‚æœéœ€è¦å¸®åŠ©, å¯ä»¥å‘é€\"bg å¸®åŠ©\"å“¦!");
         }
         else {
-            if (!PLAYER.set_signInCountCont(1)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: ÉèÖÃÁ¬ĞøÇ©µ½ÌìÊıÊ§°Ü"));
-                return;
-            }
+            if (res.content["errid"].get<int>() == BG_ERR_ALREADY_REGISTERED)
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "ä½ å·²ç»æ³¨å†Œè¿‡å•¦!");
+            else
+                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("æ³¨å†ŒæœŸé—´å‘ç”Ÿé”™è¯¯: ") + res.content["msg"].get<std::string>());
         }
-
-        // Ê×ÏÈÉèÖÃÇ©µ½Ê±¼ä, ÃâµÃÕæµÄ³öÁËÂ©¶´¸øÍæ¼Ò²»¶ÏÇ©µ½
-        if (!PLAYER.set_lastSignIn(dateTime().get_timestamp())) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: ÉèÖÃÇ©µ½Ê±¼äÊ§°Ü"));
-            return;
-        }
-
-        // ÉèÖÃÍæ¼ÒÇ©µ½´ÎÊı
-        if (!PLAYER.inc_signInCount(1)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: Ìí¼ÓÇ©µ½´ÎÊıÊ§°Ü"));
-            return;
-        }
-
-        // Ç©µ½»ñµÃÓ²±Ò = 500 + 25 * Á¬ĞøÇ©µ½ÌìÊı + 10 * ×ÜÇ©µ½ÌìÊı + rnd(20 * ×ÜÇ©µ½ÌìÊı)
-        // Ç©µ½*Ö®ºóµÄ*ÌåÁ¦ = 15 * Á¬ĞøÇ©µ½ÌìÊı + 5 * ×ÜÇ©µ½ÌìÊı
-        // Ç©µ½»ñµÃ¾­Ñé = 15 * Á¬ĞøÇ©µ½´ÎÊı + 5 * ×ÜÇ©µ½ÌìÊı
-        LL deltaCoins = 500 + 25 * PLAYER.get_signInCountCont() + 10 * PLAYER.get_signInCount() + rndRange(20 * PLAYER.get_signInCount());
-        LL deltaEnergy = 150 + 5 * PLAYER.get_level();
-        LL deltaExp = 15 * PLAYER.get_signInCountCont() + 5 * PLAYER.get_signInCount();
-
-        // ¼ì²éÇ©µ½»î¶¯
-        std::string eventMsg = "";              // »î¶¯ÏûÏ¢
-        std::vector<LL> eventItems;             // »î¶¯ÔùËÍÎïÆ·
-        bg_match_sign_in_event(now, deltaCoins, deltaEnergy, eventItems, eventMsg);
-        for (const auto &item : eventItems) {   // ÎªÍæ¼ÒÌí¼ÓÎïÆ·
-            inventoryData itemData;
-            itemData.id = item;
-            itemData.level = 0;
-            itemData.wear = allEquipments.at(item).wear;
-            if (!PLAYER.add_inventory_item(itemData)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: Ìí¼ÓÎïÆ·\"" + allEquipments.at(item).name + "\"Ê§°Ü"));
-            }
-        }
-
-        if (!PLAYER.inc_coins(deltaCoins)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: Ìí¼ÓÓ²±ÒÊ§°Ü"));
-        }
-        if (!PLAYER.set_energy(static_cast<LL>(PLAYER.get_energy() * 0.75) + deltaEnergy)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: Ìí¼ÓÌåÁ¦Ê§°Ü"));
-        }
-        if (!PLAYER.inc_exp(deltaExp)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: Ìí¼Ó¾­ÑéÊ§°Ü"));
-        }
-
-        cq::send_group_message(GROUP_ID, bg_at(ev) +
-            "Ç©µ½³É¹¦, Á¬ĞøÇ©µ½" + std::to_string(PLAYER.get_signInCountCont()) + "Ìì, ×Ü¹²Ç©µ½" + std::to_string(PLAYER.get_signInCount()) + "Ìì¡£"
-            "»ñµÃÓ²±Ò" + std::to_string(deltaCoins) + ", Ä¿Ç°ÓµÓĞ" + std::to_string(PLAYER.get_coins()) +
-            "; »ñµÃÌåÁ¦" + std::to_string(deltaEnergy) + ", Ä¿Ç°ÓµÓĞ" + std::to_string(PLAYER.get_energy()) +
-            "; »ñµÃ¾­Ñé: " + std::to_string(deltaExp) + (eventMsg.empty() ? "" : eventMsg)
-        );
-    }
-
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("Ç©µ½·¢Éú´íÎó: ") + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ç©µ½·¢Éú´íÎó!");
-    }
-}
-
-// ²é¿´±³°üÇ°¼ì²é
-bool preViewInventoryCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
-}
-
-// Í¨ÓÃ²é¿´±³°üº¯Êı
-std::string getInventoryStr(const LL &id) {
-    auto tmp = allPlayers.at(id).get_inventory();
-    if (tmp.size() == 0) {
-        return "±³°ü¿Õ¿ÕÈçÒ², ¿ìÈ¥»ñÈ¡×°±¸°É!";
-    }
-    else {
-        std::string msg = "±³°ü (" + std::to_string(tmp.size()) + "/" + std::to_string(allPlayers.at(id).get_invCapacity()) + ")\n";
-        LL index = 1;
-        for (const auto &item : tmp) {
-            if (allEquipments.at(item.id).type != EqiType::single_use)              // ·ÇÒ»´ÎĞÔÎïÆ·
-                msg += std::to_string(index) + "." + allEquipments.at(item.id).name + "+" + std::to_string(item.level) + " ";
-            else                                                                    // Ò»´ÎĞÔÎïÆ·
-                msg += std::to_string(index) + ".[" + allEquipments.at(item.id).name + "] ";
-            ++index;
-        }
-        if (!msg.empty())
-            msg.pop_back();
-        return msg;
-    }
-}
-
-// ²é¿´±³°ü
-void postViewInventoryCallback(const cq::MessageEvent &ev) {
-    try {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + getInventoryStr(USER_ID));
     }
     catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("²é¿´±³°ü·¢Éú´íÎó: ") + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´±³°ü·¢Éú´íÎó!");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("æ³¨å†ŒæœŸé—´å‘ç”Ÿé”™è¯¯: ") + e.what());
     }
 }
 
-// ³öÊÛÇ°¼ì²é
-bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::vector<LL> &rtnItems) {
-    if (!accountCheck(ev))
-        return false;
-
-    try {
-        std::unordered_set<LL> sellList;
-        for (const auto &item : args) {
-            if (item.empty())
-                continue;
-            auto tmp = str_to_ll(item);                                         // ×Ö·û´®×ª³ÉÕûÊı
-            if (tmp > PLAYER.get_inventory_size() || tmp < 1) {                 // ¼ì²éÊÇ·ñ³¬³ö±³°ü·¶Î§
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "ĞòºÅ\"" + str_trim(item) + "\"³¬³öÁË±³°ü·¶Î§!");
-                return false;
-            }
-            if (sellList.find(tmp) == sellList.end()) {                         // ¼ì²éÊÇ·ñÓĞÖØ¸´ÏîÄ¿
-                rtnItems.push_back(tmp - 1);                                    // ×îºóÌí¼Óµ½·µ»ØÁĞ±í (×¢ÒâÄÚ²¿ÁĞ±íÒÔ 0 Îª¿ªÍ·)
-                sellList.insert(tmp);                                           // ¼ÇÂ¼¸ÃÏîÄ¿
-            }
-            else {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "ĞòºÅ\"" + str_trim(item) + "\"ÖØ¸´ÁË!");
-                return false;
-            }
-        }
-        return true;
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("³öÊÛÇ°¼ì²é·¢Éú´íÎó, Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö: ") + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó! Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
-}
-
-// ³öÊÛ
-void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items) {
-    try {
-        std::sort(items.rbegin(), items.rend());            // ´Ó´óµ½Ğ¡ÅÅĞòĞòºÅ. ´ÓºóÃæÍùÇ°É¾²Å²»»á³ö´í
-
-        double  price = 0;
-        auto    inv = PLAYER.get_inventory();
-        LL      prevIndex = static_cast<LL>(inv.size()) - 1;
-        auto    it = inv.rbegin();
-        for (const auto &index : items) {                   // ¼ÆËã³öÊÛ×Ü¼Û
-            std::advance(it, prevIndex - index);
-            if (allEquipments.at(it->id).type == EqiType::single_use)   // Ò»´ÎĞÔ×°±¸¼Û¸ñ = Ô­Ê¼¼Û¸ñ
-                price += allEquipments.at(it->id).price;
-            else                                                        // ×°±¸¼Û¸ñ = Ô­Ê¼¼Û¸ñ + 100 * (1.6 ^ ×°±¸µÈ¼¶ - 1) / 0.6
-                price += allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6;
-            prevIndex = index;
-        }
-
-        if (!PLAYER.remove_at_inventory(items)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³öÊÛÊ§°Ü: ÒÆ³ı±³°üÎïÆ·Ê±·¢Éú´íÎó!");
-            return;
-        }
-        if (!PLAYER.inc_coins(static_cast<LL>(price))) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³öÊÛÊ§°Ü: Ìí¼ÓÓ²±ÒÊ±·¢Éú´íÎó!");
-            return;
-        }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦³öÊÛ" + std::to_string(items.size()) + "¸öÎïÆ·, »ñµÃ" + std::to_string(static_cast<LL>(price)) + "Ó²±Ò");
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³öÊÛÊ§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³öÊÛÊ§°Ü!");
-    }
-}
-
-// ²é¿´ÊôĞÔÇ°¼ì²é
-bool preViewPropertiesCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
-}
-
-// ÀÁÈËºê
-// »ñÈ¡Ä³¸öÊôĞÔµÄ×Ö·û´®. ±ÈÈç»ñÈ¡¹¥»÷ (atk), Ôò×Ö·û´®Îª ¹¥»÷Öµ (ÎäÆ÷¹¥»÷ + »¤¼×¹¥»÷ + ÊÎÆ·¹¥»÷)
-#define GET_EQI_PROP_STR(prop)                                                                                  \
-    std::setprecision(1) <<                                                                                     \
-    allPlayers.at(id).get_##prop##() << " (" <<                                                                 \
-    std::setprecision(0) <<                                                                                     \
-    allPlayers.at(id).get_equipments().at(EqiType::weapon_primary).calc_##prop##() +      /* ÎäÆ÷ÊôĞÔ×ÜºÍ*/      \
-    allPlayers.at(id).get_equipments().at(EqiType::weapon_secondary).calc_##prop##()                            \
-    << "+" <<                                                                                                   \
-    allPlayers.at(id).get_equipments().at(EqiType::armor_helmet).calc_##prop##() +        /* »¤¼×ÊôĞÔ×ÜºÍ*/      \
-    allPlayers.at(id).get_equipments().at(EqiType::armor_body).calc_##prop##() +                                \
-    allPlayers.at(id).get_equipments().at(EqiType::armor_leg).calc_##prop##() +                                 \
-    allPlayers.at(id).get_equipments().at(EqiType::armor_boot).calc_##prop##()                                  \
-    << "+" <<                                                                                                   \
-    allPlayers.at(id).get_equipments().at(EqiType::ornament_earrings).calc_##prop##() +   /* ÊÎÆ·ÊôĞÔ×ÜºÍ*/      \
-    allPlayers.at(id).get_equipments().at(EqiType::ornament_rings).calc_##prop##() +                            \
-    allPlayers.at(id).get_equipments().at(EqiType::ornament_necklace).calc_##prop##() +                         \
-    allPlayers.at(id).get_equipments().at(EqiType::ornament_jewelry).calc_##prop##()                            \
-    << ")"
-
-// Í¨ÓÃ²é¿´ÊôĞÔº¯Êı
-std::string getPropertiesStr(const LL &id) {
-    std::stringstream msg;
-
-    msg << std::fixed << std::setprecision(1)
-        << "ÕËºÅ: " << id << "\n"
-        << "µÈ¼¶: " << allPlayers.at(id).get_level() << ", ×£¸£: " << allPlayers.at(id).get_blessing() << "\n"
-        << "¾­Ñé: " << allPlayers.at(id).get_exp() << "/" << allPlayers.at(id).get_exp_needed()
-            << " (" << static_cast<double>(allPlayers.at(id).get_exp()) / static_cast<double>(allPlayers.at(id).get_exp_needed()) * 100.0 << "%)" << "\n"
-        << "ÉúÃü: " << GET_EQI_PROP_STR(hp) << "\n"
-        << "¹¥»÷: " << GET_EQI_PROP_STR(atk) << "\n"
-        << "·À»¤: " << GET_EQI_PROP_STR(def) << "\n"
-        << "Ä§Á¦: " << GET_EQI_PROP_STR(mp) << "\n"
-        << "±©»÷: " << GET_EQI_PROP_STR(crt) << "\n"
-        << "ÆÆ¼×: " << GET_EQI_PROP_STR(brk) << "\n"
-        << "Ãô½İ: " << GET_EQI_PROP_STR(agi) << "\n"
-        << "ÌåÁ¦: " << allPlayers.at(id).get_energy() << " Ó²±Ò: " << allPlayers.at(id).get_coins() << "\n"
-        << "Ó¢ĞÛ±Ò: " << allPlayers.at(id).get_heroCoin();
-    return msg.str();
-}
-
-// ²é¿´ÊôĞÔ
-void postViewPropertiesCallback(const cq::MessageEvent &ev) {
-    try {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + getPropertiesStr(USER_ID));
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´ÊôĞÔÊ§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´ÊôĞÔÊ§°Ü!");
-    }
-}
-
-// ²é¿´×°±¸Ç°¼ì²é
-bool preViewEquipmentsCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
-}
-
-// ÀÁÈËºê
-// Éú³É¶ÔÓ¦ÀàĞÍµÄ×°±¸µÄ×Ö·û´®. Èô ID = -1, ÔòÏÔÊ¾"Î´×°±¸"; ·ñÔòÏÔÊ¾ ×°±¸Ãû³Æ+µÈ¼¶ (Ä¥Ëğ/Ô­Ê¼Ä¥Ëğ)
-#define GET_EQI_STR(eqitype)   \
-    (##eqitype##.id == -1 ? "Î´×°±¸" : allEquipments.at(##eqitype##.id).name + "+" + std::to_string(##eqitype##.level) +    \
-    " (" + std::to_string(##eqitype##.wear) + "/" + std::to_string(allEquipments.at(##eqitype##.id).wear) + ")")
-
-// Í¨ÓÃ²é¿´×°±¸º¯Êı
-std::string getEquipmentsStr(const LL &id) {
-    const auto& eqi = allPlayers.at(id).get_equipments();
-    const auto& singleUseEqi = allPlayers.at(id).get_equipItems();
+// æŸ¥çœ‹ç¡¬å¸
+void viewCoinsCallback(const cq::MessageEvent& ev) {
     
-    const auto& armor_helmet = eqi.at(EqiType::armor_helmet);
-    const auto& armor_body = eqi.at(EqiType::armor_body);
-    const auto& armor_leg = eqi.at(EqiType::armor_leg);
-    const auto& armor_boot = eqi.at(EqiType::armor_boot);
-    const auto& weapon_primary = eqi.at(EqiType::weapon_primary);
-    const auto& weapon_secondary = eqi.at(EqiType::weapon_secondary);
-    const auto& ornament_earrings = eqi.at(EqiType::ornament_earrings);
-    const auto& ornament_rings = eqi.at(EqiType::ornament_rings);
-    const auto& ornament_necklace = eqi.at(EqiType::ornament_necklace);
-    const auto& ornament_jewelry = eqi.at(EqiType::ornament_jewelry);
-
-    std::string eqiStr =
-        "---»¤¼×---\n"
-        "Í·¿ø: " + GET_EQI_STR(armor_helmet) + ", " +
-        "Õ½¼×: " + GET_EQI_STR(armor_body) + "\n" +
-        "»¤ÍÈ: " + GET_EQI_STR(armor_leg) + ", " +
-        "Õ½Ñ¥: " + GET_EQI_STR(armor_boot) + "\n" +
-        "---ÎäÆ÷---\n"
-        "Ö÷ÎäÆ÷: " + GET_EQI_STR(weapon_primary) + ", " +
-        "¸±ÎäÆ÷: " + GET_EQI_STR(weapon_secondary) + "\n" +
-        "---ÊÎÆ·---\n"
-        "¶ú»·: " + GET_EQI_STR(ornament_earrings) + ", " +
-        "½äÖ¸: " + GET_EQI_STR(ornament_rings) + "\n" +
-        "ÏîÁ´: " + GET_EQI_STR(ornament_necklace) + ", " +
-        "±¦Ê¯: " + GET_EQI_STR(ornament_jewelry);
-
-    // ÏÔÊ¾ÒÑ×°±¸µÄÒ»´ÎĞÔÎïÆ·
-    if (!singleUseEqi.empty()) {
-        LL index = 1;
-        eqiStr += "\n---Ò»´ÎĞÔ---\n";
-        for (const auto &item : singleUseEqi) {
-            eqiStr += std::to_string(index) + "." + allEquipments[item.id].name + " ";
-            ++index;
-        }
-        if (!eqiStr.empty())
-            eqiStr.pop_back();
-    }
-    return eqiStr;
 }
 
-// ²é¿´×°±¸
-void postViewEquipmentsCallback(const cq::MessageEvent &ev) {
-    try {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + getEquipmentsStr(USER_ID));
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´×°±¸Ê§°Ü!");
-    }
+// ç­¾åˆ°
+void signInCallback(const cq::MessageEvent &ev) {
+
 }
 
-// ×°±¸Ç°¼ì²é
-bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &equipItem) {
-    if (!accountCheck(ev))
-        return false;
+// æŸ¥çœ‹èƒŒåŒ…
+void viewInventoryCallback(const cq::MessageEvent &ev) {
 
-    try {
-        equipItem = str_to_ll(arg) - 1;                                         // ×Ö·û´®×ª³ÉÕûÊı. ×¢ÒâÄÚ²¿µÄ´æ´¢ĞòºÅÓÉ 0 ¿ªÊ¼
-        if (equipItem >= PLAYER.get_inventory_size() || equipItem < 0) {        // ¼ì²éÊÇ·ñ³¬³ö±³°ü·¶Î§
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ĞòºÅ\"" + str_trim(arg) + "\"³¬³öÁË±³°ü·¶Î§!");
-            return false;
-        }
-        return true;
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸Ç°¼ì²é·¢Éú´íÎó: " + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó! Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
 }
 
-// ×°±¸
-void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem) {
-    PLAYER.resetCache();                                            // ÖØËãÍæ¼ÒÊôĞÔ
+// å‡ºå”®è£…å¤‡
+void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
 
-    // »ñÈ¡±³°üÀï¸ÃĞòºÅµÄ¶ÔÓ¦ÎïÆ·
-    auto invItems = PLAYER.get_inventory();
-    auto it = invItems.begin();
-    std::advance(it, equipItem);
-    
-    // °Ñ×°±¸ÉÏÈ¥ÁËµÄ×°±¸´Ó±³°üÒÆ³ı
-    if (!PLAYER.remove_at_inventory({ equipItem })) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸Ê±·¢Éú´íÎó: °Ñ½«Òª×°±¸µÄ×°±¸´Ó±³°üÖĞÒÆ³ıÊ±·¢Éú´íÎó!");
-        return;
-    }
-
-    // ¸ù¾İ×°±¸ÀàĞÍÀ´×°±¸
-    auto eqiType = allEquipments.at(it->id).type;
-    if (eqiType != EqiType::single_use) {                               // ²»ÊÇÒ»´ÎĞÔÎïÆ·
-        auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // »ñÈ¡Íæ¼ÒÖ®Ç°×°±¸µÄ×°±¸
-
-        // °ÑĞÂ×°±¸×°±¸ÉÏÈ¥
-        if (!PLAYER.set_equipments_item(eqiType, *it)) { 
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸Ê±·¢Éú´íÎó: ĞŞ¸ÄÍæ¼Ò×°±¸Ê±·¢Éú´íÎó!");
-            return;
-        }
-
-        // Èç¹ûÍæ¼ÒÖ®Ç°µÄ×°±¸²»Îª¿Õ, ¾Í·Å»Ø±³°üÖĞ
-        if (prevEquipItem.id != -1) {
-            if (!PLAYER.add_inventory_item(prevEquipItem)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸Ê±·¢Éú´íÎó: °ÑÖ®Ç°µÄ×°±¸·Å»Ø±³°üÊ±·¢Éú´íÎó!");
-                return;
-            }
-        }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦×°±¸" + eqiType_to_str(eqiType) + ": " + allEquipments.at(it->id).name + "+" +
-            std::to_string(it->level) + ", Ä¥Ëğ" + std::to_string(it->wear) + "/" + std::to_string(allEquipments.at(it->id).wear));
-    }
-    else {                                                              // ÊÇÒ»´ÎĞÔÎïÆ·
-        // °ÑÎïÆ·Ìí¼Óµ½Ò»´ÎĞÔÁĞ±í
-        if (!PLAYER.add_equipItems_item(*it)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸Ê±·¢Éú´íÎó: ĞŞ¸ÄÍæ¼Ò×°±¸Ê±·¢Éú´íÎó!");
-            return;
-        }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦×°±¸Ò»´ÎĞÔÎïÆ·: " + allEquipments.at(it->id).name);
-    }
 }
 
-// °ÑÖ¸¶¨Íæ¼ÒµÄÖ¸¶¨ÀàĞÍµÄ×°±¸Ğ¶ÏÂ²¢·Å»Ø°üÀï.
-// Èç¹ûĞ¶ÏÂÁË×°±¸, Ôò·µ»Ø¶ÔÓ¦µÄÃû³Æ; ·ñÔò·µ»Ø¿Õ×Ö·û´®
-// ×¢Òâ, ¸Ãº¯Êı²»ÄÜ´¦ÀíĞ¶ÏÂÒ»´ÎĞÔÎïÆ·
-std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
-    auto &p = allPlayers.at(qq);
-    inventoryData eqi = p.get_equipments().at(eqiType);
+// æŸ¥çœ‹å±æ€§
+void viewPropertiesCallback(const cq::MessageEvent &ev) {
 
-    if (eqi.id == -1)
-        return "";
-    else {
-        p.resetCache();
-        if (!p.set_equipments_item(eqiType, { -1, -1, -1 })) {
-            throw std::exception("ÉèÖÃÍæ¼Ò×°±¸Ê±Ê§°Ü!");
-        }
-        if (!p.add_inventory_item(eqi)) {
-            throw std::exception("ÎªÍæ¼ÒÌí¼Ó×°±¸µ½±³°üÊ±Ê§°Ü!");
-        }
-
-        return allEquipments.at(eqi.id).name + "+" + std::to_string(eqi.level);
-    }
 }
 
-// ÀÁÈËºê
-// ´¦ÀíĞ¶ÏÂÖ¸¶¨×°±¸
-// Ê×ÏÈ¼ì²éÍæ¼ÒÊÇ·ñÓĞ¶ÔÓ¦ÀàĞÍµÄ×°±¸, È»ºóĞ¶ÏÂ
-// name: »Øµ÷º¯ÊıÃû³Æ, Èç Helmet; type: ×°±¸ÀàĞÍ, Èç armor_helmet
-#define CALLBACK_UNEQUIP(name, type)                                                                \
-    bool preUnequip ##name## Callback(const cq::MessageEvent &ev) {                                 \
-        if (!accountCheck(ev))                                                                      \
-            return false;                                                                           \
-        if (PLAYER.get_equipments().at(EqiType::##type##).id == -1) {                               \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸" + eqiType_to_str(EqiType::##type##) + "Å¶!");  \
-            return false;                                                                           \
-        }                                                                                           \
-        return true;                                                                                \
-    }                                                                                               \
-                                                                                                    \
-    void postUnequip##name##Callback(const cq::MessageEvent &ev) {                                  \
-        try {                                                                                       \
-            PLAYER.resetCache();                                                                    \
-            auto rtn = unequipPlayer(USER_ID, EqiType::##type##);                                   \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒÑĞ¶ÏÂ" + rtn);                           \
-        }                                                                                           \
-        catch (const std::exception &e) {                                                           \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());     \
-        }                                                                                           \
-        catch (...) {                                                                               \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü!");                           \
-        }                                                                                           \
-    }
+// æŸ¥çœ‹è£…å¤‡
+void viewEquipmentsCallback(const cq::MessageEvent &ev) {
 
-CALLBACK_UNEQUIP(Helmet,    armor_helmet);
-CALLBACK_UNEQUIP(Body,      armor_body);
-CALLBACK_UNEQUIP(Leg,       armor_leg);
-CALLBACK_UNEQUIP(Boot,      armor_boot);
-CALLBACK_UNEQUIP(Primary,   weapon_primary);
-CALLBACK_UNEQUIP(Secondary, weapon_secondary);
-CALLBACK_UNEQUIP(Earrings,  ornament_earrings);
-CALLBACK_UNEQUIP(Rings,     ornament_rings);
-CALLBACK_UNEQUIP(Necklace,  ornament_necklace);
-CALLBACK_UNEQUIP(Jewelry,   ornament_jewelry);
-
-// ÀÁÈËºê
-// Éú³ÉĞ¶ÏÂ×°±¸µÄ×Ö·û´®
-#define UNEQUIP(type)                                       \
-    rtn = unequipPlayer(USER_ID, EqiType::##type##);        \
-    if (!rtn.empty())                                       \
-        msg += rtn + ", ";
-
-// Ğ¶ÏÂ»¤¼×Ç°¼ì²é
-bool preUnequipArmorCallback(const cq::MessageEvent & ev) {
-    return accountCheck(ev);
 }
 
-// Ğ¶ÏÂ»¤¼×
-void postUnequipArmorCallback(const cq::MessageEvent &ev) {
-    try {
-        PLAYER.resetCache();                    // ÖØËãÍæ¼ÒÊôĞÔ
+// è£…å¤‡
+void equipCallback(const cq::MessageEvent &ev, const std::string &arg) {
 
-        std::string msg = "";
-        auto UNEQUIP(armor_body);
-        UNEQUIP(armor_boot);
-        UNEQUIP(armor_helmet);
-        UNEQUIP(armor_leg);
-
-        if (msg.empty()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸ÈÎºÎ»¤¼×");
-        }
-        else {
-            msg.pop_back();                     // È¥µô½áÎ²µÄ ", "
-            msg.pop_back();
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒÑĞ¶ÏÂ" + msg);
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü!");
-    }
 }
 
-// Ğ¶ÏÂÎäÆ÷Ç°¼ì²é
-bool preUnequipWeaponCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
+// å¸ä¸‹å¤´ç›”
+void unequipHelmetCallback(const cq::MessageEvent &ev) {
+
 }
 
-// Ğ¶ÏÂÎäÆ÷
-void postUnequipWeaponCallback(const cq::MessageEvent &ev) {
-    try {
-        PLAYER.resetCache();                    // ÖØËãÍæ¼ÒÊôĞÔ
+// å¸ä¸‹æŠ¤ç”²
+void unequipBodyCallback(const cq::MessageEvent &ev) {
 
-        std::string msg = "";
-        auto UNEQUIP(weapon_primary);
-        UNEQUIP(weapon_secondary);
-
-        if (msg.empty()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸ÈÎºÎÎäÆ÷");
-        }
-        else {
-            msg.pop_back();                     // È¥µô½áÎ²µÄ ", "
-            msg.pop_back();
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒÑĞ¶ÏÂ" + msg);
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü!");
-    }
 }
 
-// Ğ¶ÏÂÊÎÆ·Ç°¼ì²é
-bool preUnequipOrnamentCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
+// å¸ä¸‹æŠ¤è…¿
+void unequipLegCallback(const cq::MessageEvent &ev) {
+
 }
 
-// Ğ¶ÏÂÊÎÆ·
-void postUnequipOrnamentCallback(const cq::MessageEvent &ev) {
-    try {
-        PLAYER.resetCache();                    // ÖØËãÍæ¼ÒÊôĞÔ
+// å¸ä¸‹é´å­
+void unequipBootCallback(const cq::MessageEvent &ev) {
 
-        std::string msg = "";
-        auto UNEQUIP(ornament_earrings);
-        UNEQUIP(ornament_jewelry);
-        UNEQUIP(ornament_necklace);
-        UNEQUIP(ornament_rings);
-
-        if (msg.empty()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸ÈÎºÎÊÎÆ·");
-        }
-        else {
-            msg.pop_back();                     // È¥µô½áÎ²µÄ ", "
-            msg.pop_back();
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒÑĞ¶ÏÂ" + msg);
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü!");
-    }
 }
 
-// Ğ¶ÏÂËùÓĞ×°±¸Ç°¼ì²é
-bool preUnequipAllCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
+// å¸ä¸‹æ‰€æœ‰æŠ¤ç”²
+void unequipArmorCallback(const cq::MessageEvent &ev) {
+
 }
 
-// Ğ¶ÏÂËùÓĞ×°±¸
-void postUnequipAllCallback(const cq::MessageEvent &ev) {
-    try {
-        PLAYER.resetCache();                    // ÖØËãÍæ¼ÒÊôĞÔ
+// å¸ä¸‹ä¸»æ­¦å™¨
+void unequipPrimaryCallback(const cq::MessageEvent &ev) {
 
-        std::string msg = "";
-        auto UNEQUIP(armor_body);
-        UNEQUIP(armor_boot);
-        UNEQUIP(armor_helmet);
-        UNEQUIP(armor_leg);
-        UNEQUIP(weapon_primary);
-        UNEQUIP(weapon_secondary);
-        UNEQUIP(ornament_earrings);
-        UNEQUIP(ornament_jewelry);
-        UNEQUIP(ornament_necklace);
-        UNEQUIP(ornament_rings);
-
-        auto items = PLAYER.get_equipItems();
-        if (!PLAYER.clear_equipItems()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü: Çå¿ÕÒ»´ÎĞÔ×°±¸Ê±·¢Éú´íÎó!");
-            return;
-        }
-        for (const auto &item : items) {
-            if (!PLAYER.add_inventory_item(item)) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü: °ÑÒ»´ÎĞÔ×°±¸Ìí¼Óµ½±³°üÊ±·¢Éú´íÎó!");
-                return;
-            }
-            msg += allEquipments.at(item.id).name + ", ";
-        }
-
-        if (msg.empty()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸ÈÎºÎ×°±¸");
-        }
-        else {
-            msg.pop_back();                     // È¥µô½áÎ²µÄ ", "
-            msg.pop_back();
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÒÑĞ¶ÏÂ" + msg);
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂ×°±¸Ê§°Ü!");
-    }
 }
 
-// Ğ¶ÏÂÖ¸¶¨ÎïÆ·Ç°¼ì²é
-bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg, LL &unequipItem) {
-    if (!accountCheck(ev))
-        return false;
-    
-    try {
-        auto tmp = str_to_ll(arg);                                              // ×Ö·û´®×ª³ÉÕûÊı
-        if (tmp < 1 || tmp > PLAYER.get_equipItems_size()) {                    // ¼ì²éĞòºÅÊÇ·ñ³¬³ö×°±¸·¶Î§
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ã»ÓĞÕÒµ½ĞòºÅÎª\"" + std::to_string(tmp) + "\"µÄÎïÆ·!");
-            return false;
-        }
-        unequipItem = tmp - 1;                                                  // ×¢ÒâÄÚ²¿ÁĞ±íÒÔ 0 Îª¿ªÍ·
-        return true;
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó: " + e.what() + ", Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó! Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
+// å¸ä¸‹å‰¯æ­¦å™¨
+void unequipSecondaryCallback(const cq::MessageEvent &ev) {
+
 }
 
-// Ğ¶ÏÂÖ¸¶¨ÎïÆ·
-void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem) {
-    try {
-        PLAYER.resetCache();                    // ÖØËãÍæ¼ÒÊôĞÔ
+// å¸ä¸‹æ‰€æœ‰æ­¦å™¨
+void unequipWeaponCallback(const cq::MessageEvent &ev) {
 
-        // ÏÈ°ÑÒªĞ¶ÏÂµÄ×°±¸¼ÇÂ¼ÏÂÀ´, ·½±ãÖ®ºóÌí¼Óµ½±³°ü
-        auto items = PLAYER.get_equipItems();
-        auto it = items.begin();
-        std::advance(it, unequipItem);
-
-        if (!PLAYER.remove_at_equipItems(unequipItem)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü: ÒÆ³ı×°±¸Ê±·¢Éú´íÎó!");
-            return;
-        }
-        if (!PLAYER.add_inventory_item(*it)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü: °Ñ×°±¸Ìí¼Óµ½±³°üÊ±·¢Éú´íÎó!");
-            return;
-        }
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦Ğ¶ÏÂÒ»´ÎĞÔÎïÆ·: " + allEquipments.at(it->id).name);
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ğ¶ÏÂÎïÆ·Ê§°Ü!");
-    }
 }
 
-// Ç¿»¯×°±¸Ö®Ç°¼ì²é
-bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg, LL &upgradeTimes, LL &coinsNeeded) {
-    if (!accountCheck(ev))
-        return false;
+// å¸ä¸‹è€³ç¯
+void unequipEarringsCallback(const cq::MessageEvent &ev) {
 
-    // ¼ì²éÊÇ·ñÓĞ×°±¸¶ÔÓ¦ÀàĞÍµÄ×°±¸
-    if (PLAYER.get_equipments().at(eqiType).id == -1) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞ×°±¸" + eqiType_to_str(eqiType) + "Å¶!");
-        return false;
-    }
-
-    // ´Ó×Ö·û´®»ñÈ¡Éı¼¶´ÎÊı
-    try {
-        upgradeTimes = str_to_ll(arg);
-        if (upgradeTimes < 1) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÎŞĞ§µÄÉı¼¶´ÎÊı");
-            return false;
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó: " + e.what() + ", Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó! Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
-    if (upgradeTimes > 20) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "×î¶àÁ¬ĞøÉı¼¶20´Î!");
-        return false;
-    }
-
-    // ¼ÆËãÉı¼¶ËùĞèÓ²±Ò
-    double currEqiLevel = static_cast<double>(PLAYER.get_equipments().at(eqiType).level);
-    if (upgradeTimes == 1) {
-        // ×°±¸ÉıÒ»¼¶¼Û¸ñ = 210 * 1.61 ^ µ±Ç°×°±¸µÈ¼¶
-        coinsNeeded = static_cast<LL>(210.0 * pow(1.61, currEqiLevel));
-        if (PLAYER.get_coins() < coinsNeeded) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "²»¹»Ó²±ÒÅ¶! »¹ĞèÒª" + std::to_string(coinsNeeded - PLAYER.get_coins()) + "Ó²±Ò");
-            return false;
-        }
-    }
-    else {
-        //   ×°±¸Éı n ¼¶¼Û¸ñ
-        // = sum(210 * 1.61 ^ x, x, µ±Ç°µÈ¼¶, µ±Ç°µÈ¼¶ + n - 1)
-        // = 21000 * (1.61 ^ (µ±Ç°µÈ¼¶ + n) - 1.61 ^ µ±Ç°µÈ¼¶) / 61
-        // ¡Ö -344.262295082 * exp(0.476234178996 * µ±Ç°µÈ¼¶) + 344.262295082 * exp(0.476234178996 * (µ±Ç°µÈ¼¶ + n))
-        coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
-        LL currCoins = PLAYER.get_coins();
-        if (currCoins < coinsNeeded) {
-            // Èç¹û²»¹»Ó²±Ò, Ôò¼ÆËãÓÃ»§¿ÉÒÔÉı¼¶¶àÉÙ¼¶, ¼´¶ÔÏÂÁĞ·½³ÌÖĞµÄ n Çó½â:
-            // 21000 * (1.61 ^ (µ±Ç°µÈ¼¶ + n) - 1.61 ^ µ±Ç°µÈ¼¶) / 61 = µ±Ç°Ó²±Ò
-            // ½âµÃ:
-            // n = (µ±Ç°µÈ¼¶ * ln(7) - 2 * µ±Ç°µÈ¼¶ * ln(10) + µ±Ç°µÈ¼¶ * ln(23) + ln(3) + ln(7) + 3 * ln(10) - ln(61 * µ±Ç°Ó²±Ò + 21000 * (161 / 100) ^ µ±Ç°µÈ¼¶)) / (-ln(7) + 2 * ln(10) - ln(23))
-            //   ¡Ö -2.09980728831 * (-ln(21000.0 * exp(0.476234178996 * µ±Ç°µÈ¼¶) + 61.0 * µ±Ç°Ó²±Ò) + 0.476234178996 * µ±Ç°µÈ¼¶ + 9.95227771671)
-            // ÔÙÈ¡ floor
-            upgradeTimes = static_cast<LL>(floor(
-                -2.09980728831 * (-log(21000.0 * exp(0.476234178996 * currEqiLevel) + 61.0 * currCoins) + 0.476234178996 * currEqiLevel + 9.95227771671)
-            ));
-
-            if (upgradeTimes < 1) {
-                // Íæ¼ÒµÄÇ®Ò»´Î¶¼Éı¼¶²»ÁË
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "²»¹»Ó²±ÒÅ¶! »¹ĞèÒª" + std::to_string(coinsNeeded - currCoins) + "Ó²±Ò");
-            }
-            else {
-                // ÖØËãĞèÒªÓ²±Ò
-                coinsNeeded = static_cast<LL>(-344.262295082 * exp(0.476234178996 * currEqiLevel) + 344.262295082 * exp(0.476234178996 * (currEqiLevel + upgradeTimes)));
-
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "²»¹»Ó²±ÒÅ¶! µ±Ç°Ó²±ÒÖ»¹»Éı¼¶" + std::to_string(upgradeTimes) + "´Î, Ç¿»¯ÍêÖ®ºó»¹Ê£" + std::to_string(currCoins - coinsNeeded) + "Ó²±Ò");
-            }
-            return false;
-        }
-        else {
-            // ¹»Ç®½øĞĞ¶à´ÎÉı¼¶, ´´½¨Ò»¸öÈ·ÈÏ²Ù×÷
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Äã½«ÒªÁ¬ĞøÉı¼¶" + eqiType_to_str(eqiType) + std::to_string(upgradeTimes) + "´Î, "
-                "Õâ»á»¨·Ñ" + std::to_string(coinsNeeded) + "Ó²±Ò¡£·¢ËÍ\"bg È·ÈÏ\"¼ÌĞø, Èô20ÃëºóÃ»ÓĞÈ·ÈÏ, Ôò²Ù×÷È¡Ïû¡£");
-
-            if (PLAYER.confirmInProgress) {
-                // Èç¹ûÍæ¼Òµ±Ç°ÓĞ½øĞĞÖĞµÄÈ·ÈÏ, ÄÇÃ´È¡ÏûµôÕıÔÚ½øĞĞµÄÈ·ÈÏ, ²¢µÈ´ıÄÇ¸öÈ·ÈÏÍË³ö
-                PLAYER.abortUpgrade();
-                PLAYER.waitConfirmComplete();
-            }
-            bool confirm = PLAYER.waitUpgradeConfirm();     // µÈ´ıÍæ¼Ò½øĞĞÈ·ÈÏ
-            if (!confirm) {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "È¡ÏûÁËÁ¬ĞøÉı¼¶" + eqiType_to_str(eqiType) + std::to_string(upgradeTimes) + "´Î");
-            }
-            return confirm;
-        }
-    }
-    return true;
 }
 
-// Ç¿»¯×°±¸
-void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded) {
-    try {
-        // ¿ÛÓ²±Ò
-        if (!PLAYER.inc_coins(-coinsNeeded)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ç¿»¯ÆÚ¼ä³öÏÖ´íÎó: ¿Û³ıÍæ¼ÒÓ²±ÒµÄÊ±ºò·¢Éú´íÎó!");
-            return;
-        }
+// å¸ä¸‹æˆ’æŒ‡
+void unequipRingsCallback(const cq::MessageEvent &ev) {
 
-        // Éı¼¶
-        auto currItem = PLAYER.get_equipments_item(eqiType);
-        currItem.level += upgradeTimes;
-        if (!PLAYER.set_equipments_item(eqiType, currItem)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ç¿»¯ÆÚ¼ä³öÏÖ´íÎó: ÉèÖÃÍæ¼Ò×°±¸Ê±·¢Éú´íÎó!");
-            return;
-        }
-
-        // ·¢ËÍÈ·ÈÏÏûÏ¢
-        cq::send_group_message(GROUP_ID, (std::stringstream() <<
-            "³É¹¦Ç¿»¯" << eqiType_to_str(eqiType) << upgradeTimes << "´Î: " << allEquipments.at(currItem.id).name << "+" <<
-            currItem.level << ", »¨·Ñ" << coinsNeeded << "Ó²±Ò, »¹Ê£" << PLAYER.get_coins() << "Ó²±Ò"
-        ).str());
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ç¿»¯ÆÚ¼ä³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ç¿»¯ÆÚ¼ä³öÏÖ´íÎó!");
-    }
 }
 
-// È·ÈÏ¶à´ÎÇ¿»¯Ç°¼ì²é
-bool preConfirmUpgradeCallback(const cq::MessageEvent &ev) {
-    if (!accountCheck(ev))
-        return false;
+// å¸ä¸‹é¡¹é“¾
+void unequipNecklaceCallback(const cq::MessageEvent &ev) {
 
-    if (!PLAYER.confirmInProgress) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "Ä¿Ç°Ã»ÓĞĞèÒªÈ·ÈÏµÄÁ¬ĞøÇ¿»¯²Ù×÷");
-        return false;
-    }
-    return true;
 }
 
-// È·ÈÏ¶à´ÎÇ¿»¯
-void postConfirmUpgradeCallback(const cq::MessageEvent &ev) {
-    PLAYER.confirmUpgrade();
+// å¸ä¸‹ç å®
+void unequipJewelryCallback(const cq::MessageEvent &ev) {
+
 }
 
-// ²é¿´½»Ò×³¡Ç°¼ì²é
-bool preViewTradeCallback(const cq::MessageEvent &ev) {
-    return accountCheck(ev);
+// å¸ä¸‹æ‰€æœ‰é¥°å“
+void unequipOrnamentCallback(const cq::MessageEvent &ev) {
+
 }
 
-// ²é¿´½»Ò×³¡
-void postViewTradeCallback(const cq::MessageEvent &ev) {
-    try {
-        cq::send_group_message(GROUP_ID, bg_trade_get_string());
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´½»Ò×³¡³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "²é¿´½»Ò×³¡³öÏÖ´íÎó!");
-    }
+// å¸ä¸‹ä¸€æ¬¡æ€§è£…å¤‡
+void unequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg) {
+
 }
 
-// ¹ºÂò½»Ò×³¡ÏîÄ¿Ç°¼ì²é
-bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &tradeId) {
-    try {
-        if (!accountCheck(ev))
-            return false;
+// å¸ä¸‹æ‰€æœ‰è£…å¤‡
+void unequipAllCallback(const cq::MessageEvent &ev) {
 
-        tradeId = str_to_ll(args[0]);
-
-        // ¼ì²éÖ¸¶¨ ID ÊÇ·ñ´æÔÚ
-        if (allTradeItems.find(tradeId) == allTradeItems.end()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "½»Ò×ID" + std::to_string(tradeId) + "²»ÔÚ½»Ò×³¡ÖĞ");
-            return false;
-        }
-
-        // ¼ì²éÊÇ·ñÓĞÃÜÂë
-        if (allTradeItems.at(tradeId).hasPassword) {
-            if (args.size() == 1) {
-                // ÓĞÃÜÂëµ«ÊÇÍæ¼ÒÃ»ÓĞÌá¹©ÃÜÂë
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "¸Ã½»Ò×ĞèÒªÌá¹©ÃÜÂëÅ¶!");
-                return false;
-            }
-            else {
-                // ¼ì²éÃÜÂëÊÇ·ñÆ¥Åä
-                if (args[1] != allTradeItems.at(tradeId).password) {
-                    cq::send_group_message(GROUP_ID, bg_at(ev) + "½»Ò×ÃÜÂë²»ÕıÈ·!");
-                    return false;
-                }
-            }
-        }
-        else {
-            if (args.size() == 2) {
-                // Ã»ÓĞÃÜÂëµ«ÊÇÍæ¼ÒÌá¹©ÁËÃÜÂë
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "¸Ã½»Ò×²»ĞèÒªÌá¹©ÃÜÂë! Ö±½Ó·¢ËÍ\"bg ¹ºÂò \"" + std::to_string(tradeId) + "¼´¿É¹ºÂò¡£");
-                return false;
-            }
-        }
-
-        // ¼ì²éÊÇ·ñ¹»Ç®Âò
-        if (PLAYER.get_coins() < allTradeItems.at(tradeId).price) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "»¹²»¹»Ç®ÂòÅ¶! »¹²î" +
-                std::to_string(allTradeItems.at(tradeId).price - PLAYER.get_coins()) + "Ó²±Ò");
-            return false;
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ºÂòÇ°¼ì²éÊ±³öÏÖ´íÎó! ÇëÈ·ÈÏÊäÈëµÄÊıÖµÕıÈ·? ´íÎóÔ­Òò: " + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ºÂòÇ°¼ì²éÊ±³öÏÖ´íÎó! ÇëÈ·ÈÏÊäÈëµÄÊıÖµÕıÈ·?");
-        return false;
-    }
-    return true;
 }
 
-// ¹ºÂò½»Ò×³¡ÏîÄ¿
-void postBuyTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
-    try {
-        tradeData item = allTradeItems.at(tradeId);
+// å¼ºåŒ–è£…å¤‡
+void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg) {
 
-        // ½»Ò×³¡ÒÆ³ı¶ÔÓ¦ÌõÄ¿
-        if (!bg_trade_remove_item(tradeId)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "´Ó½»Ò×³¡ÒÆ³ı¶ÔÓ¦ÎïÆ·Ê±³öÏÖ´íÎó!");
-            return;
-        }
-
-        // Âò·½¿ÛÇ®
-        if (!PLAYER.inc_coins(-item.price)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "¿Û³ıÍæ¼ÒÓ²±ÒÊ±³öÏÖ´íÎó!");
-            return;
-        }
-
-        // ±³°üÌí¼ÓÏàÓ¦ÎïÆ·
-        if (!PLAYER.add_inventory_item(item.item)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÍùÍæ¼Ò±³°üÌí¼Ó×°±¸Ê±³öÏÖ´íÎó!");
-            return;
-        }
-
-        // Âô·½¼ÓÇ®
-        if (!allPlayers.at(item.sellerId).inc_coins(item.price)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÎªÂô·½¼ÓÇ®µÄÊ±ºò³öÏÖ´íÎó!");
-            return;
-        }
-
-        // °´ÕÕ×°±¸ÀàĞÍ·¢ËÍ¹ºÂò³É¹¦ÏûÏ¢
-        if (allEquipments.at(item.item.id).type == EqiType::single_use) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦¹ºÂòÒ»´ÎĞÔÎïÆ·: " + allEquipments.at(item.item.id).name +
-                ", »¨·Ñ" + std::to_string(item.price) + "Ó²±Ò");
-        }
-        else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦¹ºÂò×°±¸: " + allEquipments.at(item.item.id).name +
-                "+" + std::to_string(item.item.level) + ", Ä¥Ëğ¶È" + std::to_string(item.item.wear) + "/" +
-                std::to_string(allEquipments.at(item.item.id).wear) + ", »¨·Ñ" + std::to_string(item.price) + "Ó²±Ò");
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ºÂòÊ±³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ºÂòÊ±³öÏÖ´íÎó!");
-    }
 }
 
-// ÉÏ¼Ü½»Ò×³¡ÏîÄ¿Ç°¼ì²é
-bool preSellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &invId, bool &hasPassword, LL &price) {
-    try {
-        if (!accountCheck(ev))
-            return false;
+// ç¡®è®¤å¼ºåŒ–
+void confirmUpgradeCallback(const cq::MessageEvent &ev) {
 
-        invId = str_to_ll(args[0]) - 1;
-        price = str_to_ll(args[1]);
-
-        // ¼ì²éµÚ¶ş¸ö²ÎÊıÊÇ·ñÕıÈ·
-        if (args.size() == 3) {
-            if (args[2] == "Ë½") {
-                hasPassword = true;
-            }
-            else {
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½²»¶ÔÅ¶! ÉÏ¼ÜÖ¸Áî¸ñÊ½Îª: \"bg ÉÏ¼Ü ±³°üĞòºÅ ¼Û¸ñ\"¡£"
-                    "ÈôÒªÖ¸¶¨ÎªÓĞÃÜÂëµÄ½»Ò×, ÔòÔÚÃüÁî×îºó¼Ó¸ö¿Õ¸ñºÍ\"Ë½\"×Ö: \"bg ÉÏ¼Ü ±³°üĞòºÅ Ë½\"");
-                return false;
-            }
-        }
-        else
-            hasPassword = false;
-
-        // ¼ì²é±³°üĞòºÅÊÇ·ñ³¬³ö·¶Î§
-        if (invId >= PLAYER.get_inventory_size() || invId < 0) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ĞòºÅ\"" + str_trim(args[0]) + "\"³¬³öÁË±³°ü·¶Î§!");
-            return false;
-        }
-
-        // ¼ì²é¼Û¸ñÊÇ·ñºÏÀí
-        // Ä¬ÈÏ¼Û¸ñ * 0.25 <= ¼Û¸ñ <= Ä¬ÈÏ¼Û¸ñ * 10
-        auto playerInv = PLAYER.get_inventory();
-        auto it = playerInv.begin();
-        std::advance(it, invId);                                                                                    // »ñÈ¡ ID ¶ÔÓ¦µÄ±³°üÎïÆ·
-        LL defPrice = static_cast<LL>(allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6);    // »ñÈ¡¸ÃÎïÆ·µÄÄ¬ÈÏ³öÊÛ¼Û¸ñ
-        if (defPrice / 4 > price || price > defPrice * 10) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼Ü¼Û¸ñ¹ı¸ß»òÕß¹ıµÍ: ¼Û¸ñ²»¿ÉµÍÓÚ³öÊÛ¼Û¸ñµÄ25% (" +
-                std::to_string(defPrice / 4) + "), Ò²²»¿É¸ßÓÚ³öÊÛ¼Û¸ñµÄÊ®±¶ (" + std::to_string(defPrice * 10) + ")");
-            return false;
-        }
-
-        // ¼ì²éÊÇ·ñ¹»Ç®½»Ë°
-        if (PLAYER.get_coins() < price * 0.05) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "²»¹»Ç®½»5%µÄË°Å¶! »¹ĞèÒª" +
-                std::to_string(static_cast<LL>(price * 0.05 - PLAYER.get_coins())) + "Ó²±Ò");
-            return false;
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÇ°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄÊıÖµÊÇ·ñÓĞĞ§? ´íÎóÔ­Òò: " + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÇ°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄÊıÖµÊÇ·ñÓĞĞ§?");
-        return false;
-    }
-    return true;
 }
 
-// ÉÏ¼Ü½»Ò×³¡ÏîÄ¿
-void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &price) {
-    try {
-        // Èç¹ûÊÇÓĞÃÜÂëµÄ½»Ò×, ÔòËæ»úÉú³ÉÒ»¸öÃÜÂë
-        std::string password = "";
-        if (hasPassword) {
-            password = std::to_string(rndRange(100000, 999999));
-        }
+// æŸ¥çœ‹äº¤æ˜“åœº
+void viewTradeCallback(const cq::MessageEvent &ev) {
 
-        // ´ÓÍæ¼Ò±³°üÒÆ³ıÖ¸¶¨ÏîÄ¿
-        auto playerInv = PLAYER.get_inventory();
-        auto it = playerInv.begin();
-        std::advance(it, invId);                        // »ñÈ¡ ID ¶ÔÓ¦µÄ±³°üÎïÆ·
-        if (!PLAYER.remove_at_inventory(invId)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó: ´ÓÍæ¼Ò±³°üÖĞÒÆ³ıÎïÆ·Ê§°Ü!");
-            return;
-        }
-
-        // ¿Û³ıË°¿î
-        LL tax = static_cast<LL>(price * 0.05);
-        if (tax < 1)
-            tax = 1;
-        if (!PLAYER.inc_coins(-tax)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó: ´ÓÍæ¼Ò±³°üÖĞÒÆ³ıÎïÆ·Ê§°Ü!");
-            return;
-        }
-
-        // »ñÈ¡²¢¸üĞÂ½»Ò×³¡ ID
-        tradeData   item;
-        item.item = *it;
-        item.password = password;
-        item.hasPassword = hasPassword;
-        item.price = price;
-        item.sellerId = USER_ID;
-        item.tradeId = bg_get_tradeId();
-        item.addTime = dateTime().get_timestamp();
-        if (!bg_inc_tradeId()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó: ¸üĞÂ½»Ò×³¡IDÊ§°Ü!");
-            return;
-        }
-
-        // Ìí¼ÓÎïÆ·µ½½»Ò×³¡
-        if (!bg_trade_insert_item(item)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó: °ÑÎïÆ·Ìí¼Óµ½½»Ò×³¡Ê±·¢Éú´íÎó!");
-            return;
-        }
-
-        // ·¢ËÍÏûÏ¢
-        if (hasPassword) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ÉÏ¼Ü, ½»Ò×IDÎª" + std::to_string(item.tradeId) +
-                ", ÊÕÈ¡Ë°¿î" + std::to_string(tax) + "Ó²±Ò¡£½»Ò×ÃÜÂëÒÑ¾­Í¨¹ıË½ÁÄ·¢¸øÄãÀ²");
-            cq::send_private_message(USER_ID, "ÄúµÄIDÎª" + std::to_string(item.tradeId) + "µÄ½»Ò×µÄ¹ºÂòÃÜÂëÎª: " + password);
-        }
-        else
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ÉÏ¼Ü, ½»Ò×IDÎª" + std::to_string(item.tradeId) +
-                ", ÊÕÈ¡Ë°¿î" + std::to_string(tax) + "Ó²±Ò");
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÉÏ¼ÜÊ±³öÏÖ´íÎó!");
-    }
 }
 
-// ÏÂ¼Ü½»Ò×³¡ÏîÄ¿Ç°¼ì²é
-bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId) {
-    if (!accountCheck(ev))
-        return false;
+// è´­ä¹°äº¤æ˜“åœºå•†å“
+void buyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
 
-    try {
-        tradeId = str_to_ll(arg);
-
-        // ¼ì²é½»Ò× ID ÊÇ·ñÔÚ½»Ò×³¡ÖĞ
-        if (allTradeItems.find(tradeId) == allTradeItems.end()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "½»Ò×ID" + str_trim(arg) + "²»ÔÚ½»Ò×³¡ÖĞ!");
-            return false;
-        }
-
-        // ¼ì²éÂô·½ÊÇ·ñÊÇÍæ¼Ò
-        if (allTradeItems.at(tradeId).sellerId != USER_ID) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "¿´Çå³şÅ¶! Õâ¸öÊÇÄãÉÏ¼ÜµÄ×°±¸Âğ?");
-            return false;
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÇ°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄÊıÖµÊÇ·ñÓĞĞ§? ´íÎóÔ­Òò: " + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÇ°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄÊıÖµÊÇ·ñÓĞĞ§?");
-        return false;
-    }
-    return true;
 }
 
-// ÏÂ¼Ü½»Ò×³¡ÏîÄ¿
-void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId) {
-    try {
-        // ´Ó½»Ò×³¡ÒÆ³ı¶ÔÓ¦ÎïÆ·
-        tradeData item = allTradeItems.at(tradeId);
-        if (!bg_trade_remove_item(tradeId)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÊ±³öÏÖ´íÎó: ´Ó½»Ò×³¡ÒÆ³ıÎïÆ·Ê§°Ü!");
-            return;
-        }
+// ä¸Šæ¶äº¤æ˜“åœºå•†å“
+void sellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
 
-        // Ìí¼ÓÎïÆ·µ½Íæ¼Ò±³°ü
-        if (!PLAYER.add_inventory_item(item.item)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÊ±³öÏÖ´íÎó: °ÑÎïÆ··Å»ØÍæ¼Ò±³°üÊ§°Ü!");
-            return;
-        }
-
-        const auto& eqi = allEquipments.at(item.item.id);
-        if (eqi.type == EqiType::single_use) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ÏÂ¼Ü½»Ò×" + std::to_string(tradeId) + ": ÒÑ°Ñ" + eqi.name + "·Å»Ø±³°ü, µ«Ë°¿î²»ÓèÍË»¹Å¶!");
-        }
-        else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ÏÂ¼Ü½»Ò×" + std::to_string(tradeId) + ": ÒÑ°Ñ" + eqi.name +
-                "+" + std::to_string(item.item.level) + "·Å»Ø±³°ü, µ«Ë°¿î²»ÓèÍË»¹Å¶!");
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÊ±³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÏÂ¼ÜÊ±³öÏÖ´íÎó!");
-    }
 }
 
-// ºÏ³É×°±¸Ç°¼ì²é
-bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL, std::greater<LL>> &invList, LL &targetId, LL &coins, LL &level) {
-    if (!accountCheck(ev))
-        return false;
+// ä¸‹æ¶äº¤æ˜“åœºå•†å“
+void recallTradeCallback(const cq::MessageEvent &ev, const std::string &arg) {
 
-    try {
-        targetId = str_to_ll(args[0]);                      // »ñÈ¡Ä¿±ê×°±¸ ID
-
-        // ¼ì²éÄ¿±ê×°±¸ÊÇ·ñ´æÔÚ
-        if (allEquipments.find(targetId) == allEquipments.end()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ö¸¶¨µÄÄ¿±ê×°±¸ID\"" + args[0] + "\"²»´æÔÚ!");
-            return false;
-        }
-
-        // Èç¹ûÖ»Ö¸¶¨ÁËÄ¿±ê×°±¸, ÔòÁĞ³ö¿ÉÓÃµÄºÏ³É
-        if (args.size() == 1) {
-            const auto result = allSynthesises.equal_range(targetId);       // »ñÈ¡¿ÉĞĞµÄºÏ³É·½°¸
-            if (std::distance(result.first, result.second) == 0) {          // Ã»ÓĞºÏ³É·½°¸
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "×°±¸\"" + allEquipments.at(targetId).name + "\"²»¿ÉºÏ³É!");
-                return false;
-            }
-            std::string msg = "×°±¸\"" + allEquipments.at(targetId).name + "\"µÄºÏ³É·½Ê½:\n";
-            for (auto it = result.first; it != result.second; ++it) {       // Éú³ÉËùÓĞºÏ³É·½°¸µÄ×Ö´®
-                for (const auto &item : it->second.requirements) {
-                    msg += allEquipments.at(item).name + "+";
-                }
-                msg += "$" + std::to_string(it->second.coins) + "\n";
-            }
-            msg.pop_back();                                                 // È¥µôÄ©Î²µÄ '\n'
-            cq::send_group_message(GROUP_ID, msg);
-            return false;
-        }
-
-        auto inventory = PLAYER.get_inventory();                            // »ñÈ¡Íæ¼Ò±³°ü
-        for (size_t i = 1; i < args.size(); ++i) {                          // »ñÈ¡ËùÓĞ±³°üĞòºÅ
-            LL tmp = str_to_ll(args[i]) - 1;
-            if (invList.find(tmp) != invList.end()) {                       // ²»ÔÊĞí±³°üĞòºÅÖØ¸´
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "Ö¸¶¨µÄ±³°üĞòºÅ\"" + args[i] + "\"ÖØ¸´À²!");
-                return false;
-            }
-            if (tmp < 0 || tmp >= inventory.size()) {                       // ²»ÔÊĞíĞòºÅ³¬³ö±³°ü·¶Î§
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "Ö¸¶¨µÄ±³°üĞòºÅ\"" + args[i] + "\"³¬³öÁË±³°ü·¶Î§!");
-                return false;
-            }
-            invList.insert(tmp);
-        }
-
-        std::unordered_multiset<LL> materials;                              // ËùÓĞÌá¹©µÄ²ÄÁÏ
-        auto invIter = inventory.begin();
-        LL prevInvId = 0;
-        for (auto invIdIter = invList.begin(); invIdIter != invList.end(); ++invIdIter) {
-            std::advance(invIter, *invIdIter - prevInvId);
-            materials.insert(invIter->id);
-            if (invIter->level > level)                                     // »ñÈ¡²ÄÁÏµÄ×î¸ßµÈ¼¶
-                level = invIter->level;
-            prevInvId = *invIdIter;
-        }
-
-        if (!bg_match_synthesis(targetId, materials, coins)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "Ã»ÓĞÕÒµ½Õâ¸öºÏ³ÉÅ¶! Äã¿ÉÒÔ·¢ËÍ\"bg ºÏ³É \"" + std::to_string(targetId) + "À´»ñÈ¡ºÏ³É·½Ê½¡£");
-            return false;
-        }
-
-        if (PLAYER.get_coins() < coins) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "»¹²»¹»Ç®½øĞĞÕâ¸öºÏ³ÉÅ¶! »¹ĞèÒª" + std::to_string(coins - PLAYER.get_coins()) + "Ó²±Ò¡£");
-            return false;
-        }
-        return true;
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("ºÏ³ÉÇ°¼ì²é·¢Éú´íÎó, Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö: ") + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÊäÈë¸ñÊ½´íÎó! Çë¼ì²éÊäÈëµÄ¶¼ÊÇÓĞĞ§µÄÊı×Ö?");
-        return false;
-    }
 }
 
-// ºÏ³É×°±¸
-void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level) {
-    try {
-        // ¿Û³ıÓ²±Ò
-        if (!PLAYER.inc_coins(-coins)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ºÏ³É×°±¸·¢Éú´íÎó: ¿Û³ıÍæ¼ÒÓ²±ÒÊ§°Ü!");
-            return;
-        }
+// åˆæˆè£…å¤‡
+void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
 
-        // ´ÓÍæ¼Ò±³°üÒÆ³ı×°±¸
-        std::vector<LL> invId;
-        for (const auto &inv : invList)
-            invId.push_back(inv);
-        if (!PLAYER.remove_at_inventory(invId)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ºÏ³É×°±¸·¢Éú´íÎó: ´ÓÍæ¼Ò±³°üÒÆ³ı×°±¸Ê§°Ü!");
-            return;
-        }
-
-        // Ìí¼ÓºÏ³ÉºóµÄ×°±¸µ½Íæ¼Ò±³°ü
-        inventoryData newItem;
-        newItem.id = targetId;
-        newItem.level = level;
-        newItem.wear = allEquipments.at(targetId).wear;
-        if (!PLAYER.add_inventory_item(newItem)) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ºÏ³É×°±¸·¢Éú´íÎó: ÍùÍæ¼Ò±³°üÌí¼Ó" +
-                allEquipments.at(targetId).name + "+" + std::to_string(level) + "Ê§°Ü!");
-            return;
-        }
-
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ºÏ³É" +
-            allEquipments.at(targetId).name + "+" + std::to_string(level) + ", »¨·Ñ" + std::to_string(coins) + "Ó²±Ò");
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + std::string("ºÏ³É×°±¸·¢Éú´íÎó: ") + e.what());
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ºÏ³É×°±¸·¢Éú´íÎó!");
-    }
 }
 
-// ÌôÕ½¸±±¾Ç°¼ì²é
-bool preFightCallback(const cq::MessageEvent &ev, const std::string &arg, LL &dungeonLevel) {
-    if (!accountCheck(ev))
-        return false;
+// æŒ‘æˆ˜å‰¯æœ¬
+void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
 
-    try {
-        dungeonLevel = str_to_ll(arg);
-
-        // ¼ì²éµÈ¼¶ÊÇ·ñÓĞĞ§
-        if (allDungeons.find(dungeonLevel) == allDungeons.end()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÎŞĞ§µÄ¸±±¾ºÅ!");
-            return false;
-        }
-
-        // ¼ì²éÍæ¼ÒÊÇ·ñ»¹ÓĞÌåÁ¦
-        if (PLAYER.get_energy() < 10) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÄãµÄÌåÁ¦ÒÑ¾­ºÄ¾¡ÁË!");
-            return false;
-        }
-
-        // ¼ì²éÀäÈ´Ê±¼ä
-        const auto timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
-        if (timeDiff < PLAYER.get_cd()) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "ÌôÕ½ÀäÈ´»¹Ã»½áÊø, »¹Ê£" + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60));
-            return false;
-        }
-    }
-    catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÌôÕ½Ç°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄ¸±±¾ºÅÊÇ·ñÓĞĞ§? ´íÎóÔ­Òò: " + e.what());
-        return false;
-    }
-    catch (...) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "ÌôÕ½Ç°¼ì²éÊ±³öÏÖ´íÎó! Çë¼ì²éÊäÈëµÄ¸±±¾ºÅÊÇ·ñÓĞĞ§?");
-        return false;
-    }
-    return true;
 }
 
-// ÌôÕ½¸±±¾
-void postFightCallback(const cq::MessageEvent &ev, const LL &dungeonLevel) {
-    cq::send_group_message(GROUP_ID, bg_at(ev) + std::to_string(dungeonLevel));
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ç¡¬å¸
+ADMIN(AddCoins) {
+
 }
 
-// =====================================================================================================
-// ¹ÜÀíÖ¸Áî
-// =====================================================================================================
+// ç®¡ç†å‘½ä»¤: æ·»åŠ è‹±é›„å¸
+ADMIN(AddHeroCoin) {
 
-// ÀÁÈËºê
-// ÎªÖ¸¶¨Íæ¼ÒÌí¼ÓÖ¸¶¨ÊôĞÔµÄÊıÖµ
-#define ADMIN_INC_FIELD(funcName, fieldStr, field)                                              \
-    void adminAdd##funcName##Callback(const cq::MessageEvent &ev, const std::string &arg) {     \
-        try {                                                                                   \
-            auto params = str_split(str_trim(arg), ' ');                                        \
-            if (params.size() != 2) {                                                           \
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "ÃüÁî¸ñÊ½: bg /add" #field " qq/all " fieldStr "Êı");   \
-                return;                                                                         \
-            }                                                                                   \
-                                                                                                \
-            auto val = str_to_ll(params[1]);                                                    \
-            if (params[0] != "all") {                                                           \
-                /* Îªµ¥Ò»Íæ¼ÒÌí¼Ó */                                                            \
-                auto targetId = qq_parse(params[0]);                                            \
-                if (!allPlayers.at(targetId).inc_##field##(val)) {                              \
-                    cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ÜÀíÖ¸Áî: Ìí¼Ó" fieldStr "³öÏÖ´íÎó: ÉèÖÃÍæ¼Ò" fieldStr "ÊıÊ±·¢Éú´íÎó");   \
-                    return;                                                                     \
-                }                                                                               \
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦ÎªÍæ¼Ò" + std::to_string(targetId) + "Ìí¼Ó" + std::to_string(val) + fieldStr);   \
-            }                                                                                   \
-            else {                                                                              \
-                /* ÎªËùÓĞÍæ¼ÒÌí¼Ó */                                                            \
-                if (!bg_all_player_inc_##field##(val)) {                                        \
-                    cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ÜÀíÖ¸Áî: Ìí¼Ó" fieldStr "³öÏÖ´íÎó: ÉèÖÃËùÓĞÍæ¼Ò" fieldStr "ÊıÊ±·¢Éú´íÎó"); \
-                    return;                                                                     \
-                }                                                                               \
-                cq::send_group_message(GROUP_ID, bg_at(ev) + "³É¹¦Îª" + std::to_string(allPlayers.size()) + "Î»Íæ¼ÒÌí¼Ó" + std::to_string(val) + fieldStr); \
-            }                                                                                   \
-        }                                                                                       \
-        catch (const std::exception &e) {                                                      \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ÜÀíÖ¸Áî: Ìí¼Ó" fieldStr "³öÏÖ´íÎó! ´íÎóÔ­Òò: " + e.what());   \
-        }                                                                                       \
-        catch (...) {                                                                           \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "¹ÜÀíÖ¸Áî: Ìí¼Ó" fieldStr "³öÏÖ´íÎó!"); \
-        }                                                                                       \
-    }
+}
 
-ADMIN_INC_FIELD(Coins, "Ó²±Ò", coins);
-ADMIN_INC_FIELD(HeroCoin, "Ó¢ĞÛ±Ò", heroCoin);
-ADMIN_INC_FIELD(Level, "µÈ¼¶", level);
-ADMIN_INC_FIELD(Blessing, "×£¸£", blessing);
-ADMIN_INC_FIELD(Energy, "ÌåÁ¦", energy);
-ADMIN_INC_FIELD(Exp, "¾­Ñé", exp);
-ADMIN_INC_FIELD(InvCapacity, "±³°üÈİÁ¿", invCapacity);
-ADMIN_INC_FIELD(Vip, "VIPµÈ¼¶", vip);
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ç©å®¶ç­‰çº§
+ADMIN(AddLevel) {
+
+}
+
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ç©å®¶ç¥ç¦
+ADMIN(AddBlessing) {
+
+}
+
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ä½“åŠ›
+ADMIN(AddEnergy) {
+
+}
+
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ç»éªŒ
+ADMIN(AddExp) {
+
+}
+
+// ç®¡ç†å‘½ä»¤: æ·»åŠ ç¡¬å¸
+ADMIN(AddInvCapacity) {
+
+}
+
+// ç®¡ç†å‘½ä»¤: æ·»åŠ  VIP ç­‰çº§
+ADMIN(AddVip) {
+
+}

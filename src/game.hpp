@@ -1,79 +1,65 @@
 /*
-ÃèÊö: Bingy ÓÎÏ·Ïà¹Øº¯ÊıµÄ½Ó¿Ú
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: game.hpp
+æè¿°: Bingy æ¸¸æˆç›¸å…³å‡½æ•°çš„æ¥å£
+ä½œè€…: å†°æ£
+æ–‡ä»¶: game.hpp
 */
 
 #pragma once
 
 #include <cqcppsdk/cqcppsdk.hpp>
-#include <unordered_set>
 #include "equipment.hpp"
+
+#define DEFAULT_SERVER_URI  "http://127.0.0.1:8000"     // é»˜è®¤æœåŠ¡å™¨åœ°å€
+
+extern std::string serverUri;                           // æœåŠ¡å™¨åœ°å€
+extern std::string appId;                               // åº”ç”¨ ID
+extern std::string appSecret;                           // åº”ç”¨å¯†åŒ™
 
 using LL = long long;
 
-extern std::unordered_set<LL>  blacklist;
-extern std::unordered_set<LL>  allAdmins;
-
+// å–å¾—è‰¾ç‰¹ç©å®¶å­—ç¬¦ä¸²
 std::string bg_at(const cq::MessageEvent &ev);
-bool accountCheck(const cq::MessageEvent &ev);
 
-// ÀÁÈËºê
-// ¶¨Òå pre*Callback ºÍ post*Callback
-#define PRE_POST(name)                                      \
-    bool pre##name##Callback(const cq::MessageEvent &ev);   \
-    void post##name##Callback(const cq::MessageEvent &ev);  \
-
-// ÀÁÈËºê
-// ¶¨Òå¹ÜÀíÃüÁî admin*Callback
+// æ‡’äººå®
+// å®šä¹‰ç®¡ç†å‘½ä»¤ admin*Callback
 #define ADMIN(name)                                         \
-    void admin##name##Callback(const cq::MessageEvent &ev, const std::string &arg);
+    void admin##name##Callback(const cq::MessageEvent &ev, const std::string &arg)
 
-// ÀÁÈËºê
-#define GROUP_ID    ev.target.group_id.value()      // ´Ó ev »ñÈ¡ÈººÅ
-#define USER_ID     ev.target.user_id.value()       // ´Ó ev »ñÈ¡Íæ¼Ò QQ ºÅ
-#define PLAYER      allPlayers.at(USER_ID)          // Ïß³Ì°²È«µØ»ñÈ¡ QQ ºÅ¶ÔÓ¦µÄÍæ¼Ò
+// æ‡’äººå®
+#define GROUP_ID    ev.target.group_id.value()      // ä» ev è·å–ç¾¤å·
+#define USER_ID     ev.target.user_id.value()       // ä» ev è·å–ç©å®¶ QQ å·
 
-PRE_POST(Register);
-PRE_POST(ViewCoins);
-PRE_POST(SignIn);
-PRE_POST(ViewInventory);
-bool prePawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::vector<LL> &rtnItems);
-void postPawnCallback(const cq::MessageEvent &ev, std::vector<LL> &items);
-PRE_POST(ViewProperties);
-PRE_POST(ViewEquipments);
-bool preEquipCallback(const cq::MessageEvent &ev, const std::string &arg, LL &equipItem);
-void postEquipCallback(const cq::MessageEvent &ev, const LL &equipItem);
-PRE_POST(UnequipHelmet);
-PRE_POST(UnequipBody);
-PRE_POST(UnequipLeg);
-PRE_POST(UnequipBoot);
-PRE_POST(UnequipArmor);
-PRE_POST(UnequipPrimary);
-PRE_POST(UnequipSecondary);
-PRE_POST(UnequipWeapon);
-PRE_POST(UnequipEarrings);
-PRE_POST(UnequipRings);
-PRE_POST(UnequipNecklace);
-PRE_POST(UnequipJewelry);
-PRE_POST(UnequipOrnament);
-bool preUnequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg, LL &unequipItem);
-void postUnequipSingleCallback(const cq::MessageEvent &ev, const LL &unequipItem);
-PRE_POST(UnequipAll);
-bool preUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg, LL &upgradeTimes, LL &coinsNeeded);
-void postUpgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const LL &upgradeTimes, const LL &coinsNeeded);
-PRE_POST(ConfirmUpgrade);
-PRE_POST(ViewTrade);
-bool preBuyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &tradeId);
-void postBuyTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
-bool preSellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, LL &invId, bool &hasPassword, LL &price);
-void postSellTradeCallback(const cq::MessageEvent &ev, const LL &invId, const bool &hasPassword, const LL &price);
-bool preRecallTradeCallback(const cq::MessageEvent &ev, const std::string &arg, LL &tradeId);
-void postRecallTradeCallback(const cq::MessageEvent &ev, const LL &tradeId);
-bool preSynthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args, std::set<LL, std::greater<LL>> &invList, LL &targetId, LL &coins, LL &level);
-void postSynthesisCallback(const cq::MessageEvent &ev, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
-bool preFightCallback(const cq::MessageEvent &ev, const std::string &arg, LL &dungeonLevel);
-void postFightCallback(const cq::MessageEvent &ev, const LL &dungeonLevel);
+void registerCallback(const cq::MessageEvent &ev);
+void viewCoinsCallback(const cq::MessageEvent &ev);
+void signInCallback(const cq::MessageEvent &ev);
+void viewInventoryCallback(const cq::MessageEvent &ev);
+void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
+void viewPropertiesCallback(const cq::MessageEvent &ev);
+void viewEquipmentsCallback(const cq::MessageEvent &ev);
+void equipCallback(const cq::MessageEvent &ev, const std::string &arg);
+void unequipHelmetCallback(const cq::MessageEvent &ev);
+void unequipBodyCallback(const cq::MessageEvent &ev);
+void unequipLegCallback(const cq::MessageEvent &ev);
+void unequipBootCallback(const cq::MessageEvent &ev);
+void unequipArmorCallback(const cq::MessageEvent &ev);
+void unequipPrimaryCallback(const cq::MessageEvent &ev);
+void unequipSecondaryCallback(const cq::MessageEvent &ev);
+void unequipWeaponCallback(const cq::MessageEvent &ev);
+void unequipEarringsCallback(const cq::MessageEvent &ev);
+void unequipRingsCallback(const cq::MessageEvent &ev);
+void unequipNecklaceCallback(const cq::MessageEvent &ev);
+void unequipJewelryCallback(const cq::MessageEvent &ev);
+void unequipOrnamentCallback(const cq::MessageEvent &ev);
+void unequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg);
+void unequipAllCallback(const cq::MessageEvent &ev);
+void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg);
+void confirmUpgradeCallback(const cq::MessageEvent &ev);
+void viewTradeCallback(const cq::MessageEvent &ev);
+void buyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
+void sellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
+void recallTradeCallback(const cq::MessageEvent &ev, const std::string &arg);
+void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
+void fightCallback(const cq::MessageEvent &ev, const std::string &arg);
 
 ADMIN(AddCoins);
 ADMIN(AddHeroCoin);

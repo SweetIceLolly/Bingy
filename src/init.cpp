@@ -1,173 +1,124 @@
 /*
-ÃèÊö: ³õÊ¼»¯Ïà¹Ø´úÂë
-×÷Õß: ±ù¹÷
-ÎÄ¼ş: init.cpp
+æè¿°: åˆå§‹åŒ–ç›¸å…³ä»£ç 
+ä½œè€…: å†°æ£
+æ–‡ä»¶: init.cpp
 */
 
 #include "init.hpp"
 #include "msg_router.hpp"
 #include "msg_handlers.hpp"
-#include "database.hpp"
 #include "utils.hpp"
-#include "player.hpp"
-#include "monster.hpp"
-#include "game.hpp"
-#include "signin_event.hpp"
-#include "equipment.hpp"
-#include "synthesis.hpp"
 #include "config_parser.hpp"
-#include "trade.hpp"
-#include <iostream>
-#include <fstream>
+#include "game.hpp"
 
 #define CONFIG_FILE_PATH    "bgConfig.txt"
 
 inline void bg_msgrouter_init();
 inline bool bg_load_config();
 
-bool bgInitialized = false;     // Bingy ÊÇ·ñ³É¹¦Æô¶¯
+bool bgInitialized = false;     // Bingy æ˜¯å¦æˆåŠŸå¯åŠ¨
 
-// ³õÊ¼»¯Ö÷º¯Êı
+// åˆå§‹åŒ–ä¸»å‡½æ•°
 bool bg_init() {
-    // ¼ÓÔØÅäÖÃÎÄ¼ş
-    console_log("ÕıÔÚ¶ÁÈ¡ÅäÖÃÎÄ¼ş...");
+    // åŠ è½½é…ç½®æ–‡ä»¶
+    console_log("æ­£åœ¨è¯»å–é…ç½®æ–‡ä»¶...");
     if (!bg_load_config()) {
-        console_log("¶ÁÈ¡ÅäÖÃÎÄ¼şÊ§°Ü!", LogType::error);
+        console_log("è¯»å–é…ç½®æ–‡ä»¶å¤±è´¥!", LogType::error);
         return false;
     }
-    console_log("³É¹¦¶ÁÈ¡ÅäÖÃÎÄ¼ş: ¹²¼Æ" + std::to_string(allSignInEvents.size()) + "¸öÇ©µ½»î¶¯, " + std::to_string(allSynthesises.size()) + "¸ö×°±¸ºÏ³É");
-
-    // ¼ÓÔØ¹ÖÎïÊı¾İ
-    console_log("ÕıÔÚ¶ÁÈ¡¹ÖÎïÊı¾İ...");
-    if (!bg_load_monster_config()) {
-        console_log("¶ÁÈ¡¹ÖÎïÊı¾İÎÄ¼şÊ§°Ü!", LogType::error);
-        return false;
-    }
-    bg_init_monster_chances();
-    console_log("³É¹¦¶ÁÈ¡¹ÖÎïÊı¾İ: ¹²¼Æ" + std::to_string(allMonsters.size()) + "¸ö¹ÖÎï");
-
-    // ¼ÓÔØ×°±¸Êı¾İ
-    console_log("ÕıÔÚ¶ÁÈ¡×°±¸Êı¾İ...");
-    if (!bg_load_equipment_config()) {
-        console_log("¶ÁÈ¡×°±¸Êı¾İÎÄ¼şÊ§°Ü!", LogType::error);
-        return false;
-    }
-    console_log("³É¹¦¶ÁÈ¡×°±¸Êı¾İ: ¹²¼Æ" + std::to_string(allEquipments.size()) + "¸ö×°±¸");
-
-    // Á¬½ÓÊı¾İ¿â
-    console_log("ÕıÔÚÁ¬½ÓÊı¾İ¿â...");
-    if (!dbInit()) {
-        console_log("Á¬½ÓÊı¾İ¿âÊ§°Ü!", LogType::error);
-        return false;
-    }
-    console_log("³É¹¦Á¬½ÓÊı¾İ¿â");
-
-    // ¼ÓÔØÍæ¼ÒĞÅÏ¢
-    console_log("ÕıÔÚ¶ÁÈ¡ËùÓĞÍæ¼ÒÊı¾İ...");
-    if (!bg_get_allplayers_from_db()) {
-        console_log("¶ÁÈ¡Íæ¼ÒÊı¾İÊ§°Ü!", LogType::error);
-        return false;
-    }
-    console_log("³É¹¦¶ÁÈ¡Íæ¼ÒÊı¾İ: ¹²¼Æ" + std::to_string(allPlayers.size()) + "¸öÍæ¼Ò");
-
-    // ¼ÓÔØ½»Ò×³¡ĞÅÏ¢
-    console_log("ÕıÔÚ¶ÁÈ¡½»Ò×³¡Êı¾İ...");
-    bg_trade_get_items();
-    console_log("³É¹¦¶ÁÈ¡½»Ò×³¡Êı¾İ: ¹²¼Æ" + std::to_string(allTradeItems.size()) + "¸öÌõÄ¿, ÏÂÒ»¸ö½»Ò× ID Îª" + std::to_string(bg_get_tradeId()));
-
-    // ×¢²áÏûÏ¢Â·ÓÉ
+    console_log("æˆåŠŸè¯»å–é…ç½®æ–‡ä»¶: HTTPæœåŠ¡å™¨åœ°å€ä¸º " + serverUri);
+    
+    // æ³¨å†Œæ¶ˆæ¯è·¯ç”±
     bg_msgrouter_init();
 
-    // Æô¶¯ BgKeepAlive
-
-    // ³õÊ¼»¯Íê³É
+    // åˆå§‹åŒ–å®Œæˆ
     bgInitialized = true;
     return true;
 }
 
-// ×¢²áËùÓĞÃüÁî
+// æ³¨å†Œæ‰€æœ‰å‘½ä»¤
 inline void bg_msgrouter_init() {
-    // ×¢²áÈºÁÄÏà¹ØÃüÁî
+    // æ³¨å†Œç¾¤èŠç›¸å…³å‘½ä»¤
     bg_groupmsg_router_add("bg", bg_cmd_bg);
-    bg_groupmsg_router_add("bg ×¢²á", bg_cmd_register);
-    bg_groupmsg_router_add("bg Ç©µ½", bg_cmd_sign_in);
+    bg_groupmsg_router_add("bg æ³¨å†Œ", bg_cmd_register);
+    bg_groupmsg_router_add("bg ç­¾åˆ°", bg_cmd_sign_in);
 
-    bg_groupmsg_router_add("bg ²é¿´Ó²±Ò", bg_cmd_view_coins);
-    bg_groupmsg_router_add("bg ²é¿´±³°ü", bg_cmd_view_inventory);
-    bg_groupmsg_router_add("bg ²é¿´ÊôĞÔ", bg_cmd_view_properties);
+    bg_groupmsg_router_add("bg æŸ¥çœ‹ç¡¬å¸", bg_cmd_view_coins);
+    bg_groupmsg_router_add("bg æŸ¥çœ‹èƒŒåŒ…", bg_cmd_view_inventory);
+    bg_groupmsg_router_add("bg æŸ¥çœ‹å±æ€§", bg_cmd_view_properties);
 
-    bg_groupmsg_router_add("bg ²é¿´×°±¸", bg_cmd_view_equipments);
-    bg_groupmsg_router_add("bg ×°±¸", bg_cmd_equip);
-    bg_groupmsg_router_add("bg ³öÊÛ", bg_cmd_pawn);
+    bg_groupmsg_router_add("bg æŸ¥çœ‹è£…å¤‡", bg_cmd_view_equipments);
+    bg_groupmsg_router_add("bg è£…å¤‡", bg_cmd_equip);
+    bg_groupmsg_router_add("bg å‡ºå”®", bg_cmd_pawn);
 
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÍ·¿ø", bg_cmd_unequip_helmet);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÕ½¼×", bg_cmd_unequip_body);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ»¤ÍÈ", bg_cmd_unequip_leg);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÕ½Ñ¥", bg_cmd_unequip_boot);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ»¤¼×", bg_cmd_unequip_armor);
+    bg_groupmsg_router_add("bg å¸ä¸‹å¤´ç›”", bg_cmd_unequip_helmet);
+    bg_groupmsg_router_add("bg å¸ä¸‹æˆ˜ç”²", bg_cmd_unequip_body);
+    bg_groupmsg_router_add("bg å¸ä¸‹æŠ¤è…¿", bg_cmd_unequip_leg);
+    bg_groupmsg_router_add("bg å¸ä¸‹æˆ˜é´", bg_cmd_unequip_boot);
+    bg_groupmsg_router_add("bg å¸ä¸‹æŠ¤ç”²", bg_cmd_unequip_armor);
 
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÖ÷ÎäÆ÷", bg_cmd_unequip_primary);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ¸±ÎäÆ÷", bg_cmd_unequip_secondary);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÎäÆ÷", bg_cmd_unequip_weapon);
+    bg_groupmsg_router_add("bg å¸ä¸‹ä¸»æ­¦å™¨", bg_cmd_unequip_primary);
+    bg_groupmsg_router_add("bg å¸ä¸‹å‰¯æ­¦å™¨", bg_cmd_unequip_secondary);
+    bg_groupmsg_router_add("bg å¸ä¸‹æ­¦å™¨", bg_cmd_unequip_weapon);
 
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ¶ú»·", bg_cmd_unequip_earrings);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ½äÖ¸", bg_cmd_unequip_rings);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÏîÁ´", bg_cmd_unequip_necklace);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ±¦Ê¯", bg_cmd_unequip_jewelry);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÊÎÆ·", bg_cmd_unequip_ornament);
+    bg_groupmsg_router_add("bg å¸ä¸‹è€³ç¯", bg_cmd_unequip_earrings);
+    bg_groupmsg_router_add("bg å¸ä¸‹æˆ’æŒ‡", bg_cmd_unequip_rings);
+    bg_groupmsg_router_add("bg å¸ä¸‹é¡¹é“¾", bg_cmd_unequip_necklace);
+    bg_groupmsg_router_add("bg å¸ä¸‹å®çŸ³", bg_cmd_unequip_jewelry);
+    bg_groupmsg_router_add("bg å¸ä¸‹é¥°å“", bg_cmd_unequip_ornament);
 
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ", bg_cmd_unequip_item);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂ×°±¸", bg_cmd_unequip_item_2);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂËùÓĞ", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂËùÓĞ×°±¸", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÈ«²¿", bg_cmd_unequip_all);
-    bg_groupmsg_router_add("bg Ğ¶ÏÂÈ«²¿×°±¸", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg å¸ä¸‹", bg_cmd_unequip_item);
+    bg_groupmsg_router_add("bg å¸ä¸‹è£…å¤‡", bg_cmd_unequip_item_2);
+    bg_groupmsg_router_add("bg å¸ä¸‹æ‰€æœ‰", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg å¸ä¸‹æ‰€æœ‰è£…å¤‡", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg å¸ä¸‹å…¨éƒ¨", bg_cmd_unequip_all);
+    bg_groupmsg_router_add("bg å¸ä¸‹å…¨éƒ¨è£…å¤‡", bg_cmd_unequip_all);
 
-    bg_groupmsg_router_add("bg Ç¿»¯Í·¿ø", bg_cmd_upgrade_helmet);
-    bg_groupmsg_router_add("bg Ç¿»¯Õ½¼×", bg_cmd_upgrade_body);
-    bg_groupmsg_router_add("bg Ç¿»¯»¤ÍÈ", bg_cmd_upgrade_leg);
-    bg_groupmsg_router_add("bg Ç¿»¯Õ½Ñ¥", bg_cmd_upgrade_boot);
-    bg_groupmsg_router_add("bg Éı¼¶Í·¿ø", bg_cmd_upgrade_helmet);
-    bg_groupmsg_router_add("bg Éı¼¶Õ½¼×", bg_cmd_upgrade_body);
-    bg_groupmsg_router_add("bg Éı¼¶»¤ÍÈ", bg_cmd_upgrade_leg);
-    bg_groupmsg_router_add("bg Éı¼¶Õ½Ñ¥", bg_cmd_upgrade_boot);
+    bg_groupmsg_router_add("bg å¼ºåŒ–å¤´ç›”", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ˜ç”²", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æŠ¤è…¿", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ˜é´", bg_cmd_upgrade_boot);
+    bg_groupmsg_router_add("bg å‡çº§å¤´ç›”", bg_cmd_upgrade_helmet);
+    bg_groupmsg_router_add("bg å‡çº§æˆ˜ç”²", bg_cmd_upgrade_body);
+    bg_groupmsg_router_add("bg å‡çº§æŠ¤è…¿", bg_cmd_upgrade_leg);
+    bg_groupmsg_router_add("bg å‡çº§æˆ˜é´", bg_cmd_upgrade_boot);
 
-    bg_groupmsg_router_add("bg Ç¿»¯Ö÷ÎäÆ÷", bg_cmd_upgrade_primary);
-    bg_groupmsg_router_add("bg Ç¿»¯¸±ÎäÆ÷", bg_cmd_upgrade_secondary);
-    bg_groupmsg_router_add("bg Éı¼¶Ö÷ÎäÆ÷", bg_cmd_upgrade_primary);
-    bg_groupmsg_router_add("bg Éı¼¶¸±ÎäÆ÷", bg_cmd_upgrade_secondary);
+    bg_groupmsg_router_add("bg å¼ºåŒ–ä¸»æ­¦å™¨", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg å¼ºåŒ–å‰¯æ­¦å™¨", bg_cmd_upgrade_secondary);
+    bg_groupmsg_router_add("bg å‡çº§ä¸»æ­¦å™¨", bg_cmd_upgrade_primary);
+    bg_groupmsg_router_add("bg å‡çº§å‰¯æ­¦å™¨", bg_cmd_upgrade_secondary);
 
-    bg_groupmsg_router_add("bg Ç¿»¯¶ú»·", bg_cmd_upgrade_earrings);
-    bg_groupmsg_router_add("bg Ç¿»¯½äÖ¸", bg_cmd_upgrade_rings);
-    bg_groupmsg_router_add("bg Ç¿»¯ÏîÁ´", bg_cmd_upgrade_necklace);
-    bg_groupmsg_router_add("bg Ç¿»¯±¦Ê¯", bg_cmd_upgrade_jewelry);
-    bg_groupmsg_router_add("bg Éı¼¶¶ú»·", bg_cmd_upgrade_earrings);
-    bg_groupmsg_router_add("bg Éı¼¶½äÖ¸", bg_cmd_upgrade_rings);
-    bg_groupmsg_router_add("bg Éı¼¶ÏîÁ´", bg_cmd_upgrade_necklace);
-    bg_groupmsg_router_add("bg Éı¼¶±¦Ê¯", bg_cmd_upgrade_jewelry);
-    bg_groupmsg_router_add("bg È·ÈÏ", bg_cmd_confirm_upgrade);
+    bg_groupmsg_router_add("bg å¼ºåŒ–è€³ç¯", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æˆ’æŒ‡", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg å¼ºåŒ–é¡¹é“¾", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg å¼ºåŒ–å®çŸ³", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg å‡çº§è€³ç¯", bg_cmd_upgrade_earrings);
+    bg_groupmsg_router_add("bg å‡çº§æˆ’æŒ‡", bg_cmd_upgrade_rings);
+    bg_groupmsg_router_add("bg å‡çº§é¡¹é“¾", bg_cmd_upgrade_necklace);
+    bg_groupmsg_router_add("bg å‡çº§å®çŸ³", bg_cmd_upgrade_jewelry);
+    bg_groupmsg_router_add("bg ç¡®è®¤", bg_cmd_confirm_upgrade);
 
-    bg_groupmsg_router_add("bg Ç¿»¯»¤¼×", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Ç¿»¯ÎäÆ÷", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Ç¿»¯ÊÎÆ·", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Ç¿»¯×°±¸", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Ç¿»¯", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Éı¼¶»¤¼×", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Éı¼¶ÎäÆ÷", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Éı¼¶ÊÎÆ·", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Éı¼¶×°±¸", bg_cmd_upgrade_help);
-    bg_groupmsg_router_add("bg Éı¼¶", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æŠ¤ç”²", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å¼ºåŒ–æ­¦å™¨", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å¼ºåŒ–é¥°å“", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å¼ºåŒ–è£…å¤‡", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å¼ºåŒ–", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å‡çº§æŠ¤ç”²", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å‡çº§æ­¦å™¨", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å‡çº§é¥°å“", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å‡çº§è£…å¤‡", bg_cmd_upgrade_help);
+    bg_groupmsg_router_add("bg å‡çº§", bg_cmd_upgrade_help);
 
-    bg_groupmsg_router_add("bg ½»Ò×³¡", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg ²é¿´½»Ò×³¡", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg ½»Ò×", bg_cmd_view_trade);
-    bg_groupmsg_router_add("bg ¹ºÂò", bg_cmd_buy_trade);
-    bg_groupmsg_router_add("bg ÉÏ¼Ü", bg_cmd_sell_trade);
-    bg_groupmsg_router_add("bg ÏÂ¼Ü", bg_cmd_recall_trade);
+    bg_groupmsg_router_add("bg äº¤æ˜“åœº", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg æŸ¥çœ‹äº¤æ˜“åœº", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg äº¤æ˜“", bg_cmd_view_trade);
+    bg_groupmsg_router_add("bg è´­ä¹°", bg_cmd_buy_trade);
+    bg_groupmsg_router_add("bg ä¸Šæ¶", bg_cmd_sell_trade);
+    bg_groupmsg_router_add("bg ä¸‹æ¶", bg_cmd_recall_trade);
     
-    bg_groupmsg_router_add("bg ºÏ³É", bg_cmd_synthesis);
-    bg_groupmsg_router_add("bg ÌôÕ½", bg_cmd_fight);
-    bg_groupmsg_router_add("bg ÌôÕ½É­ÁÖ", nullptr);
+    bg_groupmsg_router_add("bg åˆæˆ", bg_cmd_synthesis);
+    bg_groupmsg_router_add("bg æŒ‘æˆ˜", bg_cmd_fight);
+    bg_groupmsg_router_add("bg æŒ‘æˆ˜æ£®æ—", nullptr);
     bg_groupmsg_router_add("bg pvp", nullptr);
     bg_groupmsg_router_add("bg vip", nullptr);
 
@@ -180,181 +131,44 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg /addinvcapacity", bg_cmd_admin_add_invCapacity);
     bg_groupmsg_router_add("bg /addvip", bg_cmd_admin_add_vip);
 
-    // ×¢²áË½ÁÄÏà¹ØÃüÁî
+    // æ³¨å†Œç§èŠç›¸å…³å‘½ä»¤
 
 }
 
-// ¶ÁÈ¡ÓÎÏ·ÅäÖÃ
+// è¯»å–æ¸¸æˆé…ç½®
 inline bool bg_load_config() {
     configParser parser(CONFIG_FILE_PATH);
-    signInEvent *signInEv = nullptr;        // Ç©µ½»î¶¯ÁÙÊ±±äÁ¿
-    synthesisInfo *synInfo = nullptr;       // ºÏ³ÉĞÅÏ¢ÁÙÊ±±äÁ¿
-    dungeonData *dungeon = nullptr;         // ¸±±¾ÅäÖÃÁÙÊ±±äÁ¿
 
     return parser.load(
-        // ÇĞ»» state »Øµ÷º¯Êı
+        // åˆ‡æ¢ state å›è°ƒå‡½æ•°
         [](const std::string &line, char &state) -> bool {
-            // state: 0: Ò»°ãÅäÖÃ; 1: Ç©µ½»î¶¯; 2: ×°±¸ºÏ³É; 3: ¸±±¾ÅäÖÃ
-            if (line == "[Ç©µ½»î¶¯]")
-                state = 1;
-            else if (line == "[×°±¸ºÏ³É]")
-                state = 2;
-            else if (line == "[¸±±¾ÅäÖÃ]")
-                state = 3;
-            else
-                state = 0;
+            state = 0;
             return true;
         },
 
-        // »ñÈ¡ÊôĞÔÖµ»Øµ÷º¯Êı
+        // è·å–å±æ€§å€¼å›è°ƒå‡½æ•°
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
-            // ´¦ÀíÒ»°ãÅäÖÃ
+            // å¤„ç†ä¸€èˆ¬é…ç½®
             if (state == 0) {
-                if (propName == "dburi")                              // Êı¾İ¿â URI
-                    dbUri = propValue + std::string("?authSource=admin");
-                else if (propName == "dbname")                        // Êı¾İ¿âÃû
-                    dbName = propValue;
-                else if (propName == "monsters")                      // ¹ÖÎïÅäÖÃÂ·¾¶
-                    monsterConfigPath = propValue;
-                else if (propName == "equipments")                    // ×°±¸ÅäÖÃÂ·¾¶
-                    eqiConfigPath = propValue;
-                else if (propName == "admin") {                       // ¹ÜÀíÔ±
-                    try {
-                        LL qq = std::stoll(propValue);
-                        if (allAdmins.insert(qq).second)
-                            console_log("³É¹¦Ìí¼Ó¹ÜÀíÔ±: " + propValue);
-                        else
-                            console_log("°Ñ¹ÜÀíÔ±" + propValue + "Ìí¼Óµ½¹ÜÀíÔ±ÁĞ±íÊ±·¢Éú´íÎó, ¿ÉÄÜÊÇÒòÎªÖØ¸´ÁË? ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
-                    }
-                    catch (...) {
-                        console_log("ÎŞ·¨°Ñ\"" + propValue + "\"Ìí¼Óµ½¹ÜÀíÔ±ÁĞ±í, Çë¼ì²éÊÇ·ñÎªÓĞĞ§ÊıÖµ! ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
-                    }
-                }
+                if (propName == "server")                                   // æœåŠ¡å™¨åœ°å€
+                    serverUri = propValue;
+                else if (propName == "appid")                               // åº”ç”¨ ID
+                    appId = propValue;
+                else if (propName == "secret")                              // åº”ç”¨å¯†åŒ™
+                    appSecret = propValue;
                 else
-                    console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
+                    console_log(std::string("æœªçŸ¥çš„é…ç½®å: \"") + propName + std::string("\", äºè¡Œ") + std::to_string(lineNo), LogType::warning);
             }
-
-            // ´¦ÀíÇ©µ½»î¶¯
-            else if (state == 1) {                                          // ÅäÖÃ
-                try {
-                    if (propName == "id")
-                        signInEv->id = std::stoll(propValue);
-                    else if (propName == "year")
-                        signInEv->year = std::stoi(propValue);
-                    else if (propName == "month")
-                        signInEv->month = std::stoi(propValue);
-                    else if (propName == "day")
-                        signInEv->day = std::stoi(propValue);
-                    else if (propName == "hour")
-                        signInEv->hour = static_cast<char>(std::stoi(propValue));
-                    else if (propName == "minute")
-                        signInEv->minute = (char)std::stoi(propValue);
-                    else if (propName == "coinfactor")
-                        signInEv->coinFactor = std::stod(propValue);
-                    else if (propName == "energyfactor")
-                        signInEv->energyFactor = std::stod(propValue);
-                    else if (propName == "first")
-                        signInEv->firstN = std::stoll(propValue);
-                    else if (propName == "items") {
-                        for (const auto &item : str_split(propValue, ',')) {
-                            auto itemId = std::stoll(item);
-                            if (itemId == -1)
-                                break;
-                            else
-                                signInEv->items.push_back(itemId);
-                        }
-                    }
-                    else if (propName == "message")
-                        signInEv->message = propValue;
-                    else
-                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
-                }
-                catch (const std::exception &e) {
-                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
-                }
-                catch (...) {
-                    console_log("´¦ÀíÇ©µ½»î¶¯ÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
-                }
-            }
-
-            // ´¦Àí×°±¸ºÏ³ÉĞÅÏ¢
-            else if (state == 2) {
-                try {
-                    if (propName == "requirements") {
-                        for (const auto &item : str_split(propValue, ',')) {
-                            auto itemId = std::stoll(item);
-                            if (itemId == -1)
-                                break;
-                            else
-                                synInfo->requirements.insert(itemId);
-                        }
-                    }
-                    else if (propName == "coins")
-                        synInfo->coins = std::stoll(propValue);
-                    else if (propName == "target")
-                        synInfo->targetId = std::stoll(propValue);
-                    else
-                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
-                }
-                catch (const std::exception &e) {
-                    console_log("Ìí¼ÓºÏ³ÉĞÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
-                }
-                catch (...) {
-                    console_log("Ìí¼ÓºÏ³ÉĞÅÏ¢Ê§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
-                }
-            }
-
-            // ´¦Àí¸±±¾ÅäÖÃ
-            else if (state == 3) {
-                try {
-                    if (propName == "level")
-                        dungeon->level = std::stoll(propValue);
-                    else if (propName == "monsters") {
-                        for (const auto &idStr : str_split(propValue, ',')) {
-                            const auto id = std::stoll(idStr);
-                            dungeon->monsters.push_back(id);
-                        }
-                    }
-                    else
-                        console_log(std::string("Î´ÖªµÄÅäÖÃÃû: \"") + propName + std::string("\", ÓÚĞĞ") + std::to_string(lineNo), LogType::warning);
-                }
-                catch (const std::exception &e) {
-                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo) + ", Ô­Òò: " + e.what(), LogType::warning);
-                }
-                catch (...) {
-                    console_log("Ìí¼Ó¸±±¾ÅäÖÃÊ§°Ü, ´¦ÀíÅäÖÃÊ±·¢Éú´íÎó: ÓÚĞĞ" + std::to_string(lineNo), LogType::warning);
-                }
-            }
-
             return true;
         },
 
-        // ¿ªÊ¼±ê¼Ç»Øµ÷º¯Êı
+        // å¼€å§‹æ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
-            if (state == 1)
-                signInEv = new signInEvent();
-            else if (state == 2)
-                synInfo = new synthesisInfo();
-            else if (state == 3)
-                dungeon = new dungeonData();
-
             return true;
         },
 
-        // ½áÊø±ê¼Ç»Øµ÷º¯Êı
+        // ç»“æŸæ ‡è®°å›è°ƒå‡½æ•°
         [&](const char &state) -> bool {
-            if (state == 1) {
-                allSignInEvents.push_back(*signInEv);
-                delete signInEv;
-            }
-            else if (state == 2) {
-                allSynthesises.insert({ synInfo->targetId, *synInfo });
-                delete synInfo;
-            }
-            else if (state == 3) {
-                allDungeons.insert({ dungeon->level, *dungeon });
-            }
-
             return true;
         }
     );
