@@ -211,61 +211,15 @@
 
 #define BG_ERR_STR_IN_CD                            "挑战冷却还没结束"
 #define BG_ERR_IN_CD                                3502
-/*
-// 错误号对应到字符串
+
+// 错误号对应到回应字符串 (适用于 Bingy 客户端代码)
+// 以下宏用来检查是否为 Bingy 客户端
+#ifdef DEFAULT_SERVER_URI
 #include <unordered_map>
 extern const std::unordered_map<int, const char *> error_desc;
 const std::unordered_map<int, const char *> error_desc = {
-    { BG_ERR_INVALID_REQUEST            , BG_ERR_STR_INVALID_REQUEST            },
-    { BG_ERR_AUTH_FAILED                , BG_ERR_STR_AUTH_FAILED                },
-    { BG_ERR_MALLOC                     , BG_ERR_STR_MALLOC                     },
-    { BG_ERR_PRE_OP_FAILED              , BG_ERR_STR_PRE_OP_FAILED              },
-    { BG_ERR_POST_OP_FAILED             , BG_ERR_STR_POST_OP_FAILED             },
-    { BG_ERR_UNREGISTERED               , BG_ERR_STR_UNREGISTERED               },
-    { BG_ERR_BLACKLISTED                , BG_ERR_STR_BLACKLISTED                },
-    { BG_ERR_ALREADY_REGISTERED         , BG_ERR_STR_ALREADY_REGISTERED         },
-    { BG_ERR_ALREADY_SIGNED_IN          , BG_ERR_STR_ALREADY_SIGNED_IN          },
-    { BG_ERR_SIGN_IN_SET_CONT_FAILED    , BG_ERR_STR_SIGN_IN_SET_CONT_FAILED    },
-    { BG_ERR_SIGN_IN_SET_TIME_FAILED    , BG_ERR_STR_SIGN_IN_SET_TIME_FAILED    },
-    { BG_ERR_SIGN_IN_INC_COUNT_FAILED   , BG_ERR_STR_SIGN_IN_INC_COUNT_FAILED   },
-    { BG_ERR_ADD_ITEM_FAILED            , BG_ERR_STR_ADD_ITEM_FAILED            },
-    { BG_ERR_INC_COINS_FAILED           , BG_ERR_STR_INC_COINS_FAILED           },
-    { BG_ERR_INC_ENERGY_FAILED          , BG_ERR_STR_INC_ENERGY_FAILED          },
-    { BG_ERR_INC_EXP_FAILED             , BG_ERR_STR_INC_EXP_FAILED             },
-    { BG_ERR_ID_OUT_OF_RANGE            , BG_ERR_STR_ID_OUT_OF_RANGE            },
-    { BG_ERR_ID_REPEATED                , BG_ERR_STR_ID_REPEATED                },
-    { BG_ERR_REMOVE_ITEM_FAILED         , BG_ERR_STR_REMOVE_ITEM_FAILED         },
-    { BG_ERR_EQUIP_REMOVE_FAILED        , BG_ERR_STR_EQUIP_REMOVE_FAILED        },
-    { BG_ERR_EQUIP_UPDATE_FAILED        , BG_ERR_STR_EQUIP_UPDATE_FAILED        },
-    { BG_ERR_EQUIP_ADD_FAILED           , BG_ERR_STR_EQUIP_ADD_FAILED           },
-    { BG_ERR_NOT_EQUIPPED               , BG_ERR_STR_NOT_EQUIPPED               },
-    { BG_ERR_SINGLE_OUT_OF_RANGE        , BG_ERR_STR_SINGLE_OUT_OF_RANGE        },
-    { BG_ERR_CLEAR_SINGLE_FAILED        , BG_ERR_STR_CLEAR_SINGLE_FAILED        },
-    { BG_ERR_SINGLE_ADD_FAILED          , BG_ERR_STR_SINGLE_ADD_FAILED          },
-    { BG_ERR_REMOVE_SINGLE_FAILED       , BG_ERR_STR_REMOVE_SINGLE_FAILED       },
-    { BG_ERR_INVALID_UPGRADE_TIMES      , BG_ERR_STR_INVALID_UPGRADE_TIMES      },
-    { BG_ERR_MAX_UPGRADE_TIMES          , BG_ERR_STR_MAX_UPGRADE_TIMES          },
-    { BG_ERR_INSUFFICIENT_COINS         , BG_ERR_STR_INSUFFICIENT_COINS         },
-    { BG_ERR_UPGRADE_CANCELED           , BG_ERR_STR_UPGRADE_CANCELED           },
-    { BG_ERR_NO_PENDING_UPGRADE         , BG_ERR_STR_NO_PENDING_UPGRADE         },
-    { BG_ERR_DEC_COINS_FAILED           , BG_ERR_STR_DEC_COINS_FAILED           },
-    { BG_ERR_SET_EQI_FAILED             , BG_ERR_STR_SET_EQI_FAILED             },
-    { BG_ERR_TRADEID_INVALID            , BG_ERR_STR_TRADEID_INVALID            },
-    { BG_ERR_PASSWORD_REQUIRED          , BG_ERR_STR_PASSWORD_REQUIRED          },
-    { BG_ERR_PASSWORD_INCORRECT         , BG_ERR_STR_PASSWORD_INCORRECT         },
-    { BG_ERR_PASSWORD_NOT_REQUIRED      , BG_ERR_STR_PASSWORD_NOT_REQUIRED      },
-    { BG_ERR_REMOVE_TRADE_FAILED        , BG_ERR_STR_REMOVE_TRADE_FAILED        },
-    { BG_ERR_INAPPROPRIATE_PRICE        , BG_ERR_STR_INAPPROPRIATE_PRICE        },
-    { BG_ERR_CANT_AFFORD_TAX            , BG_ERR_STR_CANT_AFFORD_TAX            },
-    { BG_ERR_TRADEID_UPDATE_FAILED      , BG_ERR_STR_TRADEID_UPDATE_FAILED      },
-    { BG_ERR_ADD_TRADE_FAILED           , BG_ERR_STR_ADD_TRADE_FAILED           },
-    { BG_ERR_PLAYER_MISMATCH            , BG_ERR_STR_PLAYER_MISMATCH            },
-    { BG_ERR_REMOVE_TRADE_FAILED        , BG_ERR_STR_REMOVE_TRADE_FAILED        },
-    { BG_ERR_INVALID_EQI_ID             , BG_ERR_STR_INVALID_EQI_ID             },
-    { BG_ERR_CANT_SYNTHESIS             , BG_ERR_STR_CANT_SYNTHESIS             },
-    { BG_ERR_SYNTHESIS_NOT_EXIST        , BG_ERR_STR_SYNTHESIS_NOT_EXIST        },
-    { BG_ERR_INVALID_DUNGEON            , BG_ERR_STR_INVALID_DUNGEON            },
-    { BG_ERR_NO_ENERGY                  , BG_ERR_STR_NO_ENERGY                  },
-    { BG_ERR_IN_CD                      , BG_ERR_STR_IN_CD                      }
+    { BG_ERR_ALREADY_REGISTERED, "你已经注册过啦!" },
+    { BG_ERR_UNREGISTERED, "要先注册哦! 快发送\"bg 注册\"加入游戏吧!" },
+    { BG_ERR_BLACKLISTED, "你被拉黑了!" }
 };
-*/
+#endif

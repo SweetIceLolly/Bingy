@@ -56,7 +56,7 @@ bool preRegisterCallback(const bgGameHttpReq &bgReq) {
 void postRegisterCallback(const bgGameHttpReq &bgReq) {
     try {
         if (bg_player_add(bgReq.playerId))
-            bg_http_reply(bgReq.req, 200, "");
+            bg_http_reply(bgReq.req, 200, "{}");
         else
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
@@ -78,7 +78,7 @@ void postViewCoinsCallback(const bgGameHttpReq &bgReq) {
     try {
         LOCK_PLAYERS_LIST;
         bg_http_reply(bgReq.req, 200, 
-            ("{coins: " + std::to_string(PLAYER.get_coins()) + "}").c_str());
+            ("{\"coins\": " + std::to_string(PLAYER.get_coins()) + "}").c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -764,7 +764,7 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SINGLE_ADD_FAILED, BG_ERR_SINGLE_ADD_FAILED);
             return;
         }
-        bg_http_reply(bgReq.req, 200, ("{item:" + allEquipments.at(it->id).name + "}").c_str());
+        bg_http_reply(bgReq.req, 200, ("{\"item\":" + allEquipments.at(it->id).name + "}").c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -927,7 +927,7 @@ bool preConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
 void postConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
     LOCK_PLAYERS_LIST;
     PLAYER.confirmUpgrade();
-    bg_http_reply(bgReq.req, 200, "");
+    bg_http_reply(bgReq.req, 200, "{}");
 }
 
 // 查看交易场前检查
@@ -938,7 +938,7 @@ bool preViewTradeCallback(const bgGameHttpReq& bgReq) {
 // 查看交易场
 void postViewTradeCallback(const bgGameHttpReq& bgReq) {
     try {
-        bg_http_reply(bgReq.req, 200, ("{items: " + bg_trade_get_string() + "}").c_str());
+        bg_http_reply(bgReq.req, 200, ("{\"items\": " + bg_trade_get_string() + "}").c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
