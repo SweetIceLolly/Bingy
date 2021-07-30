@@ -246,14 +246,14 @@ bool prePawnCallback(const bgGameHttpReq& bgReq, const std::vector<LL>& items) {
         LOCK_PLAYERS_LIST;
         for (const auto &item : items) {
             if (item >= PLAYER.get_inventory_size() || item < 0) {              // 检查是否超出背包范围
-                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(item), BG_ERR_ID_OUT_OF_RANGE);
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(item + 1), BG_ERR_ID_OUT_OF_RANGE);
                 return false;
             }
             if (sellList.find(item) == sellList.end()) {                        // 检查是否有重复项目
                 sellList.insert(item);                                              // 记录该项目
             }
             else {
-                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_REPEATED + std::string(": ") + std::to_string(item), BG_ERR_ID_REPEATED);
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_REPEATED + std::string(": ") + std::to_string(item + 1), BG_ERR_ID_REPEATED);
                 return false;
             }
         }
@@ -354,13 +354,13 @@ std::string getPropertiesStr(const LL &id) {
         { "blessing", allPlayers.at(id).get_blessing() },
         { "exp", allPlayers.at(id).get_exp() },
         { "expNeeded", allPlayers.at(id).get_exp_needed() },
-        { GET_EQI_PROP_STR(hp) },
-        { GET_EQI_PROP_STR(atk) },
-        { GET_EQI_PROP_STR(def) },
-        { GET_EQI_PROP_STR(mp) },
-        { GET_EQI_PROP_STR(crt) },
-        { GET_EQI_PROP_STR(brk) },
-        { GET_EQI_PROP_STR(agi) },
+        GET_EQI_PROP_STR(hp),
+        GET_EQI_PROP_STR(atk),
+        GET_EQI_PROP_STR(def),
+        GET_EQI_PROP_STR(mp),
+        GET_EQI_PROP_STR(crt),
+        GET_EQI_PROP_STR(brk),
+        GET_EQI_PROP_STR(agi),
         { "energy", allPlayers.at(id).get_energy() },
         { "coins", allPlayers.at(id).get_coins() },
         { "heroCoin", allPlayers.at(id).get_heroCoin() }
@@ -452,7 +452,7 @@ bool preEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
 
     try {
         if (equipItem >= PLAYER.get_inventory_size() || equipItem < 0) {        // 检查是否超出背包范围
-            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(equipItem), BG_ERR_ID_OUT_OF_RANGE);
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(equipItem + 1), BG_ERR_ID_OUT_OF_RANGE);
             return false;
         }
         return true;
@@ -730,7 +730,7 @@ bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
     LOCK_PLAYERS_LIST;
     try {
         if (index < 0 || index >= PLAYER.get_equipItems_size()) {               // 检查序号是否超出装备范围
-            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_SINGLE_OUT_OF_RANGE + std::string(": ") + std::to_string(index), BG_ERR_SINGLE_OUT_OF_RANGE);
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_SINGLE_OUT_OF_RANGE + std::string(": ") + std::to_string(index + 1), BG_ERR_SINGLE_OUT_OF_RANGE);
             return false;
         }
         return true;
@@ -1065,7 +1065,7 @@ bool preSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL&
 
         // 检查背包序号是否超出范围
         if (invId >= PLAYER.get_inventory_size() || invId < 0) {
-            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(invId), BG_ERR_ID_OUT_OF_RANGE);
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(invId + 1), BG_ERR_ID_OUT_OF_RANGE);
             return false;
         }
 
@@ -1267,7 +1267,7 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
         for (const auto &index : invList) {
             if (index < 0 || index >= inventory.size()) {                   // 不允许序号超出背包范围
                 bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE +
-                    std::string(": ") + std::to_string(index), BG_ERR_ID_OUT_OF_RANGE);
+                    std::string(": ") + std::to_string(index + 1), BG_ERR_ID_OUT_OF_RANGE);
                 return false;
             }
         }

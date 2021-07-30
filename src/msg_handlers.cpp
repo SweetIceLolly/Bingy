@@ -47,7 +47,7 @@ CMD(view_inventory) {
 
 // 出售
 CMD(pawn) {
-    if (ev.message.length() < 9) {
+    if (ev.message.length() < 10) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
         return;
     }

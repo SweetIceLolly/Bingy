@@ -220,6 +220,8 @@ extern const std::unordered_map<int, const char *> error_desc;
 const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_ALREADY_REGISTERED, "你已经注册过啦!" },
     { BG_ERR_UNREGISTERED, "要先注册哦! 快发送\"bg 注册\"加入游戏吧!" },
-    { BG_ERR_BLACKLISTED, "你被拉黑了!" }
+    { BG_ERR_BLACKLISTED, "你被拉黑了!" },
+    { BG_ERR_ID_OUT_OF_RANGE, "" },
+    { BG_ERR_ID_REPEATED, "" }
 };
 #endif

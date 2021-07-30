@@ -4,6 +4,7 @@
 文件: game.cpp
 */
 
+#include <sstream>
 #include "game.hpp"
 #include "utils.hpp"
 #include "HTTPRequest.hpp"
@@ -66,14 +67,18 @@ std::string bg_at(const cq::MessageEvent &ev) {
 }
 
 // 根据错误内容描述生成对应的回应
-std::string bg_get_err_msg(const json &content, const std::string strPrefix = "") {
-    int errid = content["errid"].get<int>();
+std::string bg_get_err_msg(const bg_http_response &res, const std::string strPrefix = "") {
+    int errid = res.content["errid"].get<int>();
     auto desc_entry = error_desc.find(errid);
 
-    if (desc_entry != error_desc.end())
-        return desc_entry->second;
-    else
-        return strPrefix + content["msg"].get<std::string>();
+    if (desc_entry != error_desc.end()) {
+        if (desc_entry->second == "")                       // 错误原文返回
+            return res.content["msg"].get<std::string>();
+        else                                                // 返回人话
+            return desc_entry->second;
+    }
+    else                                                    // 返回带前缀的原文
+        return strPrefix + res.content["msg"].get<std::string>();
 }
 
 // 新玩家注册
@@ -81,10 +86,10 @@ void registerCallback(const cq::MessageEvent& ev) {
     try {
         auto res = bg_http_post("/register", { MAKE_BG_JSON });
         if (res.code == 200) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "注册成功! 发送\"bg 签到\"获取体力, 然后发送\"bg 挑战1\"开始副本之旅吧! 如果需要帮助, 可以发送\"bg 帮助\"哦!");
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "注册成功! 发送\"bg 签到\"获取体力, 然后发送\"bg 挑战1\"开始冒险之旅吧! 如果需要帮助, 可以发送\"bg 帮助\"哦!");
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res.content, "注册期间发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "注册期间发生错误: "));
         }
     }
     catch (const std::exception &e) {
@@ -100,7 +105,7 @@ void viewCoinsCallback(const cq::MessageEvent& ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + "硬币数: " + std::to_string(res.content["coins"].get<LL>()));
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res.content, "查看硬币发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看硬币发生错误: "));
         }
     }
     catch (const std::exception &e) {
@@ -132,7 +137,7 @@ void signInCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + msg);
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res.content, "签到期间发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "签到期间发生错误: "));
         }
     }
     catch (const std::exception &e) {
@@ -164,7 +169,7 @@ void viewInventoryCallback(const cq::MessageEvent &ev) {
             cq::send_group_message(GROUP_ID, bg_at(ev) + msg);
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res.content, "查看背包发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看背包发生错误: "));
         }
     }
     catch (const std::exception &e) {
@@ -174,12 +179,65 @@ void viewInventoryCallback(const cq::MessageEvent &ev) {
 
 // 出售装备
 void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
-
+    try {
+        std::vector<LL> invList;
+        for (const auto &item : args) {
+            if (!item.empty())
+                invList.push_back(str_to_ll(item) - 1);
+        }
+        auto res = bg_http_post("/pawn", { MAKE_BG_JSON, { "items", invList } });
+        if (res.code == 200) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功出售" + std::to_string(res.content["count"].get<LL>()) +
+                "个物品, 获得" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "出售装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售装备发生错误: " + e.what());
+    }
 }
+
+// 懒人宏
+// 获取某个属性的字符串. 比如获取攻击 (atk), 则字符串为 攻击值 (武器攻击 + 护甲攻击 + 饰品攻击)
+#define GET_EQI_PROP_STR(prop)                                                  \
+    std::setprecision(1) <<                                                     \
+    res.content[ #prop ]["total"].get<double>() <<                              \
+    std::setprecision(0) << " (" <<                                             \
+    res.content[ #prop ]["weapons"].get<double>() << "+" <<                     \
+    res.content[ #prop ]["armors"].get<double>() << "+" <<                      \
+    res.content[ #prop ]["ornaments"].get<double>() << ")"                   
 
 // 查看属性
 void viewPropertiesCallback(const cq::MessageEvent &ev) {
-
+    try {
+        auto res = bg_http_get("/viewprop", { MAKE_BG_QUERY });
+        if (res.code == 200) {
+            std::stringstream msg;
+            msg << std::fixed << std::setprecision(1)
+                << "账号: " << res.content["qq"].get<LL>() << "\n"
+                << "等级: " << res.content["level"].get<LL>() << ", 祝福: " << res.content["blessing"].get<LL>() << "\n"
+                << "经验: " << res.content["exp"].get<LL>() << "/" << res.content["expNeeded"].get<LL>()
+                << " (" << static_cast<double>(res.content["exp"].get<LL>()) / static_cast<double>(res.content["expNeeded"].get<LL>()) * 100.0 << "%)" << "\n"
+                << "生命: " << GET_EQI_PROP_STR(hp) << "\n"
+                << "攻击: " << GET_EQI_PROP_STR(atk) << "\n"
+                << "防护: " << GET_EQI_PROP_STR(def) << "\n"
+                << "魔力: " << GET_EQI_PROP_STR(mp) << "\n"
+                << "暴击: " << GET_EQI_PROP_STR(crt) << "\n"
+                << "破甲: " << GET_EQI_PROP_STR(brk) << "\n"
+                << "敏捷: " << GET_EQI_PROP_STR(agi) << "\n"
+                << "体力: " << res.content["energy"].get<LL>() << " 硬币: " << res.content["coins"].get<LL>() << "\n"
+                << "英雄币: " << res.content["heroCoin"].get<LL>();
+            cq::send_group_message(GROUP_ID, bg_at(ev) + msg.str());
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看背包发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看背包发生错误: " + e.what());
+    }
 }
 
 // 查看装备
