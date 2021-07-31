@@ -44,8 +44,11 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 签到", bg_cmd_sign_in);
 
     bg_groupmsg_router_add("bg 查看硬币", bg_cmd_view_coins);
+    bg_groupmsg_router_add("bg 硬币", bg_cmd_view_coins);
     bg_groupmsg_router_add("bg 查看背包", bg_cmd_view_inventory);
+    bg_groupmsg_router_add("bg 背包", bg_cmd_view_inventory);
     bg_groupmsg_router_add("bg 查看属性", bg_cmd_view_properties);
+    bg_groupmsg_router_add("bg 属性", bg_cmd_view_properties);
 
     bg_groupmsg_router_add("bg 查看装备", bg_cmd_view_equipments);
     bg_groupmsg_router_add("bg 装备", bg_cmd_equip);

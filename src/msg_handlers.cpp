@@ -32,7 +32,13 @@ CMD(register) {
 
 // 查看硬币
 CMD(view_coins) {
-    MATCH("查看硬币", viewCoins);
+    if (ev.message == "bg 查看硬币" || ev.message == "bg 硬币") {
+        viewCoinsCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) +
+            "命令格式不对哦! 要查看硬币的话发送\"bg 查看硬币\"即可");
+    }
 }
 
 // 签到
@@ -42,7 +48,13 @@ CMD(sign_in) {
 
 // 查看背包
 CMD(view_inventory) {
-    MATCH("查看背包", viewInventory);
+    if (ev.message == "bg 查看背包" || ev.message == "bg 背包") {
+        viewInventoryCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) +
+            "命令格式不对哦! 要查看背包的话发送\"bg 查看背包\"即可");
+    }
 }
 
 // 出售
@@ -62,7 +74,13 @@ CMD(pawn) {
 
 // 查看属性
 CMD(view_properties) {
-    MATCH("查看属性", viewProperties);
+    if (ev.message == "bg 查看属性" || ev.message == "bg 属性") {
+        viewPropertiesCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) +
+            "命令格式不对哦! 要查看属性的话发送\"bg 查看属性\"即可");
+    }
 }
 
 // 查看装备
@@ -73,7 +91,8 @@ CMD(view_equipments) {
 // 装备
 CMD(equip) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 装备指令格式为: \"bg 装备 背包序号\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 装备指令格式为: \"bg 装备 背包序号\"。"
+            "或者你可以发送\"bg 查看装备\"来查看身上的装备。");
         return;
     }
     auto param = ev.message.substr(9);

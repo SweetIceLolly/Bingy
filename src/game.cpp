@@ -242,12 +242,70 @@ void viewPropertiesCallback(const cq::MessageEvent &ev) {
 
 // 查看装备
 void viewEquipmentsCallback(const cq::MessageEvent &ev) {
+    try {
+        auto res = bg_http_get("/vieweqi", { MAKE_BG_QUERY });
+        if (res.code == 200) {
+            std::stringstream msg;
+            msg << "---护甲---\n"
+                "头盔: " << res.content["armor_helmet"].get<std::string>() << ", " <<
+                "战甲: " << res.content["armor_body"].get<std::string>() << "\n" <<
+                "护腿: " << res.content["armor_leg"].get<std::string>() << ", " <<
+                "战靴: " << res.content["armor_boot"].get<std::string>() << "\n" <<
+                "---武器---\n"
+                "主武器: " << res.content["weapon_primary"].get<std::string>() << ", " <<
+                "副武器: " << res.content["weapon_secondary"].get<std::string>() << "\n" <<
+                "---饰品---\n"
+                "耳环: " << res.content["ornament_earrings"].get<std::string>() << ", " <<
+                "戒指: " << res.content["ornament_rings"].get<std::string>() << "\n" <<
+                "项链: " << res.content["ornament_necklace"].get<std::string>() << ", " <<
+                "宝石: " << res.content["ornament_jewelry"].get<std::string>();
 
+            auto singleItems = res.content["single_use"].get<std::vector<std::string>>();
+            if (singleItems.size() > 0) {
+                msg << "\n---一次性---\n";
+                LL index = 1;
+                for (const auto &item : singleItems) {
+                    if (index < singleItems.size())
+                        msg << index << "." << item << " ";
+                    else
+                        msg << index << "." << item;
+                    ++index;
+                }
+            }
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + msg.str());
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备发生错误: " + e.what());
+    }
 }
 
 // 装备
 void equipCallback(const cq::MessageEvent &ev, const std::string &arg) {
-
+    try {
+        auto res = bg_http_post("/equip", { MAKE_BG_JSON, {"item", str_to_ll(arg) - 1 } });
+        if (res.code == 200) {
+            if (res.content.contains("wear")) {
+                // 是普通装备
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + res.content["type"].get<std::string>() + ": " +
+                    res.content["name"].get<std::string>() + "+" + std::to_string(res.content["level"].get<LL>()) + ", 磨损" +
+                    std::to_string(res.content["wear"].get<LL>()) + "/" + std::to_string(res.content["defWear"].get<LL>()));
+            }
+            else {
+                // 是一次性装备
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备一次性物品: " + res.content["name"].get<std::string>());
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "装备发生错误: " + e.what());
+    }
 }
 
 // 卸下头盔
