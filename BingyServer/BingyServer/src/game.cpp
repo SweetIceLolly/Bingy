@@ -552,7 +552,9 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
 // 卸下多个指定类型的装备并返回所有卸下了的装备的列表
 template <typename ... Ts>
 std::vector<std::string> UnequipMultiple(const LL &qq, const Ts&&... types) {
-    return { (unequipPlayer(qq, types), ...) };
+    auto items = std::vector<std::string> { unequipPlayer(qq, types)... };
+    items.erase(std::remove_if(items.begin(), items.end(), [](const std::string &s) { return s.empty(); }), items.end());
+    return items;
 }
 
 // 卸下指定玩家的一次性物品并放回包里
@@ -564,7 +566,7 @@ std::vector<std::string> UnequipAllSingles(const LL &qq) {
 
     std::vector<std::string> rtn;
     for (const auto &item : items) {
-        if (!allPlayers.at(qq).add_inventory_item(item))
+        if (allPlayers.at(qq).add_inventory_item(item))
             rtn.push_back(allEquipments.at(item.id).name);
         else
             throw BG_ERR_STR_SINGLE_ADD_FAILED + std::string(": ") + allEquipments.at(item.id).name;
@@ -694,25 +696,23 @@ bool preUnequipAllCallback(const bgGameHttpReq& bgReq) {
 // 卸下所有装备
 void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
     try {
-        LOCK_PLAYERS_LIST;
         PLAYER.resetCache();                                            // 重算玩家属性
-        bg_http_reply(bgReq.req, 200, json{
-            { "eqi", UnequipMultiple(
-                bgReq.playerId,
-                EqiType::weapon_primary,
-                EqiType::weapon_secondary,
-                EqiType::armor_body,
-                EqiType::armor_boot,
-                EqiType::armor_helmet,
-                EqiType::armor_leg,
-                EqiType::ornament_earrings,
-                EqiType::ornament_jewelry,
-                EqiType::ornament_necklace,
-                EqiType::ornament_rings
-                )
-            },
-            { "single", UnequipAllSingles(bgReq.playerId) }
-            }.dump().c_str());
+        auto eqis = UnequipMultiple(
+            bgReq.playerId,
+            EqiType::weapon_primary,
+            EqiType::weapon_secondary,
+            EqiType::armor_body,
+            EqiType::armor_boot,
+            EqiType::armor_helmet,
+            EqiType::armor_leg,
+            EqiType::ornament_earrings,
+            EqiType::ornament_jewelry,
+            EqiType::ornament_necklace,
+            EqiType::ornament_rings
+        );
+        auto singles = UnequipAllSingles(bgReq.playerId);
+        eqis.insert(eqis.end(), singles.begin(), singles.end());
+        bg_http_reply(bgReq.req, 200, json { { "items", eqis } }.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -764,7 +764,7 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SINGLE_ADD_FAILED, BG_ERR_SINGLE_ADD_FAILED);
             return;
         }
-        bg_http_reply(bgReq.req, 200, ("{\"item\":" + allEquipments.at(it->id).name + "}").c_str());
+        bg_http_reply(bgReq.req, 200, json{ { "item", allEquipments.at(it->id).name} }.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);

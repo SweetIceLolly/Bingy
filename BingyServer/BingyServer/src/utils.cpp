@@ -240,6 +240,6 @@ LL str_to_ll(const std::string &str) {
 }
 
 std::string eqiType_to_str(const EqiType &type) {
-    const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石" };
+    const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石", "一次性物品" };
     return names[static_cast<LL>(type)];
 }

@@ -187,8 +187,8 @@
 #define BG_ERR_PLAYER_MISMATCH                      3400
 
 // B.15.b. 500 错误
-#define BG_ERR_STR_REMOVE_TRADE_FAILED              "把物品添加到交易场失败"
-#define BG_ERR_REMOVE_TRADE_FAILED                  3351
+#define BG_ERR_STR_ADD_TRADE_FAILED                 "把物品添加到交易场失败"
+#define BG_ERR_ADD_TRADE_FAILED                     3351
 
 // B.16. 合成装备错误
 // B.16.a. 400 错误
@@ -222,6 +222,8 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_UNREGISTERED, "要先注册哦! 快发送\"bg 注册\"加入游戏吧!" },
     { BG_ERR_BLACKLISTED, "你被拉黑了!" },
     { BG_ERR_ID_OUT_OF_RANGE, "" },
-    { BG_ERR_ID_REPEATED, "" }
+    { BG_ERR_ID_REPEATED, "" },
+    { BG_ERR_NOT_EQUIPPED, "没有装备这个类型的装备哦!" },
+    { BG_ERR_SINGLE_OUT_OF_RANGE, "指定的一次性物品序号超出了范围!" }
 };
 #endif

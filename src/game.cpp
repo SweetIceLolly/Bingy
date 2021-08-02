@@ -308,84 +308,138 @@ void equipCallback(const cq::MessageEvent &ev, const std::string &arg) {
     }
 }
 
-// 卸下头盔
-void unequipHelmetCallback(const cq::MessageEvent &ev) {
-
+// 卸下指定类型的普通装备
+void unequipPlayer(const cq::MessageEvent &ev, const EqiType &type, const LL &index = -1) {
+    try {
+        bg_http_response res;
+        if (type == EqiType::single_use)
+            res = bg_http_post("/unequip", { MAKE_BG_JSON, { "type", type }, { "index", index - 1 } });
+        else
+            res = bg_http_post("/unequip", { MAKE_BG_JSON, { "type", type } });
+        if (res.code == 200) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + res.content["item"].get<std::string>());
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "卸下装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下装备发生错误: " + e.what());
+    }
 }
 
-// 卸下护甲
-void unequipBodyCallback(const cq::MessageEvent &ev) {
+// 卸下所有指定种类的装备
+void unequipPlayer(const cq::MessageEvent &ev, const std::string &uriName, const std::string &typeName) {
+    try {
+        auto res = bg_http_post("/unequip" + uriName, { MAKE_BG_JSON });
+        if (res.code == 200) {
+            auto items = res.content["items"].get<std::vector<std::string>>();
+            if (items.size() > 0) {
+                std::string msg;
+                for (const auto &item : items) {
+                    if (!item.empty())
+                        msg += item + ", ";
+                }
+                msg.pop_back();                                 // 去掉结尾的 ", "
+                msg.pop_back();
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "已卸下" + msg);
+            }
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "目前没有装备" + typeName + "哦!");
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "卸下所有" + typeName + "发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "卸下所有" + typeName + "发生错误: " + e.what());
+    }
+}
 
+// 卸下头盔
+void unequipHelmetCallback(const cq::MessageEvent &ev) {
+    unequipPlayer(ev, EqiType::armor_helmet);
+}
+
+// 卸下战甲
+void unequipBodyCallback(const cq::MessageEvent &ev) {
+    unequipPlayer(ev, EqiType::armor_body);
 }
 
 // 卸下护腿
 void unequipLegCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::armor_leg);
 }
 
-// 卸下靴子
+// 卸下战靴
 void unequipBootCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::armor_boot);
 }
 
 // 卸下所有护甲
 void unequipArmorCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, "armor", "护甲");
 }
 
 // 卸下主武器
 void unequipPrimaryCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::weapon_primary);
 }
 
 // 卸下副武器
 void unequipSecondaryCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::weapon_secondary);
 }
 
 // 卸下所有武器
 void unequipWeaponCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, "weapon", "武器");
 }
 
 // 卸下耳环
 void unequipEarringsCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::ornament_earrings);
 }
 
 // 卸下戒指
 void unequipRingsCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::ornament_rings);
 }
 
 // 卸下项链
 void unequipNecklaceCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::ornament_necklace);
 }
 
-// 卸下珠宝
+// 卸下宝石
 void unequipJewelryCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, EqiType::ornament_jewelry);
 }
 
 // 卸下所有饰品
 void unequipOrnamentCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, "ornament", "饰品");
 }
 
 // 卸下一次性装备
 void unequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg) {
-
+    try {
+        unequipPlayer(ev, EqiType::single_use, str_to_ll(arg));
+    }
+    catch (...) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "无效的字符串!");
+    }
 }
 
 // 卸下所有装备
 void unequipAllCallback(const cq::MessageEvent &ev) {
-
+    unequipPlayer(ev, "all", "装备");
 }
 
 // 强化装备
 void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg) {
-
+    
 }
 
 // 确认强化
