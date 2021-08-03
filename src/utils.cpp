@@ -7,7 +7,6 @@
 #include "utils.hpp"
 #include <iostream>
 #include <cqcppsdk/cqcppsdk.hpp>
-#include <mutex>
 #include <equipment.hpp>
 
 #ifdef WIN32
@@ -19,10 +18,6 @@
 #define YELLOW  14
 #define WHITE   15
 #endif
-
-// 初始化随机数产生器
-std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-std::mutex mutexRndGen;
 
 void console_log(const std::string &msg, const LogType &type) {
 #ifdef WIN32
@@ -123,4 +118,9 @@ LL str_to_ll(const std::string &str) {
         numStarted = true;
     }
     return std::stoll(str.substr(start, i - start + 1));
+}
+
+std::string eqiType_to_str(const EqiType &type) {
+    const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石", "一次性物品" };
+    return names[static_cast<LL>(type)];
 }

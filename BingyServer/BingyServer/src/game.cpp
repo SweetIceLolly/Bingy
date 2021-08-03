@@ -780,14 +780,13 @@ bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL& upg
         return false;
 
     // 检查是否有装备对应类型的装备
-    LOCK_PLAYERS_LIST;
     if (PLAYER.get_equipments().at(type).id == -1) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NOT_EQUIPPED + std::string(": ") +
             eqiType_to_str(type), BG_ERR_NOT_EQUIPPED);
         return false;
     }
 
-    // 从字符串获取升级次数
+    // 获取升级次数
     try {
         if (upgradeTimes < 1) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_UPGRADE_TIMES, BG_ERR_INVALID_UPGRADE_TIMES);

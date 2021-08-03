@@ -221,9 +221,14 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_ALREADY_REGISTERED, "你已经注册过啦!" },
     { BG_ERR_UNREGISTERED, "要先注册哦! 快发送\"bg 注册\"加入游戏吧!" },
     { BG_ERR_BLACKLISTED, "你被拉黑了!" },
+    { BG_ERR_ALREADY_SIGNED_IN, "你今天已经签到过了哦! 明天再来签到吧!" },
     { BG_ERR_ID_OUT_OF_RANGE, "" },
     { BG_ERR_ID_REPEATED, "" },
     { BG_ERR_NOT_EQUIPPED, "没有装备这个类型的装备哦!" },
-    { BG_ERR_SINGLE_OUT_OF_RANGE, "指定的一次性物品序号超出了范围!" }
+    { BG_ERR_SINGLE_OUT_OF_RANGE, "指定的一次性物品序号超出了范围!" },
+    { BG_ERR_INSUFFICIENT_COINS, "" },
+    { BG_ERR_INVALID_UPGRADE_TIMES, "指定的强化次数无效!" },
+    { BG_ERR_MAX_UPGRADE_TIMES, "不好意思, 一次最多连续强化20次哦!" },
+    { BG_ERR_NO_PENDING_UPGRADE, "" }
 };
 #endif

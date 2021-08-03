@@ -205,7 +205,7 @@ CMD(unequip_all) {
         LL coinsNeeded = 0;                                 /* 需要硬币 */                              \
                                                                                                         \
         if (ev.message.length() < cmdLen) {                 /* 无参数 */                                \
-            upgradeCallback(ev, EqiType::##type##, "");                                                 \
+            upgradeCallback(ev, EqiType::##type##, "1");                                                \
         }                                                                                               \
         else {                                              /* 有参数 */                                \
             auto param = ev.message.substr(cmdLen - 1);                                                 \

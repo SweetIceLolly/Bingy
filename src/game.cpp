@@ -5,6 +5,7 @@
 */
 
 #include <sstream>
+#include <condition_variable>
 #include "game.hpp"
 #include "utils.hpp"
 #include "HTTPRequest.hpp"
@@ -12,7 +13,7 @@
 #include "error_codes.hpp"
 
 // 默认请求超时
-#define DEFAULT_TIMEOUT 50000
+#define DEFAULT_TIMEOUT -1
 
 using namespace nlohmann;
 
@@ -27,9 +28,71 @@ std::string appSecret;
 
 // Bingy 的 HTTP 请求回应
 typedef struct _bg_http_response {
-    int     code;                                 // 状态码
-    json    content;                              // 回应内容
+    int                     code;                       // 状态码
+    json                    content;                    // 回应内容
 } bg_http_response;
+
+// 玩家强化状态
+class player_confirm {
+private:
+    std::mutex              mutexStatus;                // 线程状态锁
+    bool                    upgrading;                  // 玩家是否确认要强化
+    std::condition_variable cvStatusChange;             // 状态发生变化
+    std::condition_variable cvPrevConfirmCompleted;     // 上一次操作是否完成
+
+public:
+    player_confirm() {}
+    player_confirm(const player_confirm &pc) {}
+
+    // 完成多次强化 (确认或者取消)
+    void completeUpgrade(const bool &confirm) {
+        upgrading = confirm;
+        cvStatusChange.notify_one();
+    }
+
+    // 等待强化确认. 如果玩家确认了强化, 就返回 true; 否则返回 false
+    bool waitUpgradeConfirm() {
+        upgrading = false;
+        std::unique_lock lock(this->mutexStatus);
+        cvStatusChange.wait_for(lock, std::chrono::seconds(20));    // 20 秒确认超时
+        cvPrevConfirmCompleted.notify_one();
+        return this->upgrading;
+    }
+
+    // 等待确认完成
+    void waitConfirmComplete() {
+        std::unique_lock lock(this->mutexStatus);
+        cvPrevConfirmCompleted.wait(lock);
+
+        // 不知为什么编译器优化会导致这里出 bug. 于是后面加一些垃圾防止编译器优化
+        console_log("");
+    }
+};
+
+// 玩家强化状态表. 如果玩家在这个表里, 那么玩家有正在进行的多次强化操作
+std::unordered_map<LL, player_confirm> upgradeConfirmList;
+std::mutex lockConfirmList;
+
+// 强化状态表的相关操作
+void confirmAdd(const LL &id) {
+    std::scoped_lock _lock(lockConfirmList);
+    upgradeConfirmList.insert({ id, player_confirm() });
+}
+
+void confirmRemove(const LL &id) {
+    std::scoped_lock _lock(lockConfirmList);
+    upgradeConfirmList.erase(id);
+}
+
+player_confirm& confirmGet(const LL &id) {
+    std::scoped_lock _lock(lockConfirmList);
+    return upgradeConfirmList[id];
+}
+
+bool confirmExists(const LL &id) {
+    std::scoped_lock _lock(lockConfirmList);
+    return upgradeConfirmList.find(id) != upgradeConfirmList.end();
+}
 
 // 进行 POST 请求. 注意: 需要调用方处理异常
 bg_http_response bg_http_post(const std::string &path, const json &body, const int &timeout = DEFAULT_TIMEOUT) {
@@ -229,7 +292,7 @@ void viewPropertiesCallback(const cq::MessageEvent &ev) {
                 << "敏捷: " << GET_EQI_PROP_STR(agi) << "\n"
                 << "体力: " << res.content["energy"].get<LL>() << " 硬币: " << res.content["coins"].get<LL>() << "\n"
                 << "英雄币: " << res.content["heroCoin"].get<LL>();
-            cq::send_group_message(GROUP_ID, bg_at(ev) + msg.str());
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + msg.str());
         }
         else {
             cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看背包发生错误: "));
@@ -439,12 +502,62 @@ void unequipAllCallback(const cq::MessageEvent &ev) {
 
 // 强化装备
 void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg) {
-    
+    try {
+        LL times = str_to_ll(arg);
+        auto res = bg_http_post("/upgrade", { MAKE_BG_JSON, { "type", eqiType }, { "times", times } });
+        if (res.code == 200) {
+            if (res.content.contains("coinsLeft")) {            // 单次强化
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
+                    "次: " + res.content["name"].get<std::string>() + ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币, 还剩" +
+                    std::to_string(res.content["coinsLeft"].get<LL>()) + "硬币");
+            }
+            else {                                              // 多次强化
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "你将要连续强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
+                    "次, 这会花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币。发送\"bg 确认\"继续, 若20秒后没有确认, 则操作取消。");
+
+                // 等待确认
+                if (confirmExists(USER_ID)) {
+                    // 如果玩家当前有进行中的确认, 那么取消掉正在进行的确认, 并等待那个确认退出
+                    confirmGet(USER_ID).completeUpgrade(false);
+                    confirmGet(USER_ID).waitConfirmComplete();
+                    confirmRemove(USER_ID);
+                }
+                confirmAdd(USER_ID);
+                if (upgradeConfirmList.at(USER_ID).waitUpgradeConfirm())
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "成功强化" + eqiType_to_str(eqiType) + std::to_string(times) +
+                        "次, 共花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+                else
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "你取消了连续强化" + eqiType_to_str(eqiType) + std::to_string(times) + "次");
+                confirmRemove(USER_ID);
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "强化装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "强化装备发生错误: " + e.what());
+    }
 }
 
 // 确认强化
 void confirmUpgradeCallback(const cq::MessageEvent &ev) {
-
+    try {
+        if (!confirmExists(USER_ID)) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + BG_ERR_STR_NO_PENDING_UPGRADE);
+            return;
+        }
+        auto res = bg_http_post("/confirm", { MAKE_BG_JSON });
+        if (res.code == 200) {
+            confirmGet(USER_ID).completeUpgrade(true);
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "确认强化装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "确认强化装备发生错误: " + e.what());
+    }
 }
 
 // 查看交易场

@@ -176,75 +176,75 @@ bool bg_get_all_players_from_db() {
             player *p = nullptr;
 
             for (const auto &entry : doc) {
-                if (entry.key() == "id") {
+                if (entry.key().compare("id") == 0) {
                     id = entry.get_int64().value;
                     p = new player(id);
                 }
-                else if (entry.key() == "nickname") {
+                else if (entry.key().compare("nickname") == 0) {
                     p->nickname = entry.get_utf8().value.data();
                     p->nickname_cache = true;
                 }
-                else if (entry.key() == "signInCount") {
+                else if (entry.key().compare("signInCount") == 0) {
                     p->signInCount = entry.get_int64().value;
                     p->signInCount_cache = true;
                 }
-                else if (entry.key() == "signInCountCont") {
+                else if (entry.key().compare("signInCountCont") == 0) {
                     p->signInCountCont = entry.get_int64().value;
                     p->signInCountCont_cache = true;
                 }
-                else if (entry.key() == "lastFight") {
+                else if (entry.key().compare("lastFight") == 0) {
                     p->lastFight = entry.get_int64().value;
                     p->lastFight_cache = true;
                 }
-                else if (entry.key() == "lastSignIn") {
+                else if (entry.key().compare("lastSignIn") == 0) {
                     p->lastSignIn = entry.get_int64().value;
                     p->lastSignIn_cache = true;
                 }
-                else if (entry.key() == "coins") {
+                else if (entry.key().compare("coins") == 0) {
                     p->coins = entry.get_int64().value;
                     p->coins_cache = true;
                 }
-                else if (entry.key() == "heroCoin") {
+                else if (entry.key().compare("heroCoin") == 0) {
                     p->heroCoin = entry.get_int64().value;
                     p->heroCoin_cache = true;
                 }
-                else if (entry.key() == "level") {
+                else if (entry.key().compare("level") == 0) {
                     p->level = entry.get_int64().value;
                     p->level_cache = true;
                 }
-                else if (entry.key() == "blessing") {
+                else if (entry.key().compare("blessing") == 0) {
                     p->blessing = entry.get_int64().value;
                     p->blessing_cache = true;
                 }
-                else if (entry.key() == "energy") {
+                else if (entry.key().compare("energy") == 0) {
                     p->energy = entry.get_int64().value;
                     p->energy_cache = true;
                 }
-                else if (entry.key() == "exp") {
+                else if (entry.key().compare("exp") == 0) {
                     p->exp = entry.get_int64().value;
                     p->exp_cache = true;
                 }
-                else if (entry.key() == "invCapacity") {
+                else if (entry.key().compare("invCapacity") == 0) {
                     p->invCapacity = entry.get_int64().value;
                     p->invCapacity_cache = true;
                 }
-                else if (entry.key() == "vip") {
+                else if (entry.key().compare("vip") == 0) {
                     p->vip = entry.get_int64().value;
                     p->vip_cache = true;
                 }
-                else if (entry.key() == "inventory") {
+                else if (entry.key().compare("inventory") == 0) {
                     invListFromBson(entry, p->inventory);
                     p->inventory_cache = true;
                 }
-                else if (entry.key() == "equipments") {
+                else if (entry.key().compare("equipments") == 0) {
                     eqiMapFromBson(entry, p->equipments);
                     p->equipments_cache = true;
                 }
-                else if (entry.key() == "equipItems") {
+                else if (entry.key().compare("equipItems") == 0) {
                     invListFromBson(entry, p->equipItems);
                     p->equipItems_cache = true;
                 }
-                else if (entry.key() == "buyCount") {
+                else if (entry.key().compare("buyCount") == 0) {
                     // todo
                 }
                 else {
@@ -381,13 +381,13 @@ void invListFromBson(const bsoncxx::document::element &elem, T &container) {
     inventoryData invItem;
     for (const auto &item : tmpArray) {
         for (const auto &entry : item.get_document().view()) {
-            if (entry.key() == "id") {                          // 装备 ID
+            if (entry.key().compare("id") == 0) {                          // 装备 ID
                 invItem.id = entry.get_int64().value;
             }
-            else if (entry.key() == "level") {                  // 装备等级
+            else if (entry.key().compare("level") == 0) {                  // 装备等级
                 invItem.level = entry.get_int64().value;
             }
-            else if (entry.key() == "wear") {                   // 装备磨损度
+            else if (entry.key().compare("wear") == 0) {                   // 装备磨损度
                 invItem.wear = entry.get_int64().value;
             }
             else {
@@ -578,13 +578,13 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
     for (const auto &it : elem.get_document().view()) {
         if (it.type() == bsoncxx::type::k_document) {         // 只处理 object 类型的元素
             for (const auto &entry : it.get_document().view()) {
-                if (entry.key() == "id") {
+                if (entry.key().compare("id") == 0) {
                     invData.id = entry.get_int64().value;
                 }
-                else if (entry.key() == "level") {
+                else if (entry.key().compare("level") == 0) {
                     invData.level = entry.get_int64().value;
                 }
-                else if (entry.key() == "wear") {
+                else if (entry.key().compare("wear") == 0) {
                     invData.wear = entry.get_int64().value;
                 }
                 else {
