@@ -937,7 +937,33 @@ bool preViewTradeCallback(const bgGameHttpReq& bgReq) {
 // 查看交易场
 void postViewTradeCallback(const bgGameHttpReq& bgReq) {
     try {
-        bg_http_reply(bgReq.req, 200, ("{\"items\": " + bg_trade_get_string() + "}").c_str());
+        auto &items = bg_trade_get_items();
+        json content = {};
+
+        for (const auto &[tradeId, data] : items) {
+            if (allEquipments.at(data.item.id).type == EqiType::single_use) {
+                // 一次性商品
+                content.push_back(json{
+                    { "id", tradeId },
+                    { "name", "[" + allEquipments.at(data.item.id).name + "]" },
+                    { "price", data.price },
+                    { "private", data.hasPassword }
+                });
+            }
+            else {
+                // 普通商品
+                content.push_back(json{
+                    { "id", tradeId },
+                    { "name", allEquipments.at(data.item.id).name + "+" + std::to_string(data.item.level) },
+                    { "wear", data.item.wear },
+                    { "originalWear", allEquipments.at(data.item.id).wear },
+                    { "price", data.price },
+                    { "private", data.hasPassword }
+                });
+            }
+        }
+
+        bg_http_reply(bgReq.req, 200, content.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -985,7 +1011,7 @@ bool preBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId, const st
         // 检查是否够钱买
         if (PLAYER.get_coins() < allTradeItems.at(tradeId).price) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
-                std::string(": 还差") + std::to_string(PLAYER.get_coins()) + "硬币",
+                std::string(": 还差") + std::to_string(allTradeItems.at(tradeId).price - PLAYER.get_coins()) + "硬币",
                 BG_ERR_INSUFFICIENT_COINS);
             return false;
         }
@@ -1075,7 +1101,7 @@ bool preSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL&
         std::advance(it, invId);                                                                                    // 获取 ID 对应的背包物品
         LL defPrice = static_cast<LL>(allEquipments.at(it->id).price + 100.0 * (pow(1.6, it->level) - 1) / 0.6);    // 获取该物品的默认出售价格
         if (defPrice / 4 > price || price > defPrice * 10) {
-            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INAPPROPRIATE_PRICE + std::string("价格不可低于出售价格的25% (") +
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INAPPROPRIATE_PRICE + std::string(": 价格不可低于出售价格的百分之25 (") +
                 std::to_string(defPrice / 4) + "), 也不可高于出售价格的十倍 (" + std::to_string(defPrice * 10) + ")",
                 BG_ERR_INAPPROPRIATE_PRICE);
             return false;
@@ -1217,7 +1243,7 @@ void postRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
         else {
             bg_http_reply(bgReq.req, 200, json{
                 { "tradeId", tradeId },
-                { "name", eqi.name + std::to_string(item.item.level) }
+                { "name", eqi.name + "+" + std::to_string(item.item.level) }
             }.dump().c_str());
         }
     }

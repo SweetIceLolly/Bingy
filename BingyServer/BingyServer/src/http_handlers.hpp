@@ -270,7 +270,12 @@ CMD(confirm_upgrade);
  *  groupId: 群号
  *  qq: QQ 号
  * 返回值:
- *  200: 成功, 返回 items, 为交易场内容的字符串
+ *  200: 成功, 返回 items, 为交易场内容的数组, 其中包括:
+ *      id: 交易商品 ID
+ *      name: 物品名字
+ *      wear, originalWear: (当物品为一次性用品时出现) 磨损, 原始磨损
+ *      price: 价格
+ *      private: 是否为私密交易
  *  400: 失败, 详情见返回的 msg 和 errid
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */

@@ -28,7 +28,7 @@ public:
 extern std::map<LL, tradeData>  allTradeItems;      // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
 
 // 获取所有交易场条目
-std::map<LL, tradeData> bg_trade_get_items(const bool &use_cache = true);
+std::map<LL, tradeData>& bg_trade_get_items(const bool &use_cache = true);
 
 // 获取当前的交易 ID
 LL bg_get_tradeId(const bool &use_cache = true);
@@ -47,6 +47,3 @@ bool bg_trade_remove_item(const LL &tradeId);
 
 // 从交易场移除一系列的项目
 bool bg_trade_remove_item(const std::vector<LL> &tradeIdList);
-
-// 获取交易场内容字符串
-std::string bg_trade_get_string(const bool &use_cache = true);

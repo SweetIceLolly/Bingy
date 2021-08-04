@@ -45,7 +45,7 @@ public:
     player_confirm(const player_confirm &pc) {}
 
     // 完成多次强化 (确认或者取消)
-    void completeUpgrade(const bool &confirm) {
+    void completeUpgrade(bool confirm) {
         upgrading = confirm;
         cvStatusChange.notify_one();
     }
@@ -103,7 +103,7 @@ bg_http_response bg_http_post(const std::string &path, const json &body, const i
 }
 
 // 进行 GET 请求. 注意: 需要调用方处理异常
-bg_http_response bg_http_get(const std::string &path, const std::vector<std::pair<std::string, std::string>> params, const int &timeout = DEFAULT_TIMEOUT) {
+bg_http_response bg_http_get(const std::string &path, const std::vector<std::pair<std::string, std::string>> &params, const int &timeout = DEFAULT_TIMEOUT) {
     std::string uri = serverUri + path;
     if (params.size() > 0) {
         uri += "?";
@@ -130,7 +130,7 @@ std::string bg_at(const cq::MessageEvent &ev) {
 }
 
 // 根据错误内容描述生成对应的回应
-std::string bg_get_err_msg(const bg_http_response &res, const std::string strPrefix = "") {
+std::string bg_get_err_msg(const bg_http_response &res, const std::string &strPrefix = "") {
     int errid = res.content["errid"].get<int>();
     auto desc_entry = error_desc.find(errid);
 
@@ -351,7 +351,7 @@ void equipCallback(const cq::MessageEvent &ev, const std::string &arg) {
     try {
         auto res = bg_http_post("/equip", { MAKE_BG_JSON, {"item", str_to_ll(arg) - 1 } });
         if (res.code == 200) {
-            if (res.content.contains("wear")) {
+            if (res.content.find("wear") != res.content.end()) {
                 // 是普通装备
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "成功装备" + res.content["type"].get<std::string>() + ": " +
                     res.content["name"].get<std::string>() + "+" + std::to_string(res.content["level"].get<LL>()) + ", 磨损" +
@@ -506,12 +506,12 @@ void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const s
         LL times = str_to_ll(arg);
         auto res = bg_http_post("/upgrade", { MAKE_BG_JSON, { "type", eqiType }, { "times", times } });
         if (res.code == 200) {
-            if (res.content.contains("coinsLeft")) {            // 单次强化
+            if (res.content.find("coinsLeft") != res.content.end()) {           // 单次强化
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "成功强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
                     "次: " + res.content["name"].get<std::string>() + ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币, 还剩" +
                     std::to_string(res.content["coinsLeft"].get<LL>()) + "硬币");
             }
-            else {                                              // 多次强化
+            else {                                                              // 多次强化
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "你将要连续强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
                     "次, 这会花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币。发送\"bg 确认\"继续, 若20秒后没有确认, 则操作取消。");
 
@@ -562,27 +562,142 @@ void confirmUpgradeCallback(const cq::MessageEvent &ev) {
 
 // 查看交易场
 void viewTradeCallback(const cq::MessageEvent &ev) {
-
+    try {
+        auto res = bg_http_get("/viewtrade", { MAKE_BG_QUERY });
+        if (res.code == 200) {
+            if (res.content.size() > 0) {
+                std::string msg = "---交易物品 (共" + std::to_string(res.content.size()) + "个)---\n";
+                for (const auto &item : res.content) {
+                    msg += "ID" + std::to_string(item["id"].get<LL>()) + ": " + item["name"].get<std::string>();
+                    if (item.find("wear") != item.end())                // 是普通装备则加上磨损
+                        msg += ", " + std::to_string(item["wear"].get<LL>()) + "/" + std::to_string(item["originalWear"].get<LL>());
+                    msg += " $" + std::to_string(item["price"].get<LL>());
+                    if (item["private"].get<bool>())                    // 是私密交易则加上标记
+                        msg += " (私)";
+                    msg += "\n";
+                }
+                msg.pop_back();                                         // 去掉多余的换行符
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "\n" + msg);
+            }
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "目前交易场中没有东西哦!");
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看交易场发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看交易场发生错误: " + e.what());
+    }
 }
 
 // 购买交易场商品
 void buyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
-
+    try {
+        auto res = bg_http_post("/buytrade", {
+            MAKE_BG_JSON,
+            { "tradeId", str_to_ll(args[0]) },
+            { "password", args.size() == 2 ? args[1] : "" }
+        });
+        if (res.code == 200) {
+            if (res.content.find("wear") != res.content.end()) {        // 为普通装备
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功购买装备: " + res.content["name"].get<std::string>() +
+                    ", 磨损度" + std::to_string(res.content["wear"].get<LL>()) + "/" + std::to_string(res.content["originalWear"].get<LL>()) +
+                    ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+            }
+            else {                                                      // 为一次性装备
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功购买一次性物品: " + res.content["name"].get<std::string>() +
+                    ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "购买发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "购买发生错误: " + e.what());
+    }
 }
 
 // 上架交易场商品
 void sellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
-
+    try {
+        bool hasPassword = false;
+        if (args.size() == 3) {
+            if (args[2] == "私")
+                hasPassword = true;
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 上架指令格式为: \"bg 上架 背包序号 价格\"。"
+                    "若要指定为有密码的交易, 则在命令最后加个空格和\"私\"字: \"bg 上架 背包序号 私\"");
+                return;
+            }
+        }
+        auto res = bg_http_post("/selltrade", {
+            MAKE_BG_JSON,
+            { "invId", str_to_ll(args[0]) - 1 },
+            { "price", str_to_ll(args[1]) },
+            { "hasPassword", hasPassword }
+        });
+        if (res.code == 200) {
+            if (hasPassword) {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功上架, 交易ID为" + std::to_string(res.content["tradeId"].get<LL>()) +
+                    ", 收取税款" + std::to_string(res.content["tax"].get<LL>()) + "硬币。交易密码已经通过私聊发给你啦!");
+                cq::send_private_message(USER_ID, "您的ID为" + std::to_string(res.content["tradeId"].get<LL>()) +
+                    "的交易的购买密码为: " + res.content["password"].get<std::string>());
+            }
+            else
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功上架, 交易ID为" + std::to_string(res.content["tradeId"].get<LL>()) +
+                    ", 收取税款" + std::to_string(res.content["tax"].get<LL>()) + "硬币");
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "上架发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "上架发生错误: " + e.what());
+    }
 }
 
 // 下架交易场商品
 void recallTradeCallback(const cq::MessageEvent &ev, const std::string &arg) {
-
+    try {
+        auto res = bg_http_post("/recalltrade", { MAKE_BG_JSON, { "tradeId", str_to_ll(arg) } });
+        if (res.code == 200) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功下架交易" + std::to_string(res.content["tradeId"].get<LL>()) +
+                ": 已把\"" + res.content["name"].get<std::string>() + "\"放回背包, 但税款不予退还哦!");
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "下架发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "下架发生错误: " + e.what());
+    }
 }
 
 // 合成装备
 void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
+    try {
+        std::unordered_set<LL> invList;
+        for (auto it = args.begin(); it != args.end() - 1; ++it) {
+            LL index = str_to_ll(*it);
+            if (index)
+            invItems.insert();
+        }
 
+        auto res = bg_http_post("/synthesis", { MAKE_BG_JSON, { "tradeId", str_to_ll(arg) } });
+        if (res.code == 200) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功下架交易" + std::to_string(res.content["tradeId"].get<LL>()) +
+                ": 已把\"" + res.content["name"].get<std::string>() + "\"放回背包, 但税款不予退还哦!");
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "下架发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "下架发生错误: " + e.what());
+    }
 }
 
 // 挑战副本

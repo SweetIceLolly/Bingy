@@ -33,8 +33,8 @@ bool init_server_router(rest_server &server) {
 
     GET("/viewtrade", bg_cmd_view_trade);
     POST("/buytrade", bg_cmd_buy_trade);
-    POST("/selltrade", bg_cmd_buy_trade);
-    POST("/recalltrade", bg_cmd_buy_trade);
+    POST("/selltrade", bg_cmd_sell_trade);
+    POST("/recalltrade", bg_cmd_recall_trade);
 
     POST("/synthesis", bg_cmd_synthesis);
 

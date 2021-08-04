@@ -66,7 +66,7 @@ inline void free_http_req(http_req *req) {
 
 // HTTP 服务器的 poll 回调函数
 void bg_server_poll(mg_connection *connection, int &ev, mg_http_message *ev_data, void *fn_data) {
-    // 从 connection 所对应的 socket pair 接收消息. 如果接收到完整的 HTTP 响应信息, 则发送给客户端
+    // 从 connection 所对应的共享内存获取消息. 如果检测到 HTTP 响应信息, 则发送给客户端
     if (connection->bg_res_ready == 1) {
         if (connection->bg_res_body == nullptr)
             return;

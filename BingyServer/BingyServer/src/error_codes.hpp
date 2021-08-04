@@ -229,6 +229,14 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_INSUFFICIENT_COINS, "" },
     { BG_ERR_INVALID_UPGRADE_TIMES, "指定的强化次数无效!" },
     { BG_ERR_MAX_UPGRADE_TIMES, "不好意思, 一次最多连续强化20次哦!" },
-    { BG_ERR_NO_PENDING_UPGRADE, "" }
+    { BG_ERR_NO_PENDING_UPGRADE, "" },
+    { BG_ERR_TRADEID_INVALID, "" },
+    { BG_ERR_PASSWORD_REQUIRED, "该交易需要提供密码哦!" },
+    { BG_ERR_PASSWORD_INCORRECT, "交易密码不正确!" },
+    { BG_ERR_PASSWORD_NOT_REQUIRED, "该交易不需要你提供密码哦! 直接购买即可。" },
+    { BG_ERR_INAPPROPRIATE_PRICE, "" },
+    { BG_ERR_CANT_AFFORD_TAX, "" },
+    { BG_ERR_PLAYER_MISMATCH, "看清楚哦! 这个是你上架的装备吗?" },
+    { BG_ERR_INVALID_EQI_ID, "没有找到你要合成的这个 ID 哦! 你可以试下使用装备名称: \"bg 合成 装备名称 背包序号1 背包序号2 ...\"" }
 };
 #endif

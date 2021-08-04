@@ -26,7 +26,7 @@ bool bg_init() {
         console_log("读取配置文件失败!", LogType::error);
         return false;
     }
-    console_log("成功读取配置文件: HTTP服务器地址为 " + serverUri);
+    console_log("成功读取配置文件");
     
     // 注册消息路由
     bg_msgrouter_init();
@@ -153,10 +153,14 @@ inline bool bg_load_config() {
         [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
             // 处理一般配置
             if (state == 0) {
-                if (propName == "server")                                   // 服务器地址
+                if (propName == "server") {                                 // 服务器地址
                     serverUri = propValue;
-                else if (propName == "appid")                               // 应用 ID
+                    console_log("HTTP 服务器地址为 " + propValue);
+                }
+                else if (propName == "appid") {                             // 应用 ID
                     appId = propValue;
+                    console_log("AppId 为 " + propValue);
+                }
                 else if (propName == "secret")                              // 应用密匙
                     appSecret = propValue;
                 else
