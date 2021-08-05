@@ -462,13 +462,14 @@ CMD(synthesis) {
             LL          playerId = params["qq"].get<LL>();
             LL          groupId = params["groupId"].get<LL>();
             std::set<LL, std::greater<LL>> invList = params["invList"].get<std::set<LL, std::greater<LL>>>();
-            LL          targetId = params["targetId"].get<LL>();
+            std::string target = params["target"].get<std::string>();
             LL          coins = 0;
             LL          level = 0;
+            LL          targetId = -1;
 
             if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
                 bgGameHttpReq bgReq = { req, playerId, groupId };
-                if (preSynthesisCallback(bgReq, invList, targetId, coins, level))
+                if (preSynthesisCallback(bgReq, invList, target, targetId, coins, level))
                     postSynthesisCallback(bgReq, invList, targetId, coins, level);
             }
             else

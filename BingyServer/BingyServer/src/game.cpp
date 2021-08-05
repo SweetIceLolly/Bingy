@@ -1256,11 +1256,19 @@ void postRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
 }
 
 // 合成前检查
-bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, const LL& targetId, LL& coins, LL& level) {
+bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, const std::string &target, LL &targetId, LL& coins, LL& level) {
     if (!accountCheck(bgReq))
         return false;
 
     try {
+        // 尝试根据指定的装备 ID 或者名称获取对应的装备
+        try {
+            targetId = str_to_ll(target);
+        }
+        catch (...) {
+            // todo 搜索对应的装备
+        }
+
         // 检查目标装备是否存在
         if (allEquipments.find(targetId) == allEquipments.end()) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_EQI_ID +
@@ -1269,22 +1277,23 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
         }
 
         // 如果只指定了目标装备, 则列出可用的合成
-        if (targetId == -1) {
-            const auto result = allSyntheses.equal_range(targetId);       // 获取可行的合成方案
+        if (invList.empty()) {
+            const auto result = allSyntheses.equal_range(targetId);         // 获取可行的合成方案
             if (std::distance(result.first, result.second) == 0) {          // 没有合成方案
                 bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_CANT_SYNTHESIS +
                     std::string(": ") + allEquipments.at(targetId).name, BG_ERR_CANT_SYNTHESIS);
                 return false;
             }
-            std::string msg = "装备\"" + allEquipments.at(targetId).name + "\"的合成方式:\n";
+
+            std::vector<std::pair<std::vector<std::string>, LL>> methods;
             for (auto it = result.first; it != result.second; ++it) {       // 生成所有合成方案的字串
+                std::vector<std::string> requirements;
                 for (const auto &item : it->second.requirements) {
-                    msg += allEquipments.at(item).name + "+";
+                    requirements.push_back(allEquipments.at(item).name);
                 }
-                msg += "$" + std::to_string(it->second.coins) + "\n";
+                methods.push_back({ requirements, it->second.coins });
             }
-            msg.pop_back();                                                 // 去掉末尾的 '\n'
-            bg_http_reply(bgReq.req, 200, json{ {"method", msg} }.dump().c_str());
+            bg_http_reply(bgReq.req, 200, json{ { "methods", methods }, { "name", allEquipments.at(targetId).name } }.dump().c_str());
             return false;
         }
 

@@ -186,31 +186,27 @@
 #define BG_ERR_STR_PLAYER_MISMATCH                  "上架者并非玩家"
 #define BG_ERR_PLAYER_MISMATCH                      3400
 
-// B.15.b. 500 错误
-#define BG_ERR_STR_ADD_TRADE_FAILED                 "把物品添加到交易场失败"
-#define BG_ERR_ADD_TRADE_FAILED                     3351
-
 // B.16. 合成装备错误
 // B.16.a. 400 错误
 #define BG_ERR_STR_INVALID_EQI_ID                   "指定装备ID无效"
-#define BG_ERR_INVALID_EQI_ID                       3400
+#define BG_ERR_INVALID_EQI_ID                       3500
 
 #define BG_ERR_STR_CANT_SYNTHESIS                   "指定装备不能合成"
-#define BG_ERR_CANT_SYNTHESIS                       3401
+#define BG_ERR_CANT_SYNTHESIS                       3501
 
 #define BG_ERR_STR_SYNTHESIS_NOT_EXIST              "没有指定的合成"
-#define BG_ERR_SYNTHESIS_NOT_EXIST                  3402
+#define BG_ERR_SYNTHESIS_NOT_EXIST                  3502
 
 // B.17. 挑战副本错误
 // B.17.a. 400 错误
 #define BG_ERR_STR_INVALID_DUNGEON                  "无效的副本号"
-#define BG_ERR_INVALID_DUNGEON                      3500
+#define BG_ERR_INVALID_DUNGEON                      3600
 
 #define BG_ERR_STR_NO_ENERGY                        "玩家体力已耗尽"
-#define BG_ERR_NO_ENERGY                            3501
+#define BG_ERR_NO_ENERGY                            3601
 
 #define BG_ERR_STR_IN_CD                            "挑战冷却还没结束"
-#define BG_ERR_IN_CD                                3502
+#define BG_ERR_IN_CD                                3602
 
 // 错误号对应到回应字符串 (适用于 Bingy 客户端代码)
 // 以下宏用来检查是否为 Bingy 客户端
@@ -237,6 +233,8 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_INAPPROPRIATE_PRICE, "" },
     { BG_ERR_CANT_AFFORD_TAX, "" },
     { BG_ERR_PLAYER_MISMATCH, "看清楚哦! 这个是你上架的装备吗?" },
-    { BG_ERR_INVALID_EQI_ID, "没有找到你要合成的这个 ID 哦! 你可以试下使用装备名称: \"bg 合成 装备名称 背包序号1 背包序号2 ...\"" }
+    { BG_ERR_INVALID_EQI_ID, "没有找到你要合成的这个 ID 哦! 你可以试下使用装备名称: \"bg 合成 装备名称 背包序号1 背包序号2 ...\"" },
+    { BG_ERR_CANT_SYNTHESIS, "" },
+    { BG_ERR_SYNTHESIS_NOT_EXIST, "没有这个合成哦! 你可以发送\"bg 合成 装备ID(或名称)\"来查看可用的合成方式。" },
 };
 #endif

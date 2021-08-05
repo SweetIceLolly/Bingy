@@ -57,7 +57,7 @@ bool preSellTradeCallback(const bgGameHttpReq &bgReq, const LL &invId, const LL 
 void postSellTradeCallback(const bgGameHttpReq &bgReq, const LL &invId, const LL &price, const bool &hasPassword);
 bool preRecallTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId);
 void postRecallTradeCallback(const bgGameHttpReq &bgReq, const LL &tradeId);
-bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, LL &coins, LL &level);
+bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const std::string &target, LL &targetId, LL &coins, LL &level);
 void postSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
 bool preFightCallback(const bgGameHttpReq &bgReq, const LL &dungeonLevel);
 void postFightCallback(const bgGameHttpReq &bgReq, const LL &dungeonLevel);

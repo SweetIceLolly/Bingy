@@ -679,24 +679,43 @@ void recallTradeCallback(const cq::MessageEvent &ev, const std::string &arg) {
 // 合成装备
 void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args) {
     try {
-        std::unordered_set<LL> invList;
-        for (auto it = args.begin(); it != args.end() - 1; ++it) {
-            LL index = str_to_ll(*it);
-            if (index)
-            invItems.insert();
+        std::set<LL, std::greater<LL>> invList;
+        for (auto it = args.begin() + 1; it != args.end(); ++it) {
+            LL index = str_to_ll(*it) - 1;
+            if (invList.find(index) == invList.end())
+                invList.insert(index);
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "指定的背包序号重复了: " + std::to_string(index + 1));
+                return;
+            }
         }
 
-        auto res = bg_http_post("/synthesis", { MAKE_BG_JSON, { "tradeId", str_to_ll(arg) } });
+        auto res = bg_http_post("/synthesis", { MAKE_BG_JSON, { "invList", invList }, { "target", args[0] } });
         if (res.code == 200) {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "成功下架交易" + std::to_string(res.content["tradeId"].get<LL>()) +
-                ": 已把\"" + res.content["name"].get<std::string>() + "\"放回背包, 但税款不予退还哦!");
+            if (res.content.find("methods") != res.content.end()) {
+                // 列出可用的合成
+                auto methods = res.content["methods"].get<std::vector<std::pair<std::vector<std::string>, LL>>>();
+                std::string msg = "装备\"" + res.content["name"].get<std::string>() + "\"的合成方式:\n";
+                for (const auto &method : methods) {
+                    for (const auto &material : method.first) {
+                        msg += material + "+";
+                    }
+                    msg += "$" + std::to_string(method.second);
+                }
+                cq::send_group_message(GROUP_ID, msg);
+            }
+            else {
+                // 合成成功
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功合成" +
+                    res.content["name"].get<std::string>() + ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+            }
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "下架发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "合成装备发生错误: "));
         }
     }
     catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "下架发生错误: " + e.what());
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "合成装备发生错误: " + e.what());
     }
 }
 
