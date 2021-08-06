@@ -724,42 +724,128 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
 
 }
 
-// 管理命令: 添加硬币
+// =====================================================================================================
+// 管理指令
+// =====================================================================================================
+
+// type: 属性类型. 0: coins; 1: heroCoin; 2: level; 3: blessing; 4: energy; 5: exp; 6: invCapacity; 7: vip
+// mode: 修改模式. 0 : inc; 1: set
+void adminModifyFieldCallback(const cq::MessageEvent &ev, unsigned char type, unsigned char mode, const std::string &arg) {
+    static const std::string typeName[] = { "coins", "herocoin", "level", "blessing", "energy", "exp", "invcapacity", "vip" };
+    static const std::string typeStr[] = { "硬币", "英雄币", "等级", "祝福", "体力", "经验", "背包容量", "VIP等级" };
+    static const std::string modeStr[] = { "添加", "设置为" };
+
+    try {
+        auto params = str_split(str_trim(arg), ' ');
+        if (params.size() != 2) {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式错误: bg /add(或set)" + typeName[type] + " qq/all 数值");
+            return;
+        }
+
+        LL targetId;
+        try {
+            targetId = qq_parse(params[0]);
+        }
+        catch (...) {
+            if (params[0] == "all")
+                targetId = -1;
+            else {
+                throw std::runtime_error("指定的 QQ 无效");
+            }
+        }
+
+        auto res = bg_http_post("/adminmodifyfield", {
+            MAKE_BG_JSON,
+            { "targetId", targetId },
+            { "type", type },
+            { "mode", mode },
+            { "val", str_to_ll(params[1]) }
+        });
+        if (res.code == 200) {
+            if (res.content.find("count") != res.content.end())
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功为" + std::to_string(res.content["count"].get<LL>()) + "个玩家的" +
+                    typeStr[type] + modeStr[mode] + std::to_string(res.content["val"].get<LL>()));
+            else
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功把玩家" + std::to_string(res.content["player"].get<LL>()) + "的" +
+                    typeStr[type] + modeStr[mode] + std::to_string(res.content["val"].get<LL>()));
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "修改玩家" + typeName[type] + "属性时发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "修改玩家" + typeName[type] + "属性时发生错误: " + e.what());
+    }
+}
+
+// 管理命令: 添加/设置硬币
 ADMIN(AddCoins) {
-
+    adminModifyFieldCallback(ev, 0, 0, arg);
 }
 
-// 管理命令: 添加英雄币
+ADMIN(SetCoins) {
+    adminModifyFieldCallback(ev, 0, 1, arg);
+}
+
+// 管理命令: 添加/设置英雄币
 ADMIN(AddHeroCoin) {
-
+    adminModifyFieldCallback(ev, 1, 0, arg);
 }
 
-// 管理命令: 添加玩家等级
+ADMIN(SetHeroCoin) {
+    adminModifyFieldCallback(ev, 1, 1, arg);
+}
+
+// 管理命令: 添加/设置玩家等级
 ADMIN(AddLevel) {
-
+    adminModifyFieldCallback(ev, 2, 0, arg);
 }
 
-// 管理命令: 添加玩家祝福
+ADMIN(SetLevel) {
+    adminModifyFieldCallback(ev, 2, 1, arg);
+}
+
+// 管理命令: 添加/设置玩家祝福
 ADMIN(AddBlessing) {
-
+    adminModifyFieldCallback(ev, 3, 0, arg);
 }
 
-// 管理命令: 添加体力
+ADMIN(SetBlessing) {
+    adminModifyFieldCallback(ev, 3, 1, arg);
+}
+
+// 管理命令: 添加/设置体力
 ADMIN(AddEnergy) {
-
+    adminModifyFieldCallback(ev, 4, 0, arg);
 }
 
-// 管理命令: 添加经验
+ADMIN(SetEnergy) {
+    adminModifyFieldCallback(ev, 4, 1, arg);
+}
+
+// 管理命令: 添加/设置经验
 ADMIN(AddExp) {
-
+    adminModifyFieldCallback(ev, 5, 0, arg);
 }
 
-// 管理命令: 添加硬币
+ADMIN(SetExp) {
+    adminModifyFieldCallback(ev, 5, 1, arg);
+}
+
+// 管理命令: 添加/设置背包容量
 ADMIN(AddInvCapacity) {
-
+    adminModifyFieldCallback(ev, 6, 0, arg);
 }
 
-// 管理命令: 添加 VIP 等级
-ADMIN(AddVip) {
+ADMIN(SetInvCapacity) {
+    adminModifyFieldCallback(ev, 6, 1, arg);
+}
 
+// 管理命令: 添加/设置 VIP 等级
+ADMIN(AddVip) {
+    adminModifyFieldCallback(ev, 7, 0, arg);
+}
+
+ADMIN(SetVip) {
+    adminModifyFieldCallback(ev, 7, 1, arg);
 }

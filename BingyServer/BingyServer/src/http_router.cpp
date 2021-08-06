@@ -38,5 +38,7 @@ bool init_server_router(rest_server &server) {
 
     POST("/synthesis", bg_cmd_synthesis);
 
+    POST("/adminmodifyfield", bg_cmd_admin_modify_field);
+
     return true;
 }

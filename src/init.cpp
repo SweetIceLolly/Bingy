@@ -133,6 +133,14 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg /addexp", bg_cmd_admin_add_exp);
     bg_groupmsg_router_add("bg /addinvcapacity", bg_cmd_admin_add_invCapacity);
     bg_groupmsg_router_add("bg /addvip", bg_cmd_admin_add_vip);
+    bg_groupmsg_router_add("bg /setcoins", bg_cmd_admin_set_coins);
+    bg_groupmsg_router_add("bg /setherocoin", bg_cmd_admin_set_heroCoin);
+    bg_groupmsg_router_add("bg /setlevel", bg_cmd_admin_set_level);
+    bg_groupmsg_router_add("bg /setblessing", bg_cmd_admin_set_blessing);
+    bg_groupmsg_router_add("bg /setenergy", bg_cmd_admin_set_energy);
+    bg_groupmsg_router_add("bg /setexp", bg_cmd_admin_set_exp);
+    bg_groupmsg_router_add("bg /setinvcapacity", bg_cmd_admin_set_invCapacity);
+    bg_groupmsg_router_add("bg /setvip", bg_cmd_admin_set_vip);
 
     // 注册私聊相关命令
 

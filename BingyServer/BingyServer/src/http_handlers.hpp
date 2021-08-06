@@ -364,3 +364,44 @@ CMD(recall_trade);
  *  500: 内部错误, 详情见返回的 msg 和 errid
  */
 CMD(synthesis);
+
+/**
+ * 挑战副本
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  id: 副本号
+ * 返回值:
+ *  200: 成功, 返回:
+ *      fight: 回合详情
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(fight);
+
+/**
+ * 管理员修改玩家属性
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  targetId: 目标玩家 (-1 (全部玩家) 或者 QQ 号)
+ *  type: 属性类型. 0: coins; 1: heroCoin; 2: level; 3: blessing; 4: energy; 5: exp; 6: invCapacity; 7: vip
+ *  mode: 修改模式. 0: inc; 1: set
+ *  val: 修改的数值
+ * 返回值:
+ *  200: 成功, 返回:
+ *      count: (当目标玩家为全体时出现) 玩家数量
+ *      player: (当目标玩家为指定玩家时出现) 目标玩家
+ *      val: 修改数值
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+*/
+CMD(admin_modify_field);

@@ -10,8 +10,10 @@
 
 #define LOCK_CURR_PLAYER std::scoped_lock<std::mutex> __lock(this->mutexPlayer);
 
-std::unordered_map<LL, player>  allPlayers;         // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+std::unordered_map<LL, player>  allPlayers;         // 注意: 无论读写都必须加锁
 std::mutex                      mutexAllPlayers;
+std::unordered_set<LL>          allAdmins;
+std::unordered_set<LL>          blacklist;
 
 template <typename T> void invListFromBson(const bsoncxx::document::element &elem, T &container);
 void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<EqiType, inventoryData> &container);
@@ -80,12 +82,6 @@ player::player(const LL &qq) {
 
 // --------------------------------------------------
 // 玩家操作函数
-
-// 检查玩家是否存在
-bool bg_player_exist(const LL &id) {
-    LOCK_PLAYERS_LIST;
-    return allPlayers.end() != allPlayers.find(id);
-}
 
 // 懒人宏
 // 把玩家属性中 LL 类型的数据设置为0, 并把对应的缓存标识设置为 true
@@ -157,7 +153,7 @@ bool bg_player_add(const LL &id) {
     p.equipments[EqiType::ornament_jewelry] = { -1, -1, -1 };
     p.equipments_cache = true;
 
-    LOCK_PLAYERS_LIST;
+    std::scoped_lock<std::mutex> _lock(mutexAllPlayers);
     if (!dbInsertDocument(DB_COLL_USERDATA, doc))
         return false;
     allPlayers.insert(std::make_pair(id, p));
@@ -170,8 +166,7 @@ bool bg_get_all_players_from_db() {
     LL id = 0;
 
     try {
-        LOCK_PLAYERS_LIST;
-
+        std::scoped_lock<std::mutex> lock(mutexAllPlayers);
         for (const auto &doc : dbFindAll(DB_COLL_USERDATA)) {
             player *p = nullptr;
 
@@ -954,10 +949,10 @@ void player::waitConfirmComplete() {
 
 // 懒人宏
 // 为所有玩家的指定属性增加指定数值
-#define ALL_PLAYER_INC(field)                                           \
+#define ALL_PLAYER_MODIFY(field)                                        \
     bool bg_all_player_inc_ ##field (const LL &val) {                   \
         /* 更新数据库, 成功后再更新本地缓存 */                            \
-        LOCK_PLAYERS_LIST;                                              \
+        std::scoped_lock<std::mutex> _lock(mutexAllPlayers);            \
         if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
             bsoncxx::builder::stream::document{} << #field << val       \
             << bsoncxx::builder::stream::finalize)) {                   \
@@ -978,13 +973,32 @@ void player::waitConfirmComplete() {
             return true;                                                \
         }                                                               \
         return false;                                                   \
+    }                                                                   \
+                                                                        \
+    bool bg_all_player_set_ ##field (const LL &val) {                   \
+        /* 更新数据库, 成功后再更新本地缓存 */                            \
+        std::scoped_lock<std::mutex> _lock(mutexAllPlayers);            \
+        if (dbUpdateAll(DB_COLL_USERDATA, "$set",                       \
+            bsoncxx::builder::stream::document{} << #field << val       \
+            << bsoncxx::builder::stream::finalize)) {                   \
+                                                                        \
+            /* 为所有玩家修改硬币 */                                     \
+            for (auto &p : allPlayers) {                                \
+                std::unique_lock lock(p.second.mutexPlayer);            \
+                p.second. field = val;                                  \
+                p.second. field## _cache = true;                        \
+                lock.unlock();                                          \
+            }                                                           \
+            return true;                                                \
+        }                                                               \
+        return false;                                                   \
     }
 
-ALL_PLAYER_INC(coins);
-ALL_PLAYER_INC(heroCoin);
-ALL_PLAYER_INC(level);
-ALL_PLAYER_INC(blessing);
-ALL_PLAYER_INC(energy);
-ALL_PLAYER_INC(exp);
-ALL_PLAYER_INC(invCapacity);
-ALL_PLAYER_INC(vip);
+ALL_PLAYER_MODIFY(coins);
+ALL_PLAYER_MODIFY(heroCoin);
+ALL_PLAYER_MODIFY(level);
+ALL_PLAYER_MODIFY(blessing);
+ALL_PLAYER_MODIFY(energy);
+ALL_PLAYER_MODIFY(exp);
+ALL_PLAYER_MODIFY(invCapacity);
+ALL_PLAYER_MODIFY(vip);

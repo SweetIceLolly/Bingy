@@ -308,21 +308,30 @@ CMD(synthesis) {
 
 // 懒人宏
 // 定义为指定玩家添加指定属性数值的管理指令
-#define CMD_ADMIN_INC_FIELD(funcName, commandStr, fieldStr, callbackFuncName)                               \
-    CMD(admin_add_##funcName##) {                                                                           \
-        if (ev.message.length() < sizeof(commandStr)) {                                                     \
-            cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式: " commandStr " qq/all " fieldStr "数");  \
-            return;                                                                                         \
-        }                                                                                                   \
-        auto param = ev.message.substr(sizeof(commandStr) - 1);                                             \
-        adminAdd##callbackFuncName##Callback(ev, param);                                                    \
+#define CMD_ADMIN_MODIFY_FIELD(funcName, commandStr, fieldStr, callbackFuncName)                                    \
+    CMD(admin_add_##funcName##) {                                                                                   \
+        if (ev.message.length() < sizeof("bg /add" commandStr)) {                                                   \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式: bg /add" commandStr " qq/all " fieldStr "值");   \
+            return;                                                                                                 \
+        }                                                                                                           \
+        auto param = ev.message.substr(sizeof("bg /add" commandStr) - 1);                                           \
+        adminAdd##callbackFuncName##Callback(ev, param);                                                            \
+    }                                                                                                               \
+                                                                                                                    \
+    CMD(admin_set_##funcName##) {                                                                                   \
+        if (ev.message.length() < sizeof("bg /set" commandStr)) {                                                   \
+            cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式: bg /set" commandStr " qq/all " fieldStr "数");   \
+            return;                                                                                                 \
+        }                                                                                                           \
+        auto param = ev.message.substr(sizeof("bg /set" commandStr) - 1);                                           \
+        adminSet##callbackFuncName##Callback(ev, param);                                                            \
     }
 
-CMD_ADMIN_INC_FIELD(coins, "bg /addcoins", "硬币", Coins);
-CMD_ADMIN_INC_FIELD(heroCoin, "bg /addherocoin", "英雄币", HeroCoin);
-CMD_ADMIN_INC_FIELD(level, "bg /addlevel", "等级", Level);
-CMD_ADMIN_INC_FIELD(blessing, "bg /addblessing", "祝福", Blessing);
-CMD_ADMIN_INC_FIELD(energy, "bg /addenergy", "体力", Energy);
-CMD_ADMIN_INC_FIELD(exp, "bg /addexp", "经验", Exp);
-CMD_ADMIN_INC_FIELD(invCapacity, "bg /addinvcapacity", "背包容量", InvCapacity);
-CMD_ADMIN_INC_FIELD(vip, "bg /addvip", "VIP等级", Vip);
+CMD_ADMIN_MODIFY_FIELD(coins, "coins", "硬币", Coins);
+CMD_ADMIN_MODIFY_FIELD(heroCoin, "herocoin", "英雄币", HeroCoin);
+CMD_ADMIN_MODIFY_FIELD(level, "level", "等级", Level);
+CMD_ADMIN_MODIFY_FIELD(blessing, "blessing", "祝福", Blessing);
+CMD_ADMIN_MODIFY_FIELD(energy, "energy", "体力", Energy);
+CMD_ADMIN_MODIFY_FIELD(exp, "exp", "经验", Exp);
+CMD_ADMIN_MODIFY_FIELD(invCapacity, "invcapacity", "背包容量", InvCapacity);
+CMD_ADMIN_MODIFY_FIELD(vip, "vip", "VIP等级", Vip);

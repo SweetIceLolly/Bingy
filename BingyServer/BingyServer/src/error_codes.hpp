@@ -36,6 +36,9 @@
 #define BG_ERR_STR_BLACKLISTED                      "玩家在黑名单中"
 #define BG_ERR_BLACKLISTED                          2001
 
+#define BG_ERR_STR_NOT_ADMIN                        "非管理员不得使用管理指令"
+#define BG_ERR_NOT_ADMIN                            2002
+
 // B-2. 新玩家注册错误
 // B-2-a. 400 错误
 #define BG_ERR_STR_ALREADY_REGISTERED               "玩家重复注册"
@@ -207,6 +210,14 @@
 
 #define BG_ERR_STR_IN_CD                            "挑战冷却还没结束"
 #define BG_ERR_IN_CD                                3602
+
+// B.18. 管理员修改玩家属性值错误
+// B.18.a. 400 错误
+#define BG_ERR_STR_INVALID_ADMIN_REQUEST            "无效的管理指令调用"
+#define BG_ERR_INVALID_ADMIN_REQUEST                3700
+
+#define BG_ERR_STR_INVALID_TARGET                   "指定的目标玩家不存在"
+#define BG_ERR_INVALID_TARGET                       3701
 
 // 错误号对应到回应字符串 (适用于 Bingy 客户端代码)
 // 以下宏用来检查是否为 Bingy 客户端

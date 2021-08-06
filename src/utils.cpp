@@ -95,7 +95,7 @@ void str_lcase(std::string &str) {
 LL qq_parse(const std::string &str) {
     if (str[0] == '[') {
         if (str.length() < 11)
-            throw std::exception("无效的 at 指令");
+            throw std::runtime_error("无效的 at 指令");
         else
             return std::stoll(str.substr(10));
     }
@@ -113,7 +113,7 @@ LL str_to_ll(const std::string &str) {
             if (str[i] == '-' && !numStarted)
                 continue;
             else
-                throw std::exception("无效的字符串");
+                throw std::runtime_error("无效的字符串");
         }
         numStarted = true;
     }

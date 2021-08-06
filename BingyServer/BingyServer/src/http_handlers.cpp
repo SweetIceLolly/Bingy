@@ -86,7 +86,7 @@ inline std::function<void(void*)> make_bg_post_handler(
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -149,7 +149,7 @@ std::function<void(void *)> make_bg_post_handler_param(
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -246,7 +246,7 @@ CMD(unequip) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -324,7 +324,7 @@ CMD(upgrade) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -377,7 +377,7 @@ CMD(buy_trade) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -399,7 +399,7 @@ CMD(buy_trade) {
 
         free_http_req(req);
     };
-    threadPool.addDetachedJob(thread_pool_job(handler, req));
+    threadPool.addJob(thread_pool_job(handler, req));
 }
 
 // 上架交易场商品
@@ -412,7 +412,7 @@ CMD(sell_trade) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -435,7 +435,7 @@ CMD(sell_trade) {
 
         free_http_req(req);
     };
-    threadPool.addDetachedJob(thread_pool_job(handler, req));
+    threadPool.addJob(thread_pool_job(handler, req));
 }
 
 // 下架交易场商品
@@ -456,7 +456,7 @@ CMD(synthesis) {
         http_req *req = static_cast<http_req *>(_req);
 
         try {
-            auto params = json::parse(req->body);
+            auto        params = json::parse(req->body);
             std::string appid = params["appid"].get<std::string>();
             std::string secret = params["secret"].get<std::string>();
             LL          playerId = params["qq"].get<LL>();
@@ -481,5 +481,42 @@ CMD(synthesis) {
 
         free_http_req(req);
     };
-    threadPool.addDetachedJob(thread_pool_job(handler, req));
+    threadPool.addJob(thread_pool_job(handler, req));
+}
+
+// 管理命令: 为玩家修改属性值
+CMD(admin_modify_field) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto        params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            auto        fieldType = params["type"].get<unsigned char>();
+            auto        mode = params["mode"].get<unsigned char>();
+            LL          targetId = params["targetId"].get<LL>();
+            LL          val = params["val"].get<LL>();
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preAdminModifyFieldCallback(bgReq, fieldType, mode, targetId, val))
+                    postAdminModifyFieldCallback(bgReq, fieldType, mode, targetId, val);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addJob(thread_pool_job(handler, req));
 }

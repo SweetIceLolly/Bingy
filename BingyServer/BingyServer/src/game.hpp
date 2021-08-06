@@ -18,9 +18,6 @@ typedef struct _bgGameHttpReq {
     LL          groupId;        // 群号
 } bgGameHttpReq;
 
-extern std::unordered_set<LL>   allAdmins;
-extern std::unordered_set<LL>   blacklist;
-
 bool accountCheck(const bgGameHttpReq &req);
 
 // 懒人宏
@@ -61,3 +58,5 @@ bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::gr
 void postSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const LL &targetId, const LL &coins, const LL &level);
 bool preFightCallback(const bgGameHttpReq &bgReq, const LL &dungeonLevel);
 void postFightCallback(const bgGameHttpReq &bgReq, const LL &dungeonLevel);
+bool preAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, const LL &targetId, const LL &val);
+void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, const LL &targetId, const LL &val);

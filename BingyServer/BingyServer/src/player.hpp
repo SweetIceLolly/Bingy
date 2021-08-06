@@ -8,6 +8,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <condition_variable>
 #include <list>
@@ -23,12 +24,6 @@
     LL get_ ##propName (const bool &use_cache = true);          \
     bool set_ ##propName (const LL &val);                       \
     bool inc_ ##propName (const LL &val);                       \
-
-// 玩家列表锁, 防止出现一条线程添加玩家, 另一条线程读取玩家的情况
-#define LOCK_PLAYERS_LIST std::unique_lock _all_players_lock(mutexAllPlayers);
-
-// 解锁玩家列表锁
-#define UNLOCK_PLAYERS_LIST _all_players_lock.unlock();
 
 using LL = std::int64_t;
 
@@ -172,12 +167,37 @@ public:
     void waitConfirmComplete();
 };
 
-extern std::unordered_map<std::int64_t, player>     allPlayers;
-extern std::mutex                                   mutexAllPlayers;
+extern std::unordered_map<LL, player>   allPlayers;
+extern std::mutex                       mutexAllPlayers;
+extern std::unordered_set<LL>           allAdmins;
+extern std::unordered_set<LL>           blacklist;
 
-bool bg_player_exist(const LL &id);
 bool bg_player_add(const LL &id);
 bool bg_get_all_players_from_db();
+
+// 检查玩家是否存在
+inline bool bg_player_exist(const LL &id) {
+    std::scoped_lock _lock(mutexAllPlayers);
+    return allPlayers.end() != allPlayers.find(id);
+}
+
+// 检查玩家是否为管理员
+inline bool bg_is_admin(const LL &id) {
+    return allAdmins.end() != allAdmins.find(id);
+}
+
+// 从玩家列表中获取玩家
+inline auto& bg_player_get(const LL &id) {
+    std::unique_lock _lock(mutexAllPlayers);
+    return allPlayers[id];
+    _lock.unlock();
+}
+
+// 获取玩家数量
+inline size_t bg_player_get_count() {
+    std::scoped_lock _lock(mutexAllPlayers);
+    return allPlayers.size();
+}
 
 bool bg_all_player_inc_coins(const LL &val);
 bool bg_all_player_inc_heroCoin(const LL &val);
@@ -187,3 +207,11 @@ bool bg_all_player_inc_energy(const LL &val);
 bool bg_all_player_inc_exp(const LL &val);
 bool bg_all_player_inc_invCapacity(const LL &val);
 bool bg_all_player_inc_vip(const LL &val);
+bool bg_all_player_set_coins(const LL &val);
+bool bg_all_player_set_heroCoin(const LL &val);
+bool bg_all_player_set_level(const LL &val);
+bool bg_all_player_set_blessing(const LL &val);
+bool bg_all_player_set_energy(const LL &val);
+bool bg_all_player_set_exp(const LL &val);
+bool bg_all_player_set_invCapacity(const LL &val);
+bool bg_all_player_set_vip(const LL &val);
