@@ -16,6 +16,11 @@
 #include "error_codes.hpp"
 #include "json.hpp"
 #include "utils.hpp"
+#include "fight.hpp"
+
+#ifdef _WIN32
+#undef max
+#endif
 
 using namespace nlohmann;
 
@@ -144,7 +149,7 @@ void postSignInCallback(const bgGameHttpReq &bgReq) {
         std::string eventMsg = "";                              // 活动消息
         std::vector<LL> eventItems;                             // 活动赠送物品
         bg_match_sign_in_event(now, deltaCoins, deltaEnergy, eventItems, eventMsg);
-        for (const auto &item : eventItems) {       // 为玩家添加物品
+        for (const auto &item : eventItems) {                   // 为玩家添加物品
             inventoryData itemData;
             itemData.id = item;
             itemData.level = 0;
@@ -161,6 +166,9 @@ void postSignInCallback(const bgGameHttpReq &bgReq) {
             errors.push_back({ BG_ERR_STR_INC_ENERGY_FAILED , BG_ERR_INC_ENERGY_FAILED });
         }
         if (!PLAYER.inc_exp(deltaExp)) {
+            errors.push_back({ BG_ERR_STR_INC_EXP_FAILED , BG_ERR_INC_EXP_FAILED });
+        }
+        if (!PLAYER.check_exp_upgrade()) {
             errors.push_back({ BG_ERR_STR_INC_EXP_FAILED , BG_ERR_INC_EXP_FAILED });
         }
 
@@ -306,33 +314,35 @@ bool preViewPropertiesCallback(const bgGameHttpReq& bgReq) {
 
 // 懒人宏
 // 获取某个属性的 JSON 字段
-#define GET_EQI_PROP_STR(prop)                                                                          \
-    {                                                                                                   \
-        #prop, {                                                                                        \
-            { "total",                                                 /* 最终值 */                     \
-                bg_player_get(id).get_ ##prop()                                                         \
-            },                                                                                          \
-            { "weapons",                                               /* 武器属性总和 */                \
-                bg_player_get(id).get_equipments().at(EqiType::weapon_primary).calc_ ##prop() +         \
-                bg_player_get(id).get_equipments().at(EqiType::weapon_secondary).calc_ ##prop()         \
-            },                                                                                          \
-            { "armors",                                                /* 护甲属性总和 */                \
-                bg_player_get(id).get_equipments().at(EqiType::armor_helmet).calc_ ##prop() +           \
-                bg_player_get(id).get_equipments().at(EqiType::armor_body).calc_ ##prop () +            \
-                bg_player_get(id).get_equipments().at(EqiType::armor_leg).calc_ ##prop () +             \
-                bg_player_get(id).get_equipments().at(EqiType::armor_boot).calc_ ##prop ()              \
-            },                                                                                          \
-            { "ornaments",                                             /* 饰品属性总和 */                \
-                bg_player_get(id).get_equipments().at(EqiType::ornament_earrings).calc_ ##prop() +      \
-                bg_player_get(id).get_equipments().at(EqiType::ornament_rings).calc_ ##prop () +        \
-                bg_player_get(id).get_equipments().at(EqiType::ornament_necklace).calc_ ##prop () +     \
-                bg_player_get(id).get_equipments().at(EqiType::ornament_jewelry).calc_ ##prop ()        \
-            }                                                                                           \
-        }                                                                                               \
+#define GET_EQI_PROP_STR(prop)                                                  \
+    {                                                                           \
+        #prop, {                                                                \
+            { "total",                                  /* 最终值 */            \
+                bg_player_get(id).get_ ##prop()                                 \
+            },                                                                  \
+            { "weapons",                                /* 武器属性总和 */       \
+                equipments.at(EqiType::weapon_primary).calc_ ##prop() +         \
+                equipments.at(EqiType::weapon_secondary).calc_ ##prop()         \
+            },                                                                  \
+            { "armors",                                 /* 护甲属性总和 */       \
+                equipments.at(EqiType::armor_helmet).calc_ ##prop() +           \
+                equipments.at(EqiType::armor_body).calc_ ##prop () +            \
+                equipments.at(EqiType::armor_leg).calc_ ##prop () +             \
+                equipments.at(EqiType::armor_boot).calc_ ##prop ()              \
+            },                                                                  \
+            { "ornaments",                              /* 饰品属性总和 */       \
+                equipments.at(EqiType::ornament_earrings).calc_ ##prop() +      \
+                equipments.at(EqiType::ornament_rings).calc_ ##prop () +        \
+                equipments.at(EqiType::ornament_necklace).calc_ ##prop () +     \
+                equipments.at(EqiType::ornament_jewelry).calc_ ##prop ()        \
+            }                                                                   \
+        }                                                                       \
     }
 
 // 通用查看属性函数
 std::string getPropertiesStr(const LL &id) {
+    auto equipments = bg_player_get(id).get_equipments();
+
     return json {
         { "qq", id },
         { "level", bg_player_get(id).get_level() },
@@ -400,7 +410,7 @@ std::string getEquipmentsStr(const LL &id) {
         singleUseItems.push_back(allEquipments.at(item.id).name);
     }
 
-    return json{
+    return json {
         GET_EQI_STR(armor_helmet),
         GET_EQI_STR(armor_body),
         GET_EQI_STR(armor_leg),
@@ -572,7 +582,7 @@ void postUnequipCallback(const bgGameHttpReq& bgReq, const EqiType& type) {
     try {
         PLAYER.resetCache();                                            // 重算玩家属性
         auto rtn = unequipPlayer(bgReq.playerId, type);
-        bg_http_reply(bgReq.req, 200, json{ { "item", rtn } }.dump().c_str());
+        bg_http_reply(bgReq.req, 200, json { { "item", rtn } }.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -591,7 +601,7 @@ bool preUnequipWeaponCallback(const bgGameHttpReq& bgReq) {
 void postUnequipWeaponCallback(const bgGameHttpReq& bgReq) {
     try {
         PLAYER.resetCache();                                            // 重算玩家属性
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "items", UnequipMultiple(
                 bgReq.playerId,
                 EqiType::weapon_primary,
@@ -617,7 +627,7 @@ bool preUnequipArmorCallback(const bgGameHttpReq& bgReq) {
 void postUnequipArmorCallback(const bgGameHttpReq& bgReq) {
     try {
         PLAYER.resetCache();                                            // 重算玩家属性
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "items", UnequipMultiple(
                 bgReq.playerId,
                 EqiType::armor_body,
@@ -645,7 +655,7 @@ bool preUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
 void postUnequipOrnamentCallback(const bgGameHttpReq& bgReq) {
     try {
         PLAYER.resetCache();                                            // 重算玩家属性
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "items", UnequipMultiple(
                 bgReq.playerId,
                 EqiType::ornament_earrings,
@@ -738,7 +748,7 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SINGLE_ADD_FAILED, BG_ERR_SINGLE_ADD_FAILED);
             return;
         }
-        bg_http_reply(bgReq.req, 200, json{ { "item", allEquipments.at(it->id).name} }.dump().c_str());
+        bg_http_reply(bgReq.req, 200, json { { "item", allEquipments.at(it->id).name} }.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -866,7 +876,7 @@ void postUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, const 
         }
 
         // 发送确认消息
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "times", upgradeTimes },
             { "name", allEquipments.at(currItem.id).name + "+" + std::to_string(currItem.level) },
             { "coins", coinsNeeded },
@@ -913,7 +923,7 @@ void postViewTradeCallback(const bgGameHttpReq& bgReq) {
         for (const auto &[tradeId, data] : items) {
             if (allEquipments.at(data.item.id).type == EqiType::single_use) {
                 // 一次性商品
-                content.push_back(json{
+                content.push_back(json {
                     { "id", tradeId },
                     { "name", "[" + allEquipments.at(data.item.id).name + "]" },
                     { "price", data.price },
@@ -922,7 +932,7 @@ void postViewTradeCallback(const bgGameHttpReq& bgReq) {
             }
             else {
                 // 普通商品
-                content.push_back(json{
+                content.push_back(json {
                     { "id", tradeId },
                     { "name", allEquipments.at(data.item.id).name + "+" + std::to_string(data.item.level) },
                     { "wear", data.item.wear },
@@ -1028,13 +1038,13 @@ void postBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
 
         // 按照装备类型发送购买成功消息
         if (allEquipments.at(item.item.id).type == EqiType::single_use) {
-            bg_http_reply(bgReq.req, 200, json{
+            bg_http_reply(bgReq.req, 200, json {
                 { "name", allEquipments.at(item.item.id).name },
                 { "coins", item.price }
             }.dump().c_str());
         }
         else {
-            bg_http_reply(bgReq.req, 200, json{
+            bg_http_reply(bgReq.req, 200, json {
                 { "name", allEquipments.at(item.item.id).name + "+" + std::to_string(item.item.level) },
                 { "wear", item.item.wear },
                 { "originalWear", allEquipments.at(item.item.id).wear },
@@ -1144,7 +1154,7 @@ void postSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL
         }
 
         // 发送消息
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "tradeId", item.tradeId },
             { "tax", tax },
             { "password", password }
@@ -1205,13 +1215,13 @@ void postRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
 
         const auto& eqi = allEquipments.at(item.item.id);
         if (eqi.type == EqiType::single_use) {
-            bg_http_reply(bgReq.req, 200, json{
+            bg_http_reply(bgReq.req, 200, json {
                 { "tradeId", tradeId },
                 { "name", eqi.name }
             }.dump().c_str());
         }
         else {
-            bg_http_reply(bgReq.req, 200, json{
+            bg_http_reply(bgReq.req, 200, json {
                 { "tradeId", tradeId },
                 { "name", eqi.name + "+" + std::to_string(item.item.level) }
             }.dump().c_str());
@@ -1263,7 +1273,7 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
                 }
                 methods.push_back({ requirements, it->second.coins });
             }
-            bg_http_reply(bgReq.req, 200, json{ { "methods", methods }, { "name", allEquipments.at(targetId).name } }.dump().c_str());
+            bg_http_reply(bgReq.req, 200, json { { "methods", methods }, { "name", allEquipments.at(targetId).name } }.dump().c_str());
             return false;
         }
 
@@ -1338,27 +1348,28 @@ void postSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::g
             return;
         }
 
-        bg_http_reply(bgReq.req, 200, json{
+        bg_http_reply(bgReq.req, 200, json {
             { "name", allEquipments.at(targetId).name + "+" + std::to_string(level) },
             { "coins", coins }
         }.dump().c_str());
     }
     catch (const std::exception &e) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
     }
     catch (...) {
-        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
     }
 }
 
 // 挑战副本前检查
-bool preFightCallback(const bgGameHttpReq& bgReq, const LL& dungeonLevel) {
+bool preFightCallback(const bgGameHttpReq& bgReq, const std::string&levelName, LL &levelId) {
     if (!accountCheck(bgReq))
         return false;
 
     try {
         // 检查等级是否有效
-        if (allDungeons.find(dungeonLevel) == allDungeons.end()) {
+        levelId = str_to_ll(levelName);
+        if (allDungeons.find(levelId) == allDungeons.end()) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_DUNGEON, BG_ERR_INVALID_DUNGEON);
             return false;
         }
@@ -1389,8 +1400,87 @@ bool preFightCallback(const bgGameHttpReq& bgReq, const LL& dungeonLevel) {
 }
 
 // 挑战副本
-void postFightCallback(const bgGameHttpReq& bgReq, const LL& dungeonLevel) {
-    bg_http_reply(bgReq.req, 200, std::to_string(dungeonLevel).c_str());
+void postFightCallback(const bgGameHttpReq& bgReq, const LL& levelId) {
+    try {
+        // 从副本抽取一个怪物
+        LL monsterId = allDungeons[levelId].monstersDraw.draw();
+        monsterData &monster = allMonsters[monsterId];
+
+        // 扣除玩家体力
+        if (!PLAYER.inc_energy(-10)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_ENERGY_FAILED, BG_ERR_DEC_ENERGY_FAILED);
+            return;
+        }
+
+        // 进行对战
+        bool playerFirst, playerWins;
+        auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst);
+
+        std::vector<std::string> drops;
+        std::vector<std::pair<std::string, int>> errors;
+        LL loseCoins;
+        if (playerWins) {
+            // 掉落装备
+            for (int i = 0; i < monster.drop.size(); i++) {
+                LL drop = monster.dropDraw.draw();
+                if (drop != -1) {
+                    auto &item = allEquipments[drop];
+                    inventoryData itemData;
+
+                    itemData.id = drop;
+                    itemData.level = 0;
+                    itemData.wear = item.wear;
+                    drops.push_back(item.name);
+                    if (!PLAYER.add_inventory_item(itemData)) {
+                        errors.push_back({ BG_ERR_STR_ADD_ITEM_FAILED + std::string(": ") + item.name, BG_ERR_ADD_ITEM_FAILED });
+                    }
+                }
+            }
+
+            // 添加经验
+            if (!PLAYER.inc_exp(monster.exp)) {
+                errors.push_back({ BG_ERR_STR_INC_EXP_FAILED + std::string(": ") + std::to_string(monster.exp), BG_ERR_INC_EXP_FAILED });
+            }
+            if (!PLAYER.check_exp_upgrade()) {
+                errors.push_back({ BG_ERR_STR_INC_EXP_FAILED , BG_ERR_INC_EXP_FAILED });
+            }
+
+            // 添加硬币
+            if (!PLAYER.inc_coins(monster.coin)) {
+                errors.push_back({ BG_ERR_STR_INC_COINS_FAILED + std::string(": ") + std::to_string(monster.coin), BG_ERR_INC_COINS_FAILED });
+            }
+        }
+        else {
+            // 扣除硬币
+            // 失去硬币数 = [0, max(怪物硬币数 - sqrt(怪物硬币数 * 玩家等级), 0)] 范围内的随机数
+            double  dLoseCoins = static_cast<double>(monster.coin);
+            dLoseCoins = std::max(dLoseCoins - sqrt(dLoseCoins * PLAYER.get_level()), 0.0);
+            loseCoins = rndRange(static_cast<LL>(dLoseCoins) / 3, static_cast<LL>(dLoseCoins));
+            if (!PLAYER.inc_coins(loseCoins)) {
+                errors.push_back({ BG_ERR_STR_DEC_COINS_FAILED + std::string(": ") + std::to_string(loseCoins), BG_ERR_DEC_COINS_FAILED });
+            }
+        }
+
+        bg_http_reply(bgReq.req, 200, json {
+            { "fighterFirst", playerFirst },
+            { "rounds", rounds },
+            { "targetName", monster.name },
+            { "msg", monster.message },
+            { "drops", drops },
+            { "coins", playerWins ? monster.coin : loseCoins },
+            { "exp", monster.exp },
+            { "energy", PLAYER.get_energy() },
+            { "postMsg", "" },                  // todo
+            { "win", playerWins },
+            { "errors", errors }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
 }
 
 // =====================================================================================================
@@ -1514,6 +1604,7 @@ void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fiel
                 break;
             case 5:
                 rtn = bg_player_get(targetId).inc_exp(val);
+                rtn &= bg_player_get(targetId).check_exp_upgrade();
                 break;
             case 6:
                 rtn = bg_player_get(targetId).inc_invCapacity(val);
@@ -1542,6 +1633,11 @@ void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fiel
                 break;
             case 5:
                 rtn = bg_player_get(targetId).set_exp(val);
+                for (auto &p : allPlayers) {
+                    std::unique_lock lock(p.second.mutexPlayer);
+                    p.second.check_exp_upgrade();
+                    lock.unlock();
+                }
                 break;
             case 6:
                 rtn = bg_player_get(targetId).set_invCapacity(val);

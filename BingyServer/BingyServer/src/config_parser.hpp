@@ -4,6 +4,8 @@
 文件: config_parser.hpp
 */
 
+#pragma once
+
 #include <string>
 #include <functional>
 

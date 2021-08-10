@@ -267,7 +267,7 @@ bool bg_get_all_players_from_db() {
 // 懒人宏
 // 方便编写 LL 类型属性的 getter 和 setter. 其中包括:
 // 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
-#define LL_GET_SET_INC(propName)                                                \
+#define LL_GET_SET_INC(propName, cleanCache)                                    \
     LL player::get_ ##propName (const bool &use_cache) {                        \
         LOCK_CURR_PLAYER;                                                       \
         if ( propName## _cache && use_cache)                                    \
@@ -294,6 +294,8 @@ bool bg_get_all_players_from_db() {
                                                                                 \
             this-> propName = val;                                              \
             this-> propName## _cache = true;                                    \
+            if ( ##cleanCache )                                                 \
+                resetCache();                                                   \
             return true;                                                        \
         }                                                                       \
         return false;                                                           \
@@ -312,24 +314,37 @@ bool bg_get_all_players_from_db() {
             bsoncxx::builder::stream::document{} << #propName << val            \
             << bsoncxx::builder::stream::finalize)) {                           \
                                                                                 \
-            this-> propName  += val;                                            \
+            this-> propName += val;                                             \
+            if ( ##cleanCache )                                                 \
+                resetCache();                                                   \
             return true;                                                        \
         }                                                                       \
         return false;                                                           \
     }
 
-LL_GET_SET_INC(signInCount);
-LL_GET_SET_INC(signInCountCont);
-LL_GET_SET_INC(lastFight);
-LL_GET_SET_INC(lastSignIn);
-LL_GET_SET_INC(coins);
-LL_GET_SET_INC(heroCoin);
-LL_GET_SET_INC(level);
-LL_GET_SET_INC(blessing);
-LL_GET_SET_INC(energy);
-LL_GET_SET_INC(exp);
-LL_GET_SET_INC(invCapacity);
-LL_GET_SET_INC(vip);
+LL_GET_SET_INC(signInCount, false);
+LL_GET_SET_INC(signInCountCont, false);
+LL_GET_SET_INC(lastFight, false);
+LL_GET_SET_INC(lastSignIn, false);
+LL_GET_SET_INC(coins, false);
+LL_GET_SET_INC(heroCoin, false);
+LL_GET_SET_INC(level, true);
+LL_GET_SET_INC(blessing, true);
+LL_GET_SET_INC(energy, false);
+LL_GET_SET_INC(exp, false);
+LL_GET_SET_INC(invCapacity, false);
+LL_GET_SET_INC(vip, false);
+
+// 玩家添加经验值后检查升级
+bool player::check_exp_upgrade() {
+    while (get_exp() >= get_exp_needed()) {
+        if (!inc_exp(-get_exp_needed()))
+            return false;
+        if (!inc_level(1))
+            return false;
+    }
+    return true;
+}
 
 // 玩家 ID
 LL player::get_id() {
@@ -638,6 +653,7 @@ bool player::set_equipments_item(const EqiType &type, const inventoryData &item)
         << bsoncxx::builder::stream::finalize)) {
 
         this->equipments[type] = item;
+        resetCache();
         return true;
     }
     return false;

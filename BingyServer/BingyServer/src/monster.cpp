@@ -11,8 +11,8 @@
 #define DEFAULT_MONSTER_PATH    "monsters.txt"
 
 std::string                         monsterConfigPath = DEFAULT_MONSTER_PATH;
-std::unordered_map<LL, monsterData> allMonsters;    // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
-std::unordered_map<LL, dungeonData> allDungeons;    // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+std::unordered_map<LL, monsterData> allMonsters;
+std::unordered_map<LL, dungeonData> allDungeons;
 luckyDraw                           forestDraw;     // 森林抽奖机
 
 // 读取所有怪物信息
@@ -34,15 +34,17 @@ bool bg_load_monster_config() {
                 else if (propName == "name")
                     temp->name = propValue;
                 else if (propName == "atk")
-                    temp->atk = std::stoll(propValue);
+                    temp->atk = std::stod(propValue);
                 else if (propName == "def")
-                    temp->def = std::stoll(propValue);
+                    temp->def = std::stod(propValue);
                 else if (propName == "brk")
-                    temp->brk = std::stoll(propValue);
+                    temp->brk = std::stod(propValue);
                 else if (propName == "agi")
-                    temp->agi = std::stoll(propValue);
+                    temp->agi = std::stod(propValue);
                 else if (propName == "hp")
-                    temp->hp = std::stoll(propValue);
+                    temp->hp = std::stod(propValue);
+                else if (propName == "crt")
+                    temp->crt = std::stod(propValue);
                 else if (propName == "dungeonweight")
                     temp->dungeonWeight = std::stoll(propValue);
                 else if (propName == "forestweight")
@@ -63,6 +65,10 @@ bool bg_load_monster_config() {
                         temp->drop.push_back(*dropInfo);
                         delete dropInfo;
                     }
+                }
+                else {
+                    console_log(std::string("未知的配置名: \"") + propName +
+                        std::string("\", 于行") + std::to_string(lineNo), LogType::warning);
                 }
             }
             catch (const std::exception &e) {

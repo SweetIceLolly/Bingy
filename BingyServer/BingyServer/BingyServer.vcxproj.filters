@@ -64,6 +64,9 @@
     <ClCompile Include="src\http_auth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\fight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bingy.hpp">
@@ -127,6 +130,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\error_codes.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fight.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

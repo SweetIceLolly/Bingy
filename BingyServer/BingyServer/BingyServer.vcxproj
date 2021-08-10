@@ -23,6 +23,7 @@
     <ClCompile Include="src\config_parser.cpp" />
     <ClCompile Include="src\database.cpp" />
     <ClCompile Include="src\equipment.cpp" />
+    <ClCompile Include="src\fight.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\http_auth.cpp" />
     <ClCompile Include="src\http_handlers.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="src\database.hpp" />
     <ClInclude Include="src\equipment.hpp" />
     <ClInclude Include="src\error_codes.hpp" />
+    <ClInclude Include="src\fight.hpp" />
     <ClInclude Include="src\game.hpp" />
     <ClInclude Include="src\http_auth.hpp" />
     <ClInclude Include="src\http_handlers.hpp" />

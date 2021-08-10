@@ -44,6 +44,6 @@ public:
 };
 
 extern std::string                             eqiConfigPath;
-extern std::unordered_map<LL, equipmentData>   allEquipments;   // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+extern std::unordered_map<LL, equipmentData>   allEquipments;
 
 bool bg_load_equipment_config();

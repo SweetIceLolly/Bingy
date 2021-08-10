@@ -11,7 +11,7 @@
 #define DEFAULT_EQI_PATH    "equipments.txt"
 
 std::string                             eqiConfigPath = DEFAULT_EQI_PATH;
-std::unordered_map<LL, equipmentData>   allEquipments;      // 注意: 读取的时候可以不用加锁, 但是不要使用[], 需要使用 at(). 多线程写入的时候必须加锁
+std::unordered_map<LL, equipmentData>   allEquipments;
 
 // 读取所有装备信息
 bool bg_load_equipment_config() {
@@ -51,6 +51,10 @@ bool bg_load_equipment_config() {
                     temp->wear = std::stoll(propValue);
                 else if (propName == "price")
                     temp->price = std::stoll(propValue);
+                else {
+                    console_log(std::string("未知的配置名: \"") + propName +
+                        std::string("\", 于行") + std::to_string(lineNo), LogType::warning);
+                }
             }
             catch (const std::exception &e) {
                 console_log("处理装备配置时发生错误: 于行" + std::to_string(lineNo) + ", 原因: " + e.what(), LogType::warning);

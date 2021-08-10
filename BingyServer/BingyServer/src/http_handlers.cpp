@@ -484,6 +484,42 @@ CMD(synthesis) {
     threadPool.addJob(thread_pool_job(handler, req));
 }
 
+// 挑战副本
+CMD(fight) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            auto        params = json::parse(req->body);
+            std::string appid = params["appid"].get<std::string>();
+            std::string secret = params["secret"].get<std::string>();
+            LL          playerId = params["qq"].get<LL>();
+            LL          groupId = params["groupId"].get<LL>();
+            std::string level = params["level"].get<std::string>();
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                LL levelId;
+
+                if (preFightCallback(bgReq, level, levelId))
+                    postFightCallback(bgReq, levelId);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (const std::exception &e) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addJob(thread_pool_job(handler, req));
+}
+
 // 管理命令: 为玩家修改属性值
 CMD(admin_modify_field) {
     auto req = get_http_req(connection, ev_data);

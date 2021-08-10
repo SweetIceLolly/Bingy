@@ -9,9 +9,8 @@ hp=60
 crt=5
 dungeonweight=100000
 forestweight=100000
-coins=30
+coin=30
 exp=50
-drop=1:0.1,2:0.2,3:0.03
 end
 
 begin
@@ -20,12 +19,12 @@ name=狂风马
 atk=23
 def=18
 brk=8
-agi=20
+agi=10
 hp=55
 crt=10
 dungeonweight=100000
 forestweight=100000
-coins=25
+coin=25
 exp=40
 end
 
@@ -35,12 +34,12 @@ name=喰毒巨蟒
 atk=27
 def=15
 brk=10
-agi=10
+agi=5
 hp=60
 crt=0
 dungeonweight=100000
 forestweight=100000
-coins=27
+coin=27
 exp=45
 end
 
@@ -55,22 +54,22 @@ hp=60
 crt=15
 dungeonweight=100000
 forestweight=100000
-coins=45
+coin=45
 exp=75
 end
 
 begin
 id=4
-name=恶狼
+name=精英 - 恶狼
 atk=35
 def=25
 brk=20
 agi=20
 hp=60
 crt=25
-dungeonweight=100000
+dungeonweight=50000
 forestweight=100000
-coins=60
+coin=60
 exp=90
 end
 
@@ -80,12 +79,12 @@ name=食髓鸟
 atk=30
 def=20
 brk=15
-agi=25
+agi=5
 hp=50
 crt=0
 dungeonweight=100000
 forestweight=100000
-coins=22
+coin=22
 exp=35
 end
 
@@ -95,12 +94,12 @@ name=哥布林
 atk=25
 def=20
 brk=8
-agi=15
+agi=5
 hp=60
 crt=5
 dungeonweight=100000
 forestweight=100000
-coins=35
+coin=35
 exp=55
 end
 
@@ -115,37 +114,37 @@ hp=50
 crt=0
 dungeonweight=100000
 forestweight=100000
-coins=10
+coin=10
 exp=10
 end
 
 begin
 id=8
-name=火焰哥布林
+name=精英 - 火焰哥布林
 atk=35
 def=27
 brk=15
 agi=15
 hp=65
 crt=10
-dungeonweight=100000
+dungeonweight=50000
 forestweight=100000
-coins=40
+coin=40
 exp=63
 end
 
 begin
 id=9
-name=寒冰哥布林
+name=精英 - 寒冰哥布林
 atk=35
 def=27
 brk=15
 agi=15
 hp=65
 crt=10
-dungeonweight=100000
+dungeonweight=50000
 forestweight=100000
-coins=40
+coin=40
 exp=63
 end
 
@@ -158,9 +157,9 @@ brk=15
 agi=5
 hp=100
 crt=15
-dungeonweight=100000
+dungeonweight=25000
 forestweight=100000
-coins=100
+coin=100
 exp=150
 end
 
@@ -173,9 +172,9 @@ brk=15
 agi=20
 hp=80
 crt=20
-dungeonweight=100000
+dungeonweight=25000
 forestweight=100000
-coins=93
+coin=93
 exp=135
 end
 
@@ -188,9 +187,9 @@ brk=25
 agi=27
 hp=110
 crt=20
-dungeonweight=100000
+dungeonweight=25000
 forestweight=100000
-coins=130
+coin=130
 exp=180
 end
 
@@ -203,9 +202,9 @@ brk=27
 agi=30
 hp=100
 crt=20
-dungeonweight=100000
+dungeonweight=25000
 forestweight=100000
-coins=120
+coin=120
 exp=160
 end
 
@@ -218,9 +217,9 @@ brk=27
 agi=30
 hp=100
 crt=20
-dungeonweight=100000
+dungeonweight=25000
 forestweight=100000
-coins=150
+coin=150
 exp=210
 end
 

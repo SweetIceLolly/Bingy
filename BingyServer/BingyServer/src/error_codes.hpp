@@ -211,6 +211,10 @@
 #define BG_ERR_STR_IN_CD                            "挑战冷却还没结束"
 #define BG_ERR_IN_CD                                3602
 
+// B.17.b. 500 错误
+#define BG_ERR_STR_DEC_ENERGY_FAILED                "为玩家扣除体力失败"
+#define BG_ERR_DEC_ENERGY_FAILED                    3650
+
 // B.18. 管理员修改玩家属性值错误
 // B.18.a. 400 错误
 #define BG_ERR_STR_INVALID_ADMIN_REQUEST            "无效的管理指令调用"
@@ -247,5 +251,6 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_INVALID_EQI_ID, "没有找到你要合成的这个 ID 哦! 你可以试下使用装备名称: \"bg 合成 装备名称 背包序号1 背包序号2 ...\"" },
     { BG_ERR_CANT_SYNTHESIS, "" },
     { BG_ERR_SYNTHESIS_NOT_EXIST, "没有这个合成哦! 你可以发送\"bg 合成 装备ID(或名称)\"来查看可用的合成方式。" },
+    { BG_ERR_INVALID_DUNGEON, "这个副本不存在哦!" },
 };
 #endif

@@ -34,16 +34,7 @@ public:
 
     // 装备的攻防破敏血魔暴
     bool calc_atk_cache = false;
-    double calc_atk() {
-        if (id == -1)
-            return 0;
-        static double calc_result = 0;
-        if (!calc_atk_cache) {
-            calc_result = allEquipments.at(id).atk * pow(1.14, level) * (1 - 0.35 * (wear / allEquipments.at(id).wear));
-            calc_atk_cache = true;
-        }
-        return calc_result;
-    }
+    double calc_atk() { CALC_EQI_PROP(atk) }
 
     bool calc_def_cache = false;
     double calc_def() { CALC_EQI_PROP(def) };

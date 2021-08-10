@@ -51,7 +51,7 @@ public:
     LL level;                               bool level_cache = false;               // 等级 (请使用对应的 getter 或 setter)
     LL blessing;                            bool blessing_cache = false;            // 祝福 (请使用对应的 getter 或 setter)
     LL energy;                              bool energy_cache = false;              // 体力 (请使用对应的 getter 或 setter)
-    LL exp;                                 bool exp_cache = false;                 // 经验数 (请使用对应的 getter 或 setter)
+    LL exp;                                 bool exp_cache = false;                 // 经验数 (请使用对应的 getter 或 setter). 修改完后要使用 check_exp_upgrade 检查升级
     LL invCapacity;                         bool invCapacity_cache = false;         // 背包容量 (请使用对应的 getter 或 setter)
     std::list<inventoryData> inventory;     bool inventory_cache = false;           // 背包 (请使用对应的 getter 或 setter)
     std::unordered_map<LL, LL> buyCount;    bool buyCount_cache = false;            // 商品购买次数 (商品 ID -> 次数) (请使用对应的操作函数)
@@ -90,6 +90,7 @@ public:
     DEF_LL_GET_SET_INC(exp);
     DEF_LL_GET_SET_INC(invCapacity);
     DEF_LL_GET_SET_INC(vip);
+    bool check_exp_upgrade();
 
     // 获取玩家属性
     bool atk_cache = false;
@@ -116,7 +117,7 @@ public:
     LL get_exp_needed();        // 升级所需经验
     LL get_cd();                // 冷却时间
 
-    void resetCache();
+    void resetCache();          // 清空计算缓存
 
     // 获取整个背包列表
     std::list<inventoryData> get_inventory(const bool &use_cache = true);

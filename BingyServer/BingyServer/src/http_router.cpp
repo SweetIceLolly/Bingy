@@ -19,6 +19,7 @@ bool init_server_router(rest_server &server) {
     POST("/register", bg_cmd_register);
     POST("/signin", bg_cmd_sign_in);
     POST("/pawn", bg_cmd_pawn);
+    POST("/fight", bg_cmd_fight);
 
     GET("/vieweqi", bg_cmd_view_equipments);
     POST("/equip", bg_cmd_equip);

@@ -268,8 +268,8 @@ void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &ar
     std::setprecision(1) <<                                                     \
     res.content[ #prop ]["total"].get<double>() <<                              \
     std::setprecision(0) << " (" <<                                             \
-    res.content[ #prop ]["weapons"].get<double>() << "+" <<                     \
-    res.content[ #prop ]["armors"].get<double>() << "+" <<                      \
+    res.content[ #prop ]["weapons"].get<double>() << ", " <<                    \
+    res.content[ #prop ]["armors"].get<double>() << ", " <<                     \
     res.content[ #prop ]["ornaments"].get<double>() << ")"                   
 
 // 查看属性
@@ -721,7 +721,97 @@ void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string
 
 // 挑战副本
 void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
+    try {
+        auto res = bg_http_post("/fight", { MAKE_BG_JSON, { "level", arg } });
+        if (res.code == 200) {
+            bool playerFirst = res.content["fighterFirst"].get<bool>();                                 // 是否玩家先手
+            bool playerRound = playerFirst;
+            auto rounds = res.content["rounds"].get<std::vector<std::tuple<LL, LL, std::string>>>();    // 回合详情
+            auto enterMsg = res.content["msg"].get<std::string>();                                      // 怪物出场消息
+            std::string fightText;
+            LL round = 0;
 
+            // 怪物出场消息
+            if (enterMsg != "")
+                fightText = enterMsg + "\n";
+
+            for (const auto &[dmg, hp, msg] : rounds) {
+                // 在先手的回合显示回合数
+                if (playerFirst == playerRound) {
+                    ++round;
+                    fightText += "R" + std::to_string(round) + "　";
+                }
+
+                // 显示回合详情
+                if (playerRound)
+                    fightText += "玩家伤害：";
+                else
+                    fightText += "敌方伤害：";
+                fightText += std::to_string(dmg) + "，余" + std::to_string(hp);
+                if (!msg.empty())
+                    fightText += "（" + msg + "）";
+
+                // 在后手一方攻击完后添加换行符
+                // 玩家先手 => 怪物回合后添加换行符; 怪物先手 => 玩家回合后添加换行符; 其它情况: 添加空格
+                if (playerFirst != playerRound)
+                    fightText += "\n";
+                else
+                    fightText += "　";
+
+                // 切换回合
+                playerRound = !playerRound;
+            }
+
+            // 对战结束后的附加消息
+            if (fightText.back() != '\n')
+                fightText += "\n";
+            auto postMsg = res.content["postMsg"].get<std::string>();
+            if (!postMsg.empty())
+                fightText += postMsg + "\n";
+
+            // 战斗结果
+            fightText += bg_at(ev);
+            if (res.content["win"].get<bool>()) {
+                // 玩家获胜, 显示奖励信息
+                fightText += "你击败了" + res.content["targetName"].get<std::string>() + "并获得了" +
+                    std::to_string(res.content["coins"].get<LL>()) + "硬币和" + std::to_string(res.content["exp"].get<LL>()) + "经验, 体力剩余" +
+                    std::to_string(res.content["energy"].get<LL>()) + "。";
+                
+                auto drops = res.content["drops"].get<std::vector<std::string>>();
+                if (!drops.empty()) {
+                    fightText += "\n你获得了: ";
+                    for (const auto &item : drops) {
+                        fightText += item + ", ";
+                    }
+                    fightText.pop_back();
+                    fightText.pop_back();
+                }
+            }
+            else {
+                // 玩家战败, 显示战败信息
+                fightText += "你被" + res.content["targetName"].get<std::string>() + "击败了! 你失去了" +
+                    std::to_string(res.content["coins"].get<LL>()) + "硬币。体力剩余" +
+                    std::to_string(res.content["energy"].get<LL>()) + "。";
+            }
+
+            // 内部错误
+            auto errors = res.content["errors"].get<std::vector<std::pair<std::string, int>>>();
+            if (!errors.empty()) {
+                fightText += "\n\n发生了以下错误:\n";
+                for (const auto &[msg, id] : errors) {
+                    fightText += msg + " (" + std::to_string(id) + ")";
+                }
+            }
+
+            cq::send_group_message(GROUP_ID, fightText);
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "挑战副本发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "挑战副本发生错误: " + e.what());
+    }
 }
 
 // =====================================================================================================
