@@ -215,6 +215,9 @@
 #define BG_ERR_STR_DEC_ENERGY_FAILED                "为玩家扣除体力失败"
 #define BG_ERR_DEC_ENERGY_FAILED                    3650
 
+#define BG_ERR_STR_SET_FIGHTTIME_FAILED             "设置玩家最后挑战时间失败"
+#define BG_ERR_SET_FIGHTTIME_FAILED                 3651
+
 // B.18. 管理员修改玩家属性值错误
 // B.18.a. 400 错误
 #define BG_ERR_STR_INVALID_ADMIN_REQUEST            "无效的管理指令调用"

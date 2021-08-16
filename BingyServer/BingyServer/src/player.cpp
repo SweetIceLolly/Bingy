@@ -771,118 +771,44 @@ bool player::add_equipItems_item(const inventoryData &item) {
 // --------------------------------------------------
 // 玩家战斗属性
 
-// 攻 = 20 + 所有装备攻总和 + 等级 * 1.1 + 祝福 * 2
-double player::get_atk() {
-    static double calc_result = 20;
-    if (!atk_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 20;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_atk();
-            }
-        }
-        calc_result += level * 1.1 + blessing * 2;
-        // -----------------------------------
-        atk_cache = true;
+// 懒人宏
+// 根据指定参数获取某个属性的最终值
+#define PLAYER_GET_PROP(type, init_val, extra_val)                  \
+    double player::get_ ##type () {                                 \
+        static double calc_result = init_val;                       \
+        if (! ##type##_cache) {                                     \
+            /* ----------------------------------- */               \
+            /* 重新计算 */                                          \
+            calc_result = init_val;                                 \
+            for (auto &item : equipments) {                         \
+                if (item.first != EqiType::single_use) {            \
+                    calc_result += item.second.calc_##type##();     \
+                }                                                   \
+            }                                                       \
+            calc_result += extra_val;                               \
+            /* ----------------------------------- */               \
+            ##type##_cache = true;                                  \
+        }                                                           \
+        return calc_result;                                         \
     }
-    return calc_result;
-}
+
+// 攻 = 20 + 所有装备攻总和 + 等级 * 1.1 + 祝福 * 2
+PLAYER_GET_PROP(atk, 20, level * 1.1 + blessing * 2);
 
 // 防 = 20 + 所有装备防总和 + 等级 * 0.6 + 祝福 * 1.5
-double player::get_def() {
-    static double calc_result = 20;
-    if (!def_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 20;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_def();
-            }
-        }
-        calc_result += level * 0.6 + blessing * 1.5;
-        // -----------------------------------
-        def_cache = true;
-    }
-    return calc_result;
-}
+PLAYER_GET_PROP(def, 20, level * 0.6 + blessing * 1.5);
 
 // 破 = 所有武器破总和
-double player::get_brk() {
-    static double calc_result = 0;
-    if (!brk_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 0;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_brk();
-            }
-        }
-        // -----------------------------------
-        brk_cache = true;
-    }
-    return calc_result;
-}
+PLAYER_GET_PROP(brk, 0, 0);
 
 // 敏 = 10 + 所有装备敏总和 + 祝福 * 0.2
-double player::get_agi() {
-    static double calc_result = 0;
-    if (!agi_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 10;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_agi();
-            }
-        }
-        calc_result += blessing * 0.2;
-        // -----------------------------------
-        agi_cache = true;
-    }
-    return calc_result;
-}
+PLAYER_GET_PROP(agi, 10, blessing * 0.2);
 
-// 血 = 100 + 所有装备血总和 + 玩家等级 * 祝福 / 10 + 祝福
-double player::get_hp() {
-    static double calc_result = 0;
-    if (!hp_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 100;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_hp();
-            }
-        }
-        calc_result += level * blessing / 10.0 + blessing;
-        // -----------------------------------
-        hp_cache = true;
-    }
-    return calc_result;
-}
+// 血 = 100 + 所有装备血总和 + 玩家等级 * 祝福 / 4
+PLAYER_GET_PROP(hp, 100, level * blessing / 4.0);
 
 // 魔 = 所有装备魔总和 + 祝福 * 1.7 + 玩家等级 * 1.7
-double player::get_mp() {
-    static double calc_result = 0;
-    if (!mp_cache) {
-        // -----------------------------------
-        // 重新计算
-        calc_result = 0;
-        for (auto &item : equipments) {
-            if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_mp();
-            }
-        }
-        calc_result += blessing * 1.7 + level * 1.7;
-        // -----------------------------------
-        mp_cache = true;
-    }
-    return calc_result;
-}
+PLAYER_GET_PROP(mp, 0, blessing * 1.7 + level * 1.7);
 
 // 暴 = 所有装备暴总和 * (1 + 玩家等级 / 170)
 double player::get_crt() {

@@ -213,7 +213,7 @@ void viewInventoryCallback(const cq::MessageEvent &ev) {
     try {
         auto res = bg_http_get("/viewinv", { MAKE_BG_QUERY });
         if (res.code == 200) {
-            auto items = res.content["items"].get<std::vector<std::string>>();
+            auto items = res.content["items"].get<std::vector<std::pair<std::string, unsigned char>>>();
             std::string msg;
 
             if (!items.empty()) {
@@ -221,7 +221,32 @@ void viewInventoryCallback(const cq::MessageEvent &ev) {
 
                 msg = "背包 (" + std::to_string(items.size()) + "/" + std::to_string(res.content["capacity"].get<LL>()) + ")\n";
                 for (const auto &item : items) {
-                    msg += std::to_string(index) + "." + item + " ";
+                    msg += std::to_string(index) + ".";
+
+                    switch (static_cast<EqiType>(item.second)) {
+                    case EqiType::armor_helmet:
+                        msg += "(盔)"; break;
+                    case EqiType::armor_body:
+                        msg += "(甲)"; break;
+                    case EqiType::armor_leg:
+                        msg += "(腿)"; break;
+                    case EqiType::armor_boot:
+                        msg += "(靴)"; break;
+                    case EqiType::weapon_primary:
+                        msg += "(主)"; break;
+                    case EqiType::weapon_secondary:
+                        msg += "(副)"; break;
+                    case EqiType::ornament_earrings:
+                        msg += "(环)"; break;
+                    case EqiType::ornament_rings:
+                        msg += "(戒)"; break;
+                    case EqiType::ornament_necklace:
+                        msg += "(链)"; break;
+                    case EqiType::ornament_jewelry:
+                        msg += "(宝)"; break;
+                    }
+
+                    msg += item.first + " ";
                     ++index;
                 }
                 msg.pop_back();
@@ -245,8 +270,27 @@ void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &ar
     try {
         std::vector<LL> invList;
         for (const auto &item : args) {
-            if (!item.empty())
-                invList.push_back(str_to_ll(item) - 1);
+            if (!item.empty()) {
+                if (item.find('-') != item.npos) {
+                    // 处理范围
+                    auto range = str_split(item, '-');
+                    if (range.size() != 2) {
+                        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 出售指令格式为: \"bg 出售 背包序号1 背包序号2 ...\"");
+                        return;
+                    }
+                    auto start = str_to_ll(range[0]), end = str_to_ll(range[1]);
+                    if (end < start || start <= 0 || end < 0 || end - start > 100) {
+                        cq::send_group_message(GROUP_ID, bg_at(ev) + "出售范围有误!");
+                        return;
+                    }
+                    for (LL i = start; i <= end; ++i)
+                        invList.push_back(i - 1);
+                }
+                else {
+                    // 处理单个数值
+                    invList.push_back(str_to_ll(item) - 1);
+                }
+            }
         }
         auto res = bg_http_post("/pawn", { MAKE_BG_JSON, { "items", invList } });
         if (res.code == 200) {
@@ -777,11 +821,11 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
                     std::to_string(res.content["coins"].get<LL>()) + "硬币和" + std::to_string(res.content["exp"].get<LL>()) + "经验, 体力剩余" +
                     std::to_string(res.content["energy"].get<LL>()) + "。";
                 
-                auto drops = res.content["drops"].get<std::vector<std::string>>();
+                auto drops = res.content["drops"].get<std::vector<std::pair<std::string, unsigned char>>>();
                 if (!drops.empty()) {
                     fightText += "\n你获得了: ";
                     for (const auto &item : drops) {
-                        fightText += item + ", ";
+                        fightText += "(" + eqiType_to_str(static_cast<EqiType>(item.second)) + ") " + item.first + ", ";
                     }
                     fightText.pop_back();
                     fightText.pop_back();
@@ -799,7 +843,7 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
             if (!errors.empty()) {
                 fightText += "\n\n发生了以下错误:\n";
                 for (const auto &[msg, id] : errors) {
-                    fightText += msg + " (" + std::to_string(id) + ")";
+                    fightText += msg + " (" + std::to_string(id) + ")\n";
                 }
             }
 

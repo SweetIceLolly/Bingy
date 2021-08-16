@@ -288,7 +288,7 @@ CMD(recall_trade) {
 // 挑战怪物
 CMD(fight) {
     if (ev.message.length() < 10) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 下架指令格式为: \"bg 挑战 副本号ID\"");
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 挑战指令格式为: \"bg 挑战 副本号\"");
         return;
     }
     auto param = ev.message.substr(9);

@@ -25,7 +25,7 @@
 using namespace nlohmann;
 
 // 懒人宏
-// 获取当前对应的玩家 (非线程安全, 请确保调用该宏时玩家列表没有被修改)
+// 线程安全地获取当前对应的玩家
 #define PLAYER bg_player_get(bgReq.playerId)
 
 // 通用账号检查
@@ -199,16 +199,16 @@ bool preViewInventoryCallback(const bgGameHttpReq& bgReq) {
 }
 
 // 通用查看背包函数
-std::vector<std::string> getInventoryArr(const LL &id) {
+std::vector<std::pair<std::string, unsigned char>> getInventoryArr(const LL &id) {
     auto tmp = bg_player_get(id).get_inventory();
 
-    std::vector<std::string> inventory;
+    std::vector<std::pair<std::string, unsigned char>> inventory;
     for (const auto &item : tmp) {
         auto &eqiEntry = allEquipments.at(item.id);
         if (eqiEntry.type != EqiType::single_use)                       // 非一次性物品
-            inventory.push_back(eqiEntry.name + "+" + std::to_string(item.level));
+            inventory.push_back({ eqiEntry.name + "+" + std::to_string(item.level), static_cast<unsigned char>(eqiEntry.type) });
         else                                                            // 一次性物品
-            inventory.push_back("[" + eqiEntry.name + "]");
+            inventory.push_back({ "[" + eqiEntry.name + "]", static_cast<unsigned char>(eqiEntry.type) });
     }
     
     return inventory;
@@ -1381,10 +1381,11 @@ bool preFightCallback(const bgGameHttpReq& bgReq, const std::string&levelName, L
         }
 
         // 检查冷却时间
+        return true;        // todo
         const auto timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
         if (timeDiff < PLAYER.get_cd()) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_IN_CD +
-                std::string("还剩") + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60), BG_ERR_IN_CD);
+                std::string(", 还剩") + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60), BG_ERR_IN_CD);
             return false;
         }
     }
@@ -1412,17 +1413,29 @@ void postFightCallback(const bgGameHttpReq& bgReq, const LL& levelId) {
             return;
         }
 
+        // 更新最后打怪时间
+        if (!PLAYER.set_lastFight(dateTime().get_timestamp())) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SET_FIGHTTIME_FAILED, BG_ERR_SET_FIGHTTIME_FAILED);
+            return;
+        }
+
         // 进行对战
         bool playerFirst, playerWins;
         auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst);
 
-        std::vector<std::string> drops;
+        std::vector<std::pair<std::string, unsigned char>> drops;       // [[装备名称, 装备类型], ...]
         std::vector<std::pair<std::string, int>> errors;
         LL loseCoins;
         if (playerWins) {
             // 掉落装备
+            std::unordered_set<LL> dropped;                             // 已经掉落的装备
             for (int i = 0; i < monster.drop.size(); i++) {
                 LL drop = monster.dropDraw.draw();
+                if (dropped.find(drop) == dropped.end())                // 防止掉落重复的装备
+                    dropped.insert(drop);
+                else
+                    continue;
+
                 if (drop != -1) {
                     auto &item = allEquipments[drop];
                     inventoryData itemData;
@@ -1430,7 +1443,7 @@ void postFightCallback(const bgGameHttpReq& bgReq, const LL& levelId) {
                     itemData.id = drop;
                     itemData.level = 0;
                     itemData.wear = item.wear;
-                    drops.push_back(item.name);
+                    drops.push_back({ item.name, static_cast<unsigned char>(item.type) });
                     if (!PLAYER.add_inventory_item(itemData)) {
                         errors.push_back({ BG_ERR_STR_ADD_ITEM_FAILED + std::string(": ") + item.name, BG_ERR_ADD_ITEM_FAILED });
                     }

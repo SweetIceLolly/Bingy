@@ -98,6 +98,27 @@ void str_lcase(std::string &str) {
     }
 }
 
+// 检查一个字符串是否为整数. 如果不是, 则抛出异常; 如果是, 则返回对应的整数
+LL str_to_ll(const std::string &str) {
+    if (str.length() < 1)
+        throw std::runtime_error("无效的字符串");
+
+    bool numStarted = false;
+    auto start = str.find_first_not_of(' ');
+    auto i = start;
+
+    for (; i <= str.find_last_not_of(' '); ++i) {
+        if (str[i] < '0' || str[i] > '9') {
+            if (str[i] == '-' && !numStarted)
+                continue;
+            else
+                throw std::runtime_error("无效的字符串");
+        }
+        numStarted = true;
+    }
+    return std::stoll(str.substr(start, i - start + 1));
+}
+
 // --------------------------------------------------------------
 
 LL rndRange(const LL &min, const LL &max) {
@@ -148,6 +169,117 @@ bool is_day_sequential(const dateTime &a, const dateTime &b) {
         // 如果 b 的天数不是 1, 那么检查 a 是否为这个月对应的上一天
         return (year_b == year_a && month_b == month_a && day_b == day_a + 1);
     }
+}
+
+// --------------------------------------------------------------
+
+dateTime::dateTime() {
+    _timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    _date = *std::localtime(&_timestamp);
+}
+
+dateTime::dateTime(int year, int month, int day, int hour, int minute, int second) {
+    _date.tm_year = year - 1900;    // 注意, tm_year 从 1900 年开始计算
+    _date.tm_mon = month - 1;       // 注意, tm_month 从 0 开始计算
+    _date.tm_mday = day;
+    _date.tm_hour = hour;
+    _date.tm_min = minute;
+    _date.tm_sec = second;
+    _timestamp = std::mktime(&_date);
+}
+
+dateTime::dateTime(time_t timestamp) {
+    _timestamp = timestamp;
+    _date = *std::localtime(&_timestamp);
+}
+
+dateTime::dateTime(const dateTime &dt) {
+    _timestamp = dt._timestamp;
+    _date = dt._date;
+}
+
+int dateTime::get_year() const {
+    return _date.tm_year + 1900;
+}
+
+void dateTime::set_year(int year) {
+    _date.tm_year = year - 1900;
+    _timestamp = std::mktime(&_date);
+}
+
+int dateTime::get_month() const {
+    return _date.tm_mon + 1;
+}
+
+void dateTime::set_month(int month) {
+    _date.tm_mon = month - 1;
+    _timestamp = std::mktime(&_date);
+}
+
+int dateTime::get_day() const {
+    return _date.tm_mday;
+}
+
+void dateTime::set_day(int day) {
+    _date.tm_mday = day;
+    _timestamp = std::mktime(&_date);
+}
+
+int dateTime::get_hour() const {
+    return _date.tm_hour;
+}
+
+void dateTime::set_hour(int hour) {
+    _date.tm_hour = hour;
+    _timestamp = std::mktime(&_date);
+}
+
+int dateTime::get_minute() const {
+    return _date.tm_min;
+}
+
+void dateTime::set_minute(int minute) {
+    _date.tm_min = minute;
+    _timestamp = std::mktime(&_date);
+}
+
+int dateTime::get_second() const {
+    return _date.tm_sec;
+}
+
+void dateTime::set_second(int second) {
+    _date.tm_sec = second;
+    _timestamp = std::mktime(&_date);
+}
+
+// 假若当前类所代表的是本地时间, 返回当前时间戳所对应的 UTC 时间戳
+time_t dateTime::get_utc_timestamp() const {
+    return std::mktime(std::gmtime(&_timestamp));
+}
+
+// 直接获取当前类所代表的时间戳
+time_t dateTime::get_timestamp() const {
+    return _timestamp;
+}
+
+dateTime dateTime::operator+ (const time_t &b) const {
+    return dateTime(_timestamp + b);
+}
+
+dateTime dateTime::operator- (const time_t &b) const {
+    return dateTime(_timestamp - b);
+}
+
+dateTime &dateTime::operator+= (const time_t &b) {
+    _timestamp += b;
+    _date = *std::localtime(&_timestamp);
+    return *this;
+}
+
+dateTime &dateTime::operator-= (const time_t &b) {
+    _timestamp -= b;
+    _date = *std::localtime(&_timestamp);
+    return *this;
 }
 
 // --------------------------------------------------------------
@@ -219,25 +351,7 @@ LL luckyDraw::massive_draw() {
     return LLONG_MIN;       // 希望不会来到这里吧...
 }
 
-LL str_to_ll(const std::string &str) {
-    if (str.length() < 1)
-        throw std::runtime_error("无效的字符串");
-
-    bool numStarted = false;
-    auto start = str.find_first_not_of(' ');
-    auto i = start;
-
-    for (; i <= str.find_last_not_of(' '); ++i) {
-        if (str[i] < '0' || str[i] > '9') {
-            if (str[i] == '-' && !numStarted)
-                continue;
-            else
-                throw std::runtime_error("无效的字符串");
-        }
-        numStarted = true;
-    }
-    return std::stoll(str.substr(start, i - start + 1));
-}
+// --------------------------------------------------------------
 
 std::string eqiType_to_str(const EqiType &type) {
     const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石", "一次性物品" };

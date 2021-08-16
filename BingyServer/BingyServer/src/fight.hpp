@@ -16,8 +16,10 @@ public:
     double currHp;                                              // 当前血量
     
     // 只有玩家才会有以下内容
-    std::list<inventoryData> equipItems;                        // 一次性装备
-    std::unordered_map<EqiType, inventoryData> equipments;      // 装备
+    LL playerId;                                                // 玩家 ID
+
+    // 只有怪物才会有以下内容
+    LL monsterId;                                               // 怪物 ID
 
     // 默认构造函数
     fightable();

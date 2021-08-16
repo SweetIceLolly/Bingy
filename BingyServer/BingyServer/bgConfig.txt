@@ -13,8 +13,6 @@ end
 
 [管理员]
 admin=1257472418
-admin=666
-admin=888
 
 [副本配置]
 begin

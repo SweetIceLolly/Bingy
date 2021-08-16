@@ -10,7 +10,7 @@
 #include <cmath>
 
 // 懒人宏
-// 装备属性 = 默认属性 * 1.14 ^ 装备等级 * (1 - 0.35 * (磨损度 / 原始磨损))
+// 装备属性 = 默认属性 * 1.14 ^ 装备等级 * (0.65 + 0.35 * 磨损 / 原始磨损)
 // 通过装备的等级来计算对应的属性值
 // 计算之后会把结果存入静态变量, 只有在 calc_属性名_cache 为 false 的时候重新计算
 #define CALC_EQI_PROP(prop)             \
@@ -18,7 +18,7 @@
         return 0;                       \
     static double calc_result = 0;      \
     if (!calc_##prop##_cache) {         \
-        calc_result = allEquipments.at(id). prop * pow(1.14, level) * (1 - 0.35 * (wear / allEquipments.at(id).wear));   \
+        calc_result = allEquipments.at(id). prop * pow(1.14, level) * (0.65 + 0.35 * wear / allEquipments[id].wear);   \
         calc_##prop##_cache = true;     \
     }                                   \
     return calc_result;

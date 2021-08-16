@@ -21,8 +21,8 @@ fightable::fightable(const fightable &f) {
     mp = f.mp;
     crt = f.crt;
     currHp = f.currHp;
-    equipItems = f.equipItems;
-    equipments = f.equipments;
+    playerId = f.playerId;
+    monsterId = f.monsterId;
 }
 
 fightable::fightable(player &p) {
@@ -34,8 +34,8 @@ fightable::fightable(player &p) {
     mp = p.get_mp();
     crt = p.get_crt();
     currHp = hp;
-    equipItems = p.get_equipItems();
-    equipments = p.get_equipments();
+    playerId = p.get_id();
+    monsterId = -1;
 }
 
 fightable::fightable(const monsterData &m) {
@@ -47,6 +47,8 @@ fightable::fightable(const monsterData &m) {
     mp = 0;
     crt = m.crt;
     currHp = hp;
+    monsterId = m.id;
+    playerId = -1;
 }
 
 std::vector<std::tuple<LL, LL, std::string>> bg_fight(fightable a, fightable b, bool &a_wins, bool &a_first) {
@@ -65,7 +67,6 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(fightable a, fightable b, 
             // 若暴击为 0, 则最终攻 = 原始攻
             // 若暴击不为 0, 则有 (暴击 mod 100) 的机会打出更高的攻击
             aFinalAtk = a.atk;
-            // todo 检查a.crt有没有可能<0
             if (a.crt > FLOAT_PRECISION) {
                 if (rndRange(100) <= static_cast<LL>(a.crt) % 100)
                     aFinalAtk *= (1.3 + 0.1 * (1 + floor(a.crt / 100.0)) + a.crt / (a.atk * 2.5));
