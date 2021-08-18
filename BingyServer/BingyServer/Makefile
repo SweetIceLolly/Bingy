@@ -5,9 +5,9 @@ SRC_DIR = src
 LIBS = -L/usr/local/lib -lmongocxx -lbsoncxx -lpthread
 INCLUDES = -I/usr/local/include/mongocxx/v_noabi -I/usr/local/include/bsoncxx/v_noabi
 
-build: bingy.o config_parser.o database.o equipment.o game.o http_auth.o http_handlers.o http_router.o init.o monster.o player.o signin_event.o synthesis.o thread_pool.o trade.o utils.o mongoose.o rest_server.o
+build: bingy.o config_parser.o database.o equipment.o game.o http_auth.o http_handlers.o http_router.o init.o monster.o player.o signin_event.o synthesis.o thread_pool.o trade.o utils.o mongoose.o rest_server.o fight.o
 	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LIBS) -o $(BUILD_DIR)/bingy $(BUILD_DIR)/bingy.o $(BUILD_DIR)/config_parser.o $(BUILD_DIR)/database.o $(BUILD_DIR)/equipment.o $(BUILD_DIR)/game.o $(BUILD_DIR)/http_auth.o $(BUILD_DIR)/http_handlers.o $(BUILD_DIR)/http_router.o $(BUILD_DIR)/init.o $(BUILD_DIR)/monster.o $(BUILD_DIR)/player.o $(BUILD_DIR)/signin_event.o $(BUILD_DIR)/synthesis.o $(BUILD_DIR)/thread_pool.o $(BUILD_DIR)/trade.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/mongoose.o $(BUILD_DIR)/rest_server.o
+	$(CC) $(CFLAGS) $(LIBS) -o $(BUILD_DIR)/bingy $(BUILD_DIR)/bingy.o $(BUILD_DIR)/config_parser.o $(BUILD_DIR)/database.o $(BUILD_DIR)/equipment.o $(BUILD_DIR)/game.o $(BUILD_DIR)/http_auth.o $(BUILD_DIR)/http_handlers.o $(BUILD_DIR)/http_router.o $(BUILD_DIR)/init.o $(BUILD_DIR)/monster.o $(BUILD_DIR)/player.o $(BUILD_DIR)/signin_event.o $(BUILD_DIR)/synthesis.o $(BUILD_DIR)/thread_pool.o $(BUILD_DIR)/trade.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/mongoose.o $(BUILD_DIR)/rest_server.o $(BUILD_DIR)/fight.o
 
 bingy.o: $(SRC_DIR)/bingy.cpp
 	mkdir -p $(BUILD_DIR)
@@ -73,6 +73,10 @@ utils.o: $(SRC_DIR)/utils.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c -o $(BUILD_DIR)/utils.o $(SRC_DIR)/utils.cpp
 
+fight.o: $(SRC_DIR)/fight.cpp
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c -o $(BUILD_DIR)/fight.o $(SRC_DIR)/fight.cpp
+    
 mongoose.o: $(SRC_DIR)/rest_server/mongoose.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c -o $(BUILD_DIR)/mongoose.o $(SRC_DIR)/rest_server/mongoose.c
@@ -82,5 +86,5 @@ rest_server.o: $(SRC_DIR)/rest_server/rest_server.cpp
 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c -o $(BUILD_DIR)/rest_server.o $(SRC_DIR)/rest_server/rest_server.cpp
 
 clean:
-	rm -f $(BUILD_DIR)/bingy $(BUILD_DIR)/bingy.o $(BUILD_DIR)/config_parser.o $(BUILD_DIR)/database.o $(BUILD_DIR)/equipment.o $(BUILD_DIR)/game.o $(BUILD_DIR)/http_auth.o $(BUILD_DIR)/http_handlers.o $(BUILD_DIR)/http_router.o $(BUILD_DIR)/init.o $(BUILD_DIR)/monster.o $(BUILD_DIR)/player.o $(BUILD_DIR)/signin_event.o $(BUILD_DIR)/synthesis.o $(BUILD_DIR)/thread_pool.o $(BUILD_DIR)/trade.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/mongoose.o $(BUILD_DIR)/rest_server.o
+	rm -f $(BUILD_DIR)/bingy $(BUILD_DIR)/bingy.o $(BUILD_DIR)/config_parser.o $(BUILD_DIR)/database.o $(BUILD_DIR)/equipment.o $(BUILD_DIR)/game.o $(BUILD_DIR)/http_auth.o $(BUILD_DIR)/http_handlers.o $(BUILD_DIR)/http_router.o $(BUILD_DIR)/init.o $(BUILD_DIR)/monster.o $(BUILD_DIR)/player.o $(BUILD_DIR)/signin_event.o $(BUILD_DIR)/synthesis.o $(BUILD_DIR)/thread_pool.o $(BUILD_DIR)/trade.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/mongoose.o $(BUILD_DIR)/rest_server.o $(BUILD_DIR)/fight.o
 	rmdir $(BUILD_DIR)

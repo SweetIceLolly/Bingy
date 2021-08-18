@@ -42,6 +42,17 @@ void console_log(const std::string &msg, const LogType &type) {
         SetConsoleTextAttribute(hConsole, RED);
         break;
     }
+#else
+    // 为终端修改输出颜色
+    switch (type) {
+    case LogType::warning:
+        std::cout << "\033[33m";
+        break;
+
+    case LogType::error:
+        std::cout << "\033[31m";
+        break;
+    }
 #endif
 
     // 中文不使用 string_to_coolq 转码会乱码
@@ -62,6 +73,9 @@ void console_log(const std::string &msg, const LogType &type) {
 #ifdef _WIN32
     // 为 Windows 控制台恢复输出颜色
     SetConsoleTextAttribute(hConsole, WHITE);
+#else
+    // 为终端恢复输出颜色
+    std::cout << "\033[0m";
 #endif
 }
 

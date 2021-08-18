@@ -294,7 +294,7 @@ bool bg_get_all_players_from_db() {
                                                                                 \
             this-> propName = val;                                              \
             this-> propName## _cache = true;                                    \
-            if ( ##cleanCache )                                                 \
+            if ( cleanCache )                                                   \
                 resetCache();                                                   \
             return true;                                                        \
         }                                                                       \
@@ -315,7 +315,7 @@ bool bg_get_all_players_from_db() {
             << bsoncxx::builder::stream::finalize)) {                           \
                                                                                 \
             this-> propName += val;                                             \
-            if ( ##cleanCache )                                                 \
+            if ( cleanCache )                                                   \
                 resetCache();                                                   \
             return true;                                                        \
         }                                                                       \
@@ -776,24 +776,24 @@ bool player::add_equipItems_item(const inventoryData &item) {
 #define PLAYER_GET_PROP(type, init_val, extra_val)                  \
     double player::get_ ##type () {                                 \
         static double calc_result = init_val;                       \
-        if (! ##type##_cache) {                                     \
+        if (! type##_cache) {                                       \
             /* ----------------------------------- */               \
             /* 重新计算 */                                          \
             calc_result = init_val;                                 \
             for (auto &item : equipments) {                         \
                 if (item.first != EqiType::single_use) {            \
-                    calc_result += item.second.calc_##type##();     \
+                    calc_result += item.second.calc_ ##type ();     \
                 }                                                   \
             }                                                       \
-            calc_result += extra_val;                               \
+            calc_result += extra_val ;                              \
             /* ----------------------------------- */               \
-            ##type##_cache = true;                                  \
+            type## _cache = true;                                   \
         }                                                           \
         return calc_result;                                         \
     }
 
 // 攻 = 20 + 所有装备攻总和 + 等级 * 1.1 + 祝福 * 2
-PLAYER_GET_PROP(atk, 20, level * 1.1 + blessing * 2);
+PLAYER_GET_PROP(atk, 20, (level * 1.1 + blessing * 2));
 
 // 防 = 20 + 所有装备防总和 + 等级 * 0.6 + 祝福 * 1.5
 PLAYER_GET_PROP(def, 20, level * 0.6 + blessing * 1.5);
