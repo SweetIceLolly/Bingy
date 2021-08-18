@@ -201,16 +201,10 @@ CMD(unequip_all) {
 // 定义强化装备相关的命令规则, 并调用强化回调函数
 #define UPGRADE_CMD(name, type, cmdLen)                                                                 \
     CMD(upgrade_##name##) {                                                                             \
-        LL upgradeTimes = 0;                                /* 强化次数 */                              \
-        LL coinsNeeded = 0;                                 /* 需要硬币 */                              \
-                                                                                                        \
-        if (ev.message.length() < cmdLen) {                 /* 无参数 */                                \
+        if (ev.message.length() < cmdLen)                   /* 无参数 */                                \
             upgradeCallback(ev, EqiType::##type##, "1");                                                \
-        }                                                                                               \
-        else {                                              /* 有参数 */                                \
-            auto param = ev.message.substr(cmdLen - 1);                                                 \
-            upgradeCallback(ev, EqiType::##type##, param);                                              \
-        }                                                                                               \
+        else                                                /* 有参数 */                                \
+            upgradeCallback(ev, EqiType::##type##, ev.message.substr(cmdLen - 1));                      \
     }
 
 UPGRADE_CMD(helmet, armor_helmet, 16);
@@ -232,6 +226,19 @@ CMD(confirm_upgrade) {
 // 强化装备帮助
 CMD(upgrade_help) {
     cq::send_group_message(ev.target.group_id.value(), "请指定需要强化的装备类型, 命令后面可以跟需要强化的次数。例如: \"bg 强化主武器\", \"bg 强化战甲 5\"");
+}
+
+// 升级祝福
+CMD(upgrade_blessing) {
+    if (ev.message.length() < 16)               // 无参数
+        upgradeBlessingCallback(ev, "1");
+    else                                        // 有参数
+        upgradeBlessingCallback(ev, ev.message.substr(15));
+}
+
+// 祝福帮助
+CMD(blessing_help) {
+    cq::send_group_message(ev.target.group_id.value(), "祝福能够影响你的战斗力，发送\"bg 升级祝福\"可以升级你的祝福。命令后面可以跟需要升级的次数，例如：\"bg 升级祝福 5\"");
 }
 
 // 查看交易场

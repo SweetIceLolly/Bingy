@@ -199,7 +199,7 @@ bool preViewInventoryCallback(const bgGameHttpReq& bgReq) {
 }
 
 // 通用查看背包函数
-std::vector<std::pair<std::string, unsigned char>> getInventoryArr(const LL &id) {
+std::vector<std::pair<std::string, unsigned char>> getInventoryArr(LL id) {
     auto tmp = bg_player_get(id).get_inventory();
 
     std::vector<std::pair<std::string, unsigned char>> inventory;
@@ -340,7 +340,7 @@ bool preViewPropertiesCallback(const bgGameHttpReq& bgReq) {
     }
 
 // 通用查看属性函数
-std::string getPropertiesStr(const LL &id) {
+std::string getPropertiesStr(LL id) {
     auto equipments = bg_player_get(id).get_equipments();
 
     return json {
@@ -390,7 +390,7 @@ bool preViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
     }
 
 // 通用查看装备函数
-std::string getEquipmentsStr(const LL &id) {
+std::string getEquipmentsStr(LL id) {
     const auto eqi = bg_player_get(id).get_equipments();
     const auto singleUseEqi = bg_player_get(id).get_equipItems();
 
@@ -439,7 +439,7 @@ void postViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
 }
 
 // 装备前检查
-bool preEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
+bool preEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
     if (!accountCheck(bgReq))
         return false;
 
@@ -461,7 +461,7 @@ bool preEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
 }
 
 // 装备
-void postEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
+void postEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
     PLAYER.resetCache();                                            // 重算玩家属性
 
     // 获取背包里该序号的对应物品
@@ -521,7 +521,7 @@ void postEquipCallback(const bgGameHttpReq& bgReq, const LL& equipItem) {
 // 把指定玩家的指定类型的装备卸下并放回包里.
 // 如果卸下了装备, 则返回对应的名称; 否则返回空字符串
 // 注意, 该函数不能处理卸下一次性物品
-std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
+std::string unequipPlayer(LL qq, const EqiType &eqiType) {
     auto &p = bg_player_get(qq);
     inventoryData eqi = p.get_equipments().at(eqiType);
 
@@ -542,14 +542,14 @@ std::string unequipPlayer(const LL &qq, const EqiType &eqiType) {
 
 // 卸下多个指定类型的装备并返回所有卸下了的装备的列表
 template <typename ... Ts>
-std::vector<std::string> UnequipMultiple(const LL &qq, const Ts&&... types) {
+std::vector<std::string> UnequipMultiple(LL qq, const Ts&&... types) {
     auto items = std::vector<std::string> { unequipPlayer(qq, types)... };
     items.erase(std::remove_if(items.begin(), items.end(), [](const std::string &s) { return s.empty(); }), items.end());
     return items;
 }
 
 // 卸下指定玩家的一次性物品并放回包里
-std::vector<std::string> UnequipAllSingles(const LL &qq) {
+std::vector<std::string> UnequipAllSingles(LL qq) {
     auto items = bg_player_get(qq).get_equipItems();
     if (!bg_player_get(qq).clear_equipItems()) {
         throw std::runtime_error(BG_ERR_STR_CLEAR_SINGLE_FAILED);
@@ -709,7 +709,7 @@ void postUnequipAllCallback(const bgGameHttpReq& bgReq) {
 }
 
 // 卸下指定的一次性装备前检查
-bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
+bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, LL index) {
     if (!accountCheck(bgReq))
         return false;
 
@@ -731,7 +731,7 @@ bool preUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
 }
 
 // 卸下指定的一次性装备
-void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
+void postUnequipSingleCallback(const bgGameHttpReq& bgReq, LL index) {
     try {
         PLAYER.resetCache();                    // 重算玩家属性
 
@@ -759,7 +759,7 @@ void postUnequipSingleCallback(const bgGameHttpReq& bgReq, const LL& index) {
 }
 
 // 强化装备前检查
-bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL& upgradeTimes, LL& coinsNeeded) {
+bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL upgradeTimes, LL& coinsNeeded) {
     if (!accountCheck(bgReq))
         return false;
 
@@ -859,7 +859,7 @@ bool preUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL& upg
 }
 
 // 强化装备
-void postUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, const LL& upgradeTimes, const LL& coinsNeeded) {
+void postUpgradeCallback(const bgGameHttpReq& bgReq, const EqiType& type, LL upgradeTimes, LL coinsNeeded) {
     try {
         // 扣硬币
         if (!PLAYER.inc_coins(-coinsNeeded)) {
@@ -909,6 +909,127 @@ void postConfirmUpgradeCallback(const bgGameHttpReq& bgReq) {
     bg_http_reply(bgReq.req, 200, "{}");
 }
 
+// 升级祝福前检查
+bool preUpgradeBlessingCallback(const bgGameHttpReq &bgReq, LL upgradeTimes, LL &coinsNeeded) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    // 获取升级次数
+    try {
+        if (upgradeTimes < 1) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_UPGRADE_TIMES, BG_ERR_INVALID_UPGRADE_TIMES);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    if (upgradeTimes > 100) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_MAX_UPGRADE_TIMES, BG_ERR_MAX_UPGRADE_TIMES);
+        return false;
+    }
+
+    // 计算升级所需硬币
+    if (upgradeTimes == 1) {
+        // 祝福升一级价格 = 1500 * 当前祝福等级
+        coinsNeeded = 1500 * PLAYER.get_blessing();
+        if (PLAYER.get_coins() < coinsNeeded) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                std::string(": 还需要") + std::to_string(coinsNeeded - PLAYER.get_coins()) + "硬币",
+                BG_ERR_INSUFFICIENT_COINS
+            );
+            return false;
+        }
+    }
+    else {
+        //   祝福升 n 级价格
+        // = sum(1500x, x, 当前祝福等级, 当前祝福等级 + n - 1)
+        // = -750 * (当前祝福等级 ^ 2 - 当前祝福等级) + 750 * ((当前祝福等级 + n) ^ 2 - n - 当前祝福等级)
+        auto currBlessing = PLAYER.get_blessing();
+        coinsNeeded = -750 * (currBlessing * currBlessing - currBlessing) + 750 * ((currBlessing + upgradeTimes) * (currBlessing + upgradeTimes) - upgradeTimes - currBlessing);
+        auto currCoins = PLAYER.get_coins();
+        if (currCoins < coinsNeeded) {
+            // 如果不够硬币, 则计算用户可以升级多少级, 即对下列方程中的 n 求解:
+            // -750 * (当前祝福等级 ^ 2 - 当前祝福等级) + 750 * ((当前祝福等级 + n) ^ 2 - n - 当前祝福等级) = 当前硬币
+            // 解得:
+            // n = (1 / 750) * (5 * sqrt(15) * sqrt(1500 * 当前祝福等级 ^ 2 + 2 * 当前硬币 - 1500 * 当前祝福等级 + 375) - 750 * 当前祝福等级 + 375)
+            //   ≈ 0.00133333333333 * (-750.0 * 当前祝福等级 + 19.364916731 * sqrt(1500.0 * 当前祝福等级 ^ 2 + 2.0 * coins - 1500.0 * 当前祝福等级 + 375.0) + 375.0)
+            // 再取 floor
+            upgradeTimes = static_cast<LL>(floor(
+                0.00133333333333 * (-750.0 * currBlessing + 19.364916731 * std::sqrt(1500.0 * currBlessing * currBlessing + 2.0 * currCoins - 1500.0 * currBlessing + 375.0) + 375.0)
+            ));
+
+            if (upgradeTimes < 1) {
+                // 玩家的钱一次都升级不了
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                    std::string(": 还需要") + std::to_string(coinsNeeded - currCoins) + "硬币",
+                    BG_ERR_INSUFFICIENT_COINS
+                );
+            }
+            else {
+                // 重算需要硬币
+                coinsNeeded = -750 * (currBlessing * currBlessing - currBlessing) + 750 * ((currBlessing + upgradeTimes) * (currBlessing + upgradeTimes) - upgradeTimes - currBlessing);
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INSUFFICIENT_COINS +
+                    std::string(": 当前硬币只够升级祝福") + std::to_string(upgradeTimes) + "次, 强化完之后还剩" +
+                    std::to_string(currCoins - coinsNeeded) + "硬币",
+                    BG_ERR_INSUFFICIENT_COINS
+                );
+            }
+            return false;
+        }
+        else {
+            // 够钱进行多次升级, 创建一个确认操作
+            bg_http_reply(bgReq.req, 200, json{
+                { "times", upgradeTimes },
+                { "coins", coinsNeeded }
+            }.dump().c_str());
+
+            if (PLAYER.confirmInProgress) {
+                // 如果玩家当前有进行中的确认, 那么取消掉正在进行的确认, 并等待那个确认退出
+                PLAYER.abortUpgrade();
+                PLAYER.waitConfirmComplete();
+            }
+            return PLAYER.waitUpgradeConfirm();         // 等待玩家进行确认
+        }
+    }
+}
+
+// 升级祝福
+void postUpgradeBlessingCallback(const bgGameHttpReq &bgReq, LL upgradeTimes, LL coinsNeeded) {
+    try {
+        // 扣硬币
+        if (!PLAYER.inc_coins(-coinsNeeded)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_DEC_COINS_FAILED, BG_ERR_DEC_COINS_FAILED);
+            return;
+        }
+
+        // 升级
+        if (!PLAYER.inc_blessing(upgradeTimes)) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_INC_BLESSING_FAILED, BG_ERR_INC_BLESSING_FAILED);
+            return;
+        }
+
+        // 发送确认消息
+        bg_http_reply(bgReq.req, 200, json{
+            { "times", upgradeTimes },
+            { "blessing", PLAYER.get_blessing() },
+            { "coins", coinsNeeded },
+            { "coinsLeft", PLAYER.get_coins() }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
 // 查看交易场前检查
 bool preViewTradeCallback(const bgGameHttpReq& bgReq) {
     return accountCheck(bgReq);
@@ -954,7 +1075,7 @@ void postViewTradeCallback(const bgGameHttpReq& bgReq) {
 }
 
 // 购买交易场商品前检查
-bool preBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId, const std::string &password) {
+bool preBuyTradeCallback(const bgGameHttpReq& bgReq, LL tradeId, const std::string &password) {
         try {
         if (!accountCheck(bgReq))
             return false;
@@ -1008,7 +1129,7 @@ bool preBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId, const st
 }
 
 // 购买交易场商品
-void postBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+void postBuyTradeCallback(const bgGameHttpReq& bgReq, LL tradeId) {
     try {
         tradeData item = allTradeItems.at(tradeId);
 
@@ -1061,7 +1182,7 @@ void postBuyTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
 }
 
 // 上架交易场商品前检查
-bool preSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL& price, const bool& hasPassword) {
+bool preSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, const bool& hasPassword) {
     try {
         if (!accountCheck(bgReq))
             return false;
@@ -1107,7 +1228,7 @@ bool preSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL&
 }
 
 // 上架交易场商品
-void postSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL& price, const bool &hasPassword) {
+void postSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, const bool &hasPassword) {
     try {
         // 如果是有密码的交易, 则随机生成一个密码
         std::string password = "";
@@ -1169,7 +1290,7 @@ void postSellTradeCallback(const bgGameHttpReq& bgReq, const LL& invId, const LL
 }
 
 // 下架交易场商品前检查
-bool preRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+bool preRecallTradeCallback(const bgGameHttpReq& bgReq, LL tradeId) {
     if (!accountCheck(bgReq))
         return false;
 
@@ -1198,7 +1319,7 @@ bool preRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
 }
 
 // 下架交易场商品
-void postRecallTradeCallback(const bgGameHttpReq& bgReq, const LL& tradeId) {
+void postRecallTradeCallback(const bgGameHttpReq& bgReq, LL tradeId) {
     try {
         // 从交易场移除对应物品
         tradeData item = allTradeItems.at(tradeId);
@@ -1320,7 +1441,7 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
 }
 
 // 合成
-void postSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, const LL& targetId, const LL& coins, const LL& level) {
+void postSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::greater<LL>>& invList, LL targetId, LL coins, LL level) {
     try {
         // 扣除硬币
         if (!PLAYER.inc_coins(-coins)) {
@@ -1401,7 +1522,7 @@ bool preFightCallback(const bgGameHttpReq& bgReq, const std::string&levelName, L
 }
 
 // 挑战副本
-void postFightCallback(const bgGameHttpReq& bgReq, const LL& levelId) {
+void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
     try {
         // 从副本抽取一个怪物
         LL monsterId = allDungeons[levelId].monstersDraw.draw();
@@ -1503,7 +1624,7 @@ void postFightCallback(const bgGameHttpReq& bgReq, const LL& levelId) {
 // 管理员为玩家的某个属性添加数值前检查
 // fieldType: 0: coins; 1: heroCoin; 2: level; 3: blessing; 4: energy; 5: exp; 6: invCapacity; 7: vip
 // mode: 0: inc; 1: set
-bool preAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, const LL &targetId, const LL &val) {
+bool preAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, LL targetId, LL val) {
     // 检察权限
     if (!bg_is_admin(bgReq.playerId)) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_NOT_ADMIN, BG_ERR_NOT_ADMIN);
@@ -1527,7 +1648,7 @@ bool preAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char field
 }
 
 // 管理员为玩家的某个属性添加数值
-void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, const LL &targetId, const LL &val) {
+void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, LL targetId, LL val) {
     bool rtn = false; 
     
     if (targetId == -1) {                           // 为所有玩家修改属性

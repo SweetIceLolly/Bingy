@@ -55,6 +55,9 @@ CMD(upgrade_jewelry);
 CMD(confirm_upgrade);
 CMD(upgrade_help);
 
+CMD(upgrade_blessing);
+CMD(blessing_help);
+
 CMD(view_trade);
 CMD(buy_trade);
 CMD(sell_trade);

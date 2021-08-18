@@ -32,6 +32,8 @@ bool init_server_router(rest_server &server) {
     POST("/upgrade", bg_cmd_upgrade);
     POST("/confirm", bg_cmd_confirm_upgrade);
 
+    POST("/upgradeblessing", bg_cmd_upgrade_blessing);
+
     GET("/viewtrade", bg_cmd_view_trade);
     POST("/buytrade", bg_cmd_buy_trade);
     POST("/selltrade", bg_cmd_sell_trade);

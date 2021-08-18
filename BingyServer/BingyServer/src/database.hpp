@@ -18,7 +18,7 @@
 #include "utils.hpp"
 
 // 定义一些常量
-#define DEFAULT_DB_URI      "mongodb://127.0.0.1:27017/dreamy"
+#define DEFAULT_DB_URI      "mongodb://127.0.0.1:27017/bingy"
 #define DB_NAME             "bingy"
 #define DB_COLL_USERDATA    "userdata"
 #define DB_COLL_SIGNIN      "signin"

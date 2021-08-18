@@ -261,6 +261,25 @@ CMD(upgrade);
 CMD(confirm_upgrade);
 
 /**
+ * 升级祝福
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  times: 强化次数
+ * 返回值:
+ *  200: 成功, 返回:
+ *      如果为多次强化: times: 强化次数; coins: 将花费硬币
+ *      如果为单次强化: blessing: 当前等级; times: 强化次数; coins: 花费硬币; coinsLeft: 剩余硬币
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+*/
+CMD(upgrade_blessing);
+
+/**
  * 查看交易场
  * 类型: GET
  * 参数位置: query

@@ -226,6 +226,11 @@
 #define BG_ERR_STR_INVALID_TARGET                   "指定的目标玩家不存在"
 #define BG_ERR_INVALID_TARGET                       3701
 
+// B.19. 升级祝福错误
+// B.19.a. 500 错误
+#define BG_ERR_STR_INC_BLESSING_FAILED              "为玩家添加祝福等级失败"
+#define BG_ERR_INC_BLESSING_FAILED                  3850
+
 // 错误号对应到回应字符串 (适用于 Bingy 客户端代码)
 // 以下宏用来检查是否为 Bingy 客户端
 #ifdef DEFAULT_SERVER_URI
@@ -255,5 +260,7 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_CANT_SYNTHESIS, "" },
     { BG_ERR_SYNTHESIS_NOT_EXIST, "没有这个合成哦! 你可以发送\"bg 合成 装备ID(或名称)\"来查看可用的合成方式。" },
     { BG_ERR_INVALID_DUNGEON, "这个副本不存在哦!" },
+    { BG_ERR_NO_ENERGY, "你的体力已经耗尽啦!" },
+    { BG_ERR_IN_CD, "" }
 };
 #endif

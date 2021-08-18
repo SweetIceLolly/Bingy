@@ -54,6 +54,7 @@ void unequipSingleCallback(const cq::MessageEvent &ev, const std::string &arg);
 void unequipAllCallback(const cq::MessageEvent &ev);
 void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const std::string &arg);
 void confirmUpgradeCallback(const cq::MessageEvent &ev);
+void upgradeBlessingCallback(const cq::MessageEvent &ev, const std::string &arg);
 void viewTradeCallback(const cq::MessageEvent &ev);
 void buyTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
 void sellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);

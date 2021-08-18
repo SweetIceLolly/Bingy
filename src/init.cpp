@@ -112,6 +112,10 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 升级装备", bg_cmd_upgrade_help);
     bg_groupmsg_router_add("bg 升级", bg_cmd_upgrade_help);
 
+    bg_groupmsg_router_add("bg 强化祝福", bg_cmd_upgrade_blessing);
+    bg_groupmsg_router_add("bg 升级祝福", bg_cmd_upgrade_blessing);
+    bg_groupmsg_router_add("bg 祝福", bg_cmd_blessing_help);
+
     bg_groupmsg_router_add("bg 交易场", bg_cmd_view_trade);
     bg_groupmsg_router_add("bg 查看交易场", bg_cmd_view_trade);
     bg_groupmsg_router_add("bg 交易", bg_cmd_view_trade);

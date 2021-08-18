@@ -553,7 +553,7 @@ void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const s
             if (res.content.find("coinsLeft") != res.content.end()) {           // 单次强化
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "成功强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
                     "次: " + res.content["name"].get<std::string>() + ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币, 还剩" +
-                    std::to_string(res.content["coinsLeft"].get<LL>()) + "硬币");
+                    std::to_string(res.content["coinsLeft"].get<LL>()) + "硬币。");
             }
             else {                                                              // 多次强化
                 cq::send_group_message(GROUP_ID, bg_at(ev) + "你将要连续强化" + eqiType_to_str(eqiType) + std::to_string(res.content["times"].get<LL>()) +
@@ -576,7 +576,10 @@ void upgradeCallback(const cq::MessageEvent &ev, const EqiType &eqiType, const s
             }
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "强化装备发生错误: "));
+            if (res.content["errid"].get<int>() == BG_ERR_MAX_UPGRADE_TIMES)
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "不好意思, 一次最多连续强化20次哦!");
+            else
+                cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "强化装备发生错误: "));
         }
     }
     catch (const std::exception &e) {
@@ -596,11 +599,54 @@ void confirmUpgradeCallback(const cq::MessageEvent &ev) {
             confirmGet(USER_ID).completeUpgrade(true);
         }
         else {
-            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "确认强化装备发生错误: "));
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "确认升级发生错误: "));
         }
     }
     catch (const std::exception &e) {
-        cq::send_group_message(GROUP_ID, bg_at(ev) + "确认强化装备发生错误: " + e.what());
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "确认升级发生错误: " + e.what());
+    }
+}
+
+// 升级祝福
+void upgradeBlessingCallback(const cq::MessageEvent &ev, const std::string &arg) {
+    try {
+        LL times = str_to_ll(arg);
+        auto res = bg_http_post("/upgradeblessing", { MAKE_BG_JSON, { "times", times } });
+        if (res.code == 200) {
+            if (res.content.find("coinsLeft") != res.content.end()) {           // 单次强化
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "成功升级" + std::to_string(res.content["times"].get<LL>()) + "次祝福, 当前祝福等级为" +
+                    std::to_string(res.content["blessing"].get<LL>()) + ", 花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币, 还剩" +
+                    std::to_string(res.content["coinsLeft"].get<LL>()) + "硬币。");
+            }
+            else {                                                              // 多次强化
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "你将要连续升级祝福" + std::to_string(res.content["times"].get<LL>()) +
+                    "次, 这会花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币。发送\"bg 确认\"继续, 若20秒后没有确认, 则操作取消。");
+
+                // 等待确认
+                if (confirmExists(USER_ID)) {
+                    // 如果玩家当前有进行中的确认, 那么取消掉正在进行的确认, 并等待那个确认退出
+                    confirmGet(USER_ID).completeUpgrade(false);
+                    confirmGet(USER_ID).waitConfirmComplete();
+                    confirmRemove(USER_ID);
+                }
+                confirmAdd(USER_ID);
+                if (upgradeConfirmList.at(USER_ID).waitUpgradeConfirm())
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "成功升级祝福" + std::to_string(times) +
+                        "次, 共花费" + std::to_string(res.content["coins"].get<LL>()) + "硬币");
+                else
+                    cq::send_group_message(GROUP_ID, bg_at(ev) + "你取消了连续升级祝福" + std::to_string(times) + "次");
+                confirmRemove(USER_ID);
+            }
+        }
+        else {
+            if (res.content["errid"].get<int>() == BG_ERR_MAX_UPGRADE_TIMES)
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "不好意思, 一次最多连续升级祝福100次哦!");
+            else
+                cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "升级祝福发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "升级祝福发生错误: " + e.what());
     }
 }
 
