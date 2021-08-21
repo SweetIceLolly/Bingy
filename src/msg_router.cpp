@@ -102,4 +102,7 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
         // 调用命令处理函数
         handler(ev);
     }
+    else {
+        
+    }
 }

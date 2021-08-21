@@ -268,7 +268,7 @@ bool bg_get_all_players_from_db() {
 // 方便编写 LL 类型属性的 getter 和 setter. 其中包括:
 // 1. 获取某个属性; 2. 设置某个属性; 3. 为某个属性添加指定数值
 #define LL_GET_SET_INC(propName, cleanCache)                                    \
-    LL player::get_ ##propName (const bool &use_cache) {                        \
+    LL player::get_ ##propName (bool use_cache) {                               \
         LOCK_CURR_PLAYER;                                                       \
         if ( propName## _cache && use_cache)                                    \
             return this-> propName ;                                            \
@@ -352,7 +352,7 @@ LL player::get_id() {
 }
 
 // 获取昵称
-std::string player::get_nickname(const bool &use_cache) {
+std::string player::get_nickname(bool use_cache) {
     LOCK_CURR_PLAYER;
     if (nickname_cache && use_cache)
         return this->nickname;
@@ -409,7 +409,7 @@ void invListFromBson(const bsoncxx::document::element &elem, T &container) {
 }
 
 // 获取整个背包列表
-std::list<inventoryData> player::get_inventory(const bool &use_cache) {
+std::list<inventoryData> player::get_inventory(bool use_cache) {
     LOCK_CURR_PLAYER;
     if (inventory_cache && use_cache)
         return inventory;
@@ -428,8 +428,34 @@ std::list<inventoryData> player::get_inventory(const bool &use_cache) {
     return rtn;
 }
 
+// 获取背包中指定序号的物品
+inventoryData player::get_inventory_item(LL index, bool use_cache) {
+    LOCK_CURR_PLAYER;
+    if (inventory_cache && use_cache) {
+        auto it = inventory.begin();
+        std::advance(it, index);
+        return *it;
+    }
+
+    auto result = dbFindOne(DB_COLL_USERDATA, "id", this->id, "inventory");
+    if (!result)
+        throw std::runtime_error("找不到对应玩家 ID");
+    auto field = result->view()["inventory"];
+    if (!field.raw())
+        throw std::runtime_error("没有找到 inventory field");
+
+    std::list<inventoryData> rtn;
+    invListFromBson(field, rtn);
+    this->inventory = rtn;
+    this->inventory_cache = true;
+
+    auto it = rtn.begin();
+    std::advance(it, index);
+    return *it;
+}
+
 // 获取背包装备数量
-LL player::get_inventory_size(const bool &use_cache) {
+LL player::get_inventory_size(bool use_cache) {
     if (inventory_cache && use_cache)
         return inventory.size();
     return get_inventory().size();
@@ -565,12 +591,12 @@ bool player::set_inventory(const std::list<inventoryData> &val) {
 }
 
 // 获取整个购买次数表
-std::unordered_map<LL, LL> player::get_buyCount(const bool &use_cache) {
+std::unordered_map<LL, LL> player::get_buyCount(bool use_cache) {
     return buyCount;
 }
 
 // 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
-LL player::get_buyCount_item(const LL &id, const bool &use_cache) {
+LL player::get_buyCount_item(const LL &id, bool use_cache) {
     return 0;
 }
 
@@ -607,7 +633,7 @@ void eqiMapFromBson(const bsoncxx::document::element &elem, std::unordered_map<E
 }
 
 // 获取整个已装备的装备表
-std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &use_cache) {
+std::unordered_map<EqiType, inventoryData> player::get_equipments(bool use_cache) {
     LOCK_CURR_PLAYER;
     if (equipments_cache && use_cache)
         return equipments;
@@ -627,7 +653,7 @@ std::unordered_map<EqiType, inventoryData> player::get_equipments(const bool &us
 }
 
 // 获取某个类型的装备
-inventoryData player::get_equipments_item(const EqiType &type, const bool &use_cache) {
+inventoryData player::get_equipments_item(const EqiType &type, bool use_cache) {
     return get_equipments(use_cache)[type];
 }
 
@@ -660,7 +686,7 @@ bool player::set_equipments_item(const EqiType &type, const inventoryData &item)
 }
 
 // 获取整个已装备的一次性物品表
-std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
+std::list<inventoryData> player::get_equipItems(bool use_cache) {
     LOCK_CURR_PLAYER;
     if (equipItems_cache && use_cache)
         return equipItems;
@@ -680,7 +706,7 @@ std::list<inventoryData> player::get_equipItems(const bool &use_cache) {
 }
 
 // 获取已装备的一次性物品数量
-LL player::get_equipItems_size(const bool &use_cache) {
+LL player::get_equipItems_size(bool use_cache) {
     if (equipItems_cache && use_cache)
         return equipItems.size();
     return get_equipItems().size();

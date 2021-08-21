@@ -448,6 +448,22 @@ bool preEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ID_OUT_OF_RANGE + std::string(": ") + std::to_string(equipItem + 1), BG_ERR_ID_OUT_OF_RANGE);
             return false;
         }
+
+        auto invItem = PLAYER.get_inventory_item(equipItem);
+        if (allEquipments[invItem.id].type == EqiType::single_use) {
+            // 最多只能装备 5 个一次性物品
+            if (PLAYER.get_equipItems_size() >= 5) {
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_MAX_ITEMS, BG_ERR_MAX_ITEMS);
+                return false;
+            }
+            // 不允许装备重复的一次性物品
+            for (const auto &item : PLAYER.get_equipItems()) {
+                if (item.id == invItem.id) {
+                    bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ITEM_REPEATED, BG_ERR_ITEM_REPEATED);
+                    return false;
+                }
+            }
+        }
         return true;
     }
     catch (const std::exception &e) {
@@ -465,9 +481,7 @@ void postEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
     PLAYER.resetCache();                                            // 重算玩家属性
 
     // 获取背包里该序号的对应物品
-    auto invItems = PLAYER.get_inventory();
-    auto it = invItems.begin();
-    std::advance(it, equipItem);
+    auto item = PLAYER.get_inventory_item(equipItem);
 
     // 把装备上去了的装备从背包移除
     if (!PLAYER.remove_at_inventory({ equipItem })) {
@@ -476,12 +490,12 @@ void postEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
     }
 
     // 根据装备类型来装备
-    auto eqiType = allEquipments.at(it->id).type;
+    auto eqiType = allEquipments.at(item.id).type;
     if (eqiType != EqiType::single_use) {                               // 不是一次性物品
         auto prevEquipItem = PLAYER.get_equipments_item(eqiType);       // 获取玩家之前装备的装备
 
         // 把新装备装备上去
-        if (!PLAYER.set_equipments_item(eqiType, *it)) {
+        if (!PLAYER.set_equipments_item(eqiType, item)) {
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_UPDATE_FAILED, BG_ERR_EQUIP_UPDATE_FAILED);
             return;
         }
@@ -496,23 +510,23 @@ void postEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
 
         json reply = {
             { "type", eqiType_to_str(eqiType) },
-            { "name", allEquipments.at(it->id).name },
-            { "level", it->level },
-            { "wear", it->wear },
-            { "defWear", allEquipments.at(it->id).wear }
+            { "name", allEquipments.at(item.id).name },
+            { "level", item.level },
+            { "wear", item.wear },
+            { "defWear", allEquipments.at(item.id).wear }
         };
         bg_http_reply(bgReq.req, 200, reply.dump().c_str());
     }
     else {                                                              // 是一次性物品
         // 把物品添加到一次性列表
-        if (!PLAYER.add_equipItems_item(*it)) {
+        if (!PLAYER.add_equipItems_item(item)) {
             bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_EQUIP_UPDATE_FAILED, BG_ERR_EQUIP_UPDATE_FAILED);
             return;
         }
 
         json reply = {
             { "type", eqiType_to_str(eqiType) },
-            { "name", allEquipments.at(it->id).name }
+            { "name", allEquipments.at(item.id).name }
         };
         bg_http_reply(bgReq.req, 200, reply.dump().c_str());
     }
@@ -1542,7 +1556,8 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
 
         // 进行对战
         bool playerFirst, playerWins;
-        auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst);
+        std::string postMsg;
+        auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst, postMsg);
 
         std::vector<std::pair<std::string, unsigned char>> drops;       // [[装备名称, 装备类型], ...]
         std::vector<std::pair<std::string, int>> errors;

@@ -839,7 +839,7 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
                     fightText += "敌方伤害：";
                 fightText += std::to_string(dmg) + "，余" + std::to_string(hp);
                 if (!msg.empty())
-                    fightText += "（" + msg + "）";
+                    fightText += " (" + msg + ")";
 
                 // 在后手一方攻击完后添加换行符
                 // 玩家先手 => 怪物回合后添加换行符; 怪物先手 => 玩家回合后添加换行符; 其它情况: 添加空格

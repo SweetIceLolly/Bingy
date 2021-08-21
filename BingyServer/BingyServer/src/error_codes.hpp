@@ -96,7 +96,14 @@
 // (无)
 
 // B.9. 装备错误
-// B.9.a. 500 错误
+// B.9.a 400 错误
+#define BG_ERR_STR_MAX_ITEMS                        "最多只能装备5个一次性物品"
+#define BG_ERR_MAX_ITEMS                            2800
+
+#define BG_ERR_STR_ITEM_REPEATED                    "装备的一次性物品不得重复"
+#define BG_ERR_ITEM_REPEATED                        2801
+
+// B.9.b. 500 错误
 #define BG_ERR_STR_EQUIP_REMOVE_FAILED              "把将要装备的装备从背包中移除时发生错误"
 #define BG_ERR_EQUIP_REMOVE_FAILED                  2850
 
@@ -261,6 +268,8 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_SYNTHESIS_NOT_EXIST, "没有这个合成哦! 你可以发送\"bg 合成 装备ID(或名称)\"来查看可用的合成方式。" },
     { BG_ERR_INVALID_DUNGEON, "这个副本不存在哦!" },
     { BG_ERR_NO_ENERGY, "你的体力已经耗尽啦!" },
-    { BG_ERR_IN_CD, "" }
+    { BG_ERR_IN_CD, "" },
+    { BG_ERR_MAX_ITEMS, "最多只能装备5个一次性物品哦!" },
+    { BG_ERR_ITEM_REPEATED, "同样的一次性物品只能装备一个哦!" }
 };
 #endif

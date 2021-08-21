@@ -21,7 +21,7 @@
 // 懒人宏
 // 定义 LL 类型的属性的 getter, setter, 和 inc (增加数值)的函数原型
 #define DEF_LL_GET_SET_INC(propName)                            \
-    LL get_ ##propName (const bool &use_cache = true);          \
+    LL get_ ##propName (bool use_cache = true);          \
     bool set_ ##propName (const LL &val);                       \
     bool inc_ ##propName (const LL &val);                       \
 
@@ -75,7 +75,7 @@ public:
 
     LL get_id();
 
-    std::string get_nickname(const bool &use_cache = true);
+    std::string get_nickname(bool use_cache = true);
     bool set_nickname(const std::string &val);
 
     DEF_LL_GET_SET_INC(signInCount);
@@ -120,9 +120,11 @@ public:
     void resetCache();          // 清空计算缓存
 
     // 获取整个背包列表
-    std::list<inventoryData> get_inventory(const bool &use_cache = true);
+    std::list<inventoryData> get_inventory(bool use_cache = true);
+    // 获取背包中指定序号的物品
+    inventoryData get_inventory_item(LL index, bool use_cache = true);
     // 获取背包装备数量
-    LL get_inventory_size(const bool &use_cache = true);
+    LL get_inventory_size(bool use_cache = true);
     // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_inventory(const LL &index);
     // 按照指定的序号列表移除背包物品. 指定的序号不得重复. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
@@ -133,23 +135,23 @@ public:
     bool set_inventory(const std::list<inventoryData> &val);
 
     // 获取整个购买次数表
-    std::unordered_map<LL, LL> get_buyCount(const bool &use_cache = true);
+    std::unordered_map<LL, LL> get_buyCount(bool use_cache = true);
     // 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
-    LL get_buyCount_item(const LL &id, const bool &use_cache = true);
+    LL get_buyCount_item(const LL &id, bool use_cache = true);
     // 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
     bool set_buyCount_item(const LL &id, const LL &count);
 
     // 获取整个已装备的装备表
-    std::unordered_map<EqiType, inventoryData> get_equipments(const bool &use_cache = true);
+    std::unordered_map<EqiType, inventoryData> get_equipments(bool use_cache = true);
     // 获取某个类型的装备
-    inventoryData get_equipments_item(const EqiType &type, const bool &use_cache = true);
+    inventoryData get_equipments_item(const EqiType &type, bool use_cache = true);
     // 设置某个类型的装备. 如果要移除, 则把 item 的 id 设置为 -1
     bool set_equipments_item(const EqiType &type, const inventoryData &item);
 
     // 获取整个已装备的一次性物品表
-    std::list<inventoryData> get_equipItems(const bool &use_cache = true);
+    std::list<inventoryData> get_equipItems(bool use_cache = true);
     // 获取已装备的一次性物品数量
-    LL get_equipItems_size(const bool &use_cache = true);
+    LL get_equipItems_size(bool use_cache = true);
     // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_equipItems(const LL &index);
     // 清空已装备的一次性物品

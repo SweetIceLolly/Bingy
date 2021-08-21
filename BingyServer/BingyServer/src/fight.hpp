@@ -37,4 +37,4 @@ public:
 
 // 令两个对象对战, 返回对战的回合信息
 // 格式为: [[A打出的伤害, B的剩余血量, 附加信息], [B打出的伤害, A的剩余血量, 附加信息], ...]
-std::vector<std::tuple<LL, LL, std::string>> bg_fight(fightable a, fightable b, bool &a_wins, bool &a_first);
+std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, const fightable &obj_b, bool &a_wins, bool &a_first, std::string &postMsg);
