@@ -20,10 +20,10 @@
 
 // 懒人宏
 // 定义 LL 类型的属性的 getter, setter, 和 inc (增加数值)的函数原型
-#define DEF_LL_GET_SET_INC(propName)                            \
-    LL get_ ##propName (bool use_cache = true);          \
-    bool set_ ##propName (const LL &val);                       \
-    bool inc_ ##propName (const LL &val);                       \
+#define DEF_LL_GET_SET_INC(propName)                        \
+    LL get_ ##propName (bool use_cache = true);             \
+    bool set_ ##propName (LL val);                          \
+    bool inc_ ##propName (LL val);                          \
 
 using LL = std::int64_t;
 
@@ -69,7 +69,7 @@ public:
     player(const player &p);
 
     // 指定 QQ 号的构造函数
-    player(const LL &qq);
+    player(LL qq);
 
     // ---------------------------------------------------------
 
@@ -126,7 +126,7 @@ public:
     // 获取背包装备数量
     LL get_inventory_size(bool use_cache = true);
     // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
-    bool remove_at_inventory(const LL &index);
+    bool remove_at_inventory(LL index);
     // 按照指定的序号列表移除背包物品. 指定的序号不得重复. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
     bool remove_at_inventory(const std::vector<LL> &indexes);
     // 添加新物品到背包末尾
@@ -137,9 +137,9 @@ public:
     // 获取整个购买次数表
     std::unordered_map<LL, LL> get_buyCount(bool use_cache = true);
     // 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
-    LL get_buyCount_item(const LL &id, bool use_cache = true);
+    LL get_buyCount_item(LL id, bool use_cache = true);
     // 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
-    bool set_buyCount_item(const LL &id, const LL &count);
+    bool set_buyCount_item(LL id, LL count);
 
     // 获取整个已装备的装备表
     std::unordered_map<EqiType, inventoryData> get_equipments(bool use_cache = true);
@@ -153,11 +153,13 @@ public:
     // 获取已装备的一次性物品数量
     LL get_equipItems_size(bool use_cache = true);
     // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false. 注意, 指定序号必须从 0 开始
-    bool remove_at_equipItems(const LL &index);
+    bool remove_at_equipItems(LL index);
     // 清空已装备的一次性物品
     bool clear_equipItems();
     // 添加新物品到已装备的一次性物品列表末尾
     bool add_equipItems_item(const inventoryData &item);
+    // 根据指定装备 ID 移除某个已装备的一次性物品. 如果指定物品不存在, 则返回 false
+    bool remove_equipItem_by_id(LL id);
 
     bool confirmInProgress = false;                                                 // 是否有待确认的强化
     // 取消强化确认
@@ -175,22 +177,22 @@ extern std::mutex                       mutexAllPlayers;
 extern std::unordered_set<LL>           allAdmins;
 extern std::unordered_set<LL>           blacklist;
 
-bool bg_player_add(const LL &id);
+bool bg_player_add(LL id);
 bool bg_get_all_players_from_db();
 
 // 检查玩家是否存在
-inline bool bg_player_exist(const LL &id) {
+inline bool bg_player_exist(LL id) {
     std::scoped_lock _lock(mutexAllPlayers);
     return allPlayers.end() != allPlayers.find(id);
 }
 
 // 检查玩家是否为管理员
-inline bool bg_is_admin(const LL &id) {
+inline bool bg_is_admin(LL id) {
     return allAdmins.end() != allAdmins.find(id);
 }
 
 // 从玩家列表中获取玩家
-inline auto& bg_player_get(const LL &id) {
+inline auto& bg_player_get(LL id) {
     std::unique_lock _lock(mutexAllPlayers);
     return allPlayers[id];
     _lock.unlock();
@@ -202,19 +204,19 @@ inline size_t bg_player_get_count() {
     return allPlayers.size();
 }
 
-bool bg_all_player_inc_coins(const LL &val);
-bool bg_all_player_inc_heroCoin(const LL &val);
-bool bg_all_player_inc_level(const LL &val);
-bool bg_all_player_inc_blessing(const LL &val);
-bool bg_all_player_inc_energy(const LL &val);
-bool bg_all_player_inc_exp(const LL &val);
-bool bg_all_player_inc_invCapacity(const LL &val);
-bool bg_all_player_inc_vip(const LL &val);
-bool bg_all_player_set_coins(const LL &val);
-bool bg_all_player_set_heroCoin(const LL &val);
-bool bg_all_player_set_level(const LL &val);
-bool bg_all_player_set_blessing(const LL &val);
-bool bg_all_player_set_energy(const LL &val);
-bool bg_all_player_set_exp(const LL &val);
-bool bg_all_player_set_invCapacity(const LL &val);
-bool bg_all_player_set_vip(const LL &val);
+bool bg_all_player_inc_coins(LL val);
+bool bg_all_player_inc_heroCoin(LL val);
+bool bg_all_player_inc_level(LL val);
+bool bg_all_player_inc_blessing(LL val);
+bool bg_all_player_inc_energy(LL val);
+bool bg_all_player_inc_exp(LL val);
+bool bg_all_player_inc_invCapacity(LL val);
+bool bg_all_player_inc_vip(LL val);
+bool bg_all_player_set_coins(LL val);
+bool bg_all_player_set_heroCoin(LL val);
+bool bg_all_player_set_level(LL val);
+bool bg_all_player_set_blessing(LL val);
+bool bg_all_player_set_energy(LL val);
+bool bg_all_player_set_exp(LL val);
+bool bg_all_player_set_invCapacity(LL val);
+bool bg_all_player_set_vip(LL val);

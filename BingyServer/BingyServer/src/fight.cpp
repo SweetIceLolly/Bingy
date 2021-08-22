@@ -8,6 +8,11 @@
 
 #define FLOAT_PRECISION 1e-6            // 内部计算的数值精度, 绝对值小于这个的数值视为 0
 
+// 懒人宏
+// 定义检查玩家装备和技能相关的函数
+#define CHECK_BUFF(type)    \
+    inline void check_##type##_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg, std::vector<std::string> &msg)
+
 /**
  * 检查玩家装备和技能相关的函数
  * 优先级: init > mp > brk = def > atk = crt > dmg > hp
@@ -18,14 +23,15 @@
  *  postMsg: 对战结束后的消息. 请使用拼接字符串的形式来修改. 如: postMsg += "xxx"
  *  msg: 当前回合的消息. 请使用 push_back 来修改. 如: msg.push_back("xxx")
  */
-inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg);
-inline void check_def_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_brk_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_atk_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_crt_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_hp_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
-inline void check_mp_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg);
+inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg);
+CHECK_BUFF(mp);
+CHECK_BUFF(brk);
+CHECK_BUFF(def);
+CHECK_BUFF(atk);
+CHECK_BUFF(crt);
+inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg, std::vector<std::string> &msg);
+CHECK_BUFF(hp);
+
 
 fightable::fightable() {
     throw std::runtime_error("必须通过玩家或者怪物创建 fightable!");
@@ -42,6 +48,8 @@ fightable::fightable(const fightable &f) {
     currHp = f.currHp;
     playerId = f.playerId;
     monsterId = f.monsterId;
+    equipItems = f.equipItems;
+    equipments = f.equipments;
 }
 
 fightable::fightable(player &p) {
@@ -55,6 +63,15 @@ fightable::fightable(player &p) {
     currHp = hp;
     playerId = p.get_id();
     monsterId = -1;
+
+    // 获取玩家的装备和一次性装备
+    for (const auto &item : p.get_equipItems())
+        equipItems.insert(item.id);
+    for (const auto &item : p.get_equipments()) {
+        if (item.second.id != -1)
+            equipments.insert(item.second.id);
+    }
+        
 }
 
 fightable::fightable(const monsterData &m) {
@@ -85,13 +102,13 @@ inline std::string flatten_str_vec(const std::vector<std::string> &strVec) {
         return "";
 }
 
-std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, const fightable &obj_b, bool &a_wins, bool &a_first, std::string &postMsg) {
+std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, const fightable &obj_b, bool &a_wins, bool &a_first, std::string &preMsg, std::string &postMsg) {
     std::vector<std::tuple<LL, LL, std::string>> rounds;        // 格式为: [[A打出的伤害, B的剩余血量, 附加信息], [B打出的伤害, A的剩余血量, 附加信息], ...]
     fightable a = obj_a, b = obj_b;                             // 复制一份, 以便之后访问玩家原本的属性
     
     // 开始时检查玩家的装备和技能
-    check_init_buff(a, obj_a, b, obj_b, postMsg);
-    check_init_buff(b, obj_b, a, obj_a, postMsg);
+    check_init_buff(a, obj_a, b, obj_b, preMsg, postMsg);
+    check_init_buff(b, obj_b, a, obj_a, preMsg, postMsg);
 
     a_first = a.agi >= b.agi;                                   // 检查是否为 a 先手
     bool a_round = a_first;                                     // 是否为 a 的回合
@@ -112,16 +129,16 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
         
         if (a_round) {
             // 检查 a 的 mp 技能, a 的 brk 技能, b 的 def 技能
-            check_mp_buff(round, a, obj_a, b, obj_b, postMsg, msg);
-            check_brk_buff(round, a, obj_a, b, obj_b, postMsg, msg);
-            check_def_buff(round, b, obj_b, a, obj_a, postMsg, msg);
+            check_mp_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
+            check_brk_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
+            check_def_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
 
             // 计算最终防护
             double bFinalDef = std::max(b.def - a.brk / 4, 0.0);
 
             // 检查 a 的 atk 和 crt 技能
-            check_atk_buff(round, a, obj_a, b, obj_b, postMsg, msg);
-            check_crt_buff(round, a, obj_a, b, obj_b, postMsg, msg);
+            check_atk_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
+            check_crt_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
 
             // 根据暴击计算最终攻
             // 若暴击为 0, 则最终攻 = 原始攻
@@ -138,12 +155,12 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
             double aDmg = aFinalAtk * (1.0 - bFinalDef / (bFinalDef + 100));
 
             // 检查 a 的 dmg 技能
-            check_dmg_buff(round, aDmg, a, obj_a, b, obj_b, postMsg, msg);
+            check_dmg_buff(round, aDmg, a, obj_a, b, obj_b, preMsg, postMsg, msg);
 
             b.currHp -= aDmg;
 
             // 检查 b 的 hp 技能
-            check_hp_buff(round, b, obj_b, a, obj_a, postMsg, msg);
+            check_hp_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
 
             if (b.currHp <= FLOAT_PRECISION)
                 b.currHp = 0;
@@ -155,16 +172,16 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
         }
         else {
             // 检查 b 的 mp 技能,  b 的 brk 技能和 a 的 def 技能
-            check_mp_buff(round, b, obj_b, a, obj_a, postMsg, msg);
-            check_brk_buff(round, b, obj_b, a, obj_a, postMsg, msg);
-            check_def_buff(round, a, obj_a, b, obj_b, postMsg, msg);
+            check_mp_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
+            check_brk_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
+            check_def_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
 
             // 计算最终防护
             double aFinalDef = std::max(a.def - b.brk / 4, 0.0);
 
             // 检查 b 的 atk 和 crt 技能
-            check_atk_buff(round, b, obj_b, a, obj_a, postMsg, msg);
-            check_crt_buff(round, b, obj_b, a, obj_a, postMsg, msg);
+            check_atk_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
+            check_crt_buff(round, b, obj_b, a, obj_a, preMsg, postMsg, msg);
 
             // 根据暴击计算最终攻
             double bFinalAtk = b.atk;
@@ -179,12 +196,12 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
             double bDmg = bFinalAtk * (1.0 - aFinalDef / (aFinalDef + 100));
 
             // 检查 b 的 dmg 技能
-            check_dmg_buff(round, bDmg, b, obj_b, a, obj_a, postMsg, msg);
+            check_dmg_buff(round, bDmg, b, obj_b, a, obj_a, preMsg, postMsg, msg);
 
             a.currHp -= bDmg;
 
             // 检查 a 的 hp 技能
-            check_hp_buff(round, a, obj_a, b, obj_b, postMsg, msg);
+            check_hp_buff(round, a, obj_a, b, obj_b, preMsg, postMsg, msg);
 
             if (a.currHp <= FLOAT_PRECISION)
                 a.currHp = 0;
@@ -199,75 +216,224 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
         a_round = !a_round;
     }
 
+    // 去掉多余的换行符
+    if (preMsg.length() > 0) {
+        if (preMsg.back() == '\n')
+            preMsg.pop_back();
+    }
+
     return rounds;
 }
 
-// 开始的时候检查 a 的一次性物品和技能
-inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg) {
+// 火攻
+inline void fire_atk(LL round, double &dmgDelta, fightable &b, std::vector<std::string> &msg) {
+    if (b.equipments.find(18) != b.equipments.end() || b.equipments.find(19) != b.equipments.end()) {
+        // 如果对方有红色耳环或者火焰宝石, 则不受烧伤影响
+        dmgDelta = 0;
+        if (round == 1)
+            msg.push_back("不受烧伤影响");
+        return;
+    }
+    if (b.equipments.find(22) != b.equipments.end()) {
+        // 如果对方有寒冰宝石, 则多受 10 点伤害
+        dmgDelta += 10;
+        if (round == 1)
+            msg.push_back("烧伤且拥有寒冰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
+    }
+    else {
+        // 没有寒冰宝石
+        if (round == 1)
+            msg.push_back("烧伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
+    }
+}
+
+// 冰攻
+inline void ice_atk(LL round, double &dmgDelta, fightable &b, std::vector<std::string> &msg) {
+    if (b.equipments.find(21) != b.equipments.end() || b.equipments.find(22) != b.equipments.end()) {
+        // 如果对方有蓝色耳环或者寒冰宝石, 则不受冻伤影响
+        dmgDelta = 0;
+        if (round == 1)
+            msg.push_back("不受冻伤影响");
+        return;
+    }
+    if (b.equipments.find(19) != b.equipments.end()) {
+        // 如果对方有火焰宝石, 则多受 10 点伤害
+        dmgDelta += 10;
+        if (round == 1)
+            msg.push_back("冻伤且拥有火焰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
+    }
+    else {
+        // 没有火焰宝石
+        if (round == 1)
+            msg.push_back("冻伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
+    }
+}
+
+// 开始的时候检查 a 的技能
+inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg) {
+    // 怪物相关
+    switch (a.monsterId) {
+    case -1:
+        // 不是怪物, 继续去检查装备
+        break;
+    }
+
+    // 一次性装备相关
+    if (a.equipItems.size() > 0) {
+        if (a.equipItems.find(16) != a.equipItems.end()) {
+            // 哥布林护符: 有 30% 的概率令哥布林不战自退
+            if (b.monsterId != -1 && (b.monsterId == 6 || b.monsterId == 8 || b.monsterId == 9 || b.monsterId == 11)) {
+                // 移除这个物品
+                a.equipItems.erase(16);
+                bg_player_get(a.playerId).remove_equipItem_by_id(16);
+
+                if (rndRange(99) < 50) {
+                    // 成功
+                    preMsg += "护符成功令哥布林以为你是他们中的一员! 敌人不战自退了。";
+                    b.currHp = 0;
+                    return;
+                }
+                else {
+                    // 不成功
+                    preMsg += "哥布林认出了这个哥布林护符不是你的并向你发起了攻击!";
+                }
+            }
+        }
+        if (a.equipItems.find(11) != a.equipItems.end()) {
+            // 移除这个物品
+            a.equipItems.erase(11);
+            bg_player_get(a.playerId).remove_equipItem_by_id(11);
+
+            // 轻盈之羽: + 20 敏
+            a.agi += 20;
+            preMsg += std::to_string(a.playerId) + ": 轻盈之羽, +20敏";
+        }
+    }
+
+    // 装备相关
+    if (a.equipments.size() > 0) {
+        
+    }
+}
+
+// 检查 a 的魔法值相关技能
+CHECK_BUFF(mp) {
+
+}
+
+// 检查 a 的破甲值相关技能
+CHECK_BUFF(brk) {
 
 }
 
 // 检查 a 防护值相关技能
-inline void check_def_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
+CHECK_BUFF(def) {
     // 怪物相关
     switch (a.monsterId) {
+    case -1:
+        // 不是怪物, 继续去检查装备
+        break;
+
     case 14:
         // 末狮: 狂狮怒吼, 玩家失去 10 点防护
         b.def -= 10;
-        if (round == 1)
-            msg.push_back("狂狮怒吼,玩家失去10点防护");
+        preMsg += "末狮: 狂狮怒吼, 玩家失去10点防护\n";
         return;
     }
 }
 
-// 检查 a 的破甲值相关技能
-inline void check_brk_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
-
-}
-
 // 检查 a 的攻击值相关技能
-inline void check_atk_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
-    
+CHECK_BUFF(atk) {
+    // 怪物相关
+    switch (a.monsterId) {
+    case -1:
+        // 不是怪物, 继续去检查装备
+        break;
+    }
+
+    // 一次性装备相关
+    if (a.equipItems.size() > 0) {
+        if (a.equipItems.find(8) != a.equipItems.end()) {
+            // 巨熊之胆: 加强 10 点攻击
+            a.atk += 10;
+            if (round == 1)
+                msg.push_back("巨熊之胆:每回合+10攻击");
+        }
+    }
+
+    // 装备相关
+    if (a.equipments.size() > 0) {
+
+    }
 }
 
 // 检查 a 的暴击值相关技能
-inline void check_crt_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
+CHECK_BUFF(crt) {
 
 }
 
 // 检查 a 的最终攻击相关技能
-inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
+inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg, std::vector<std::string> &msg) {
     // 怪物相关
     switch (a.monsterId) {
+    case -1:
+        // 不是怪物, 继续去检查装备
+        break;
+
     case 2:
         // 喰毒巨蟒: 中毒, 每回合 + 7 伤害
         dmg += 7;
         if (round == 1)
-            msg.push_back("中毒,每回合+7伤害");
+            msg.push_back("玩家中毒,每回合-7血");
         return;
 
-    case 8:
+    case 8: {
         // 火焰哥布林: 烧伤, 每回合 + 5 伤害
-        dmg += 5;
-        if (round == 1)
-            msg.push_back("烧伤,每回合+5伤害");
+        double dmgDelta = 5;
+        fire_atk(round, dmgDelta, b, msg);
+        dmg += dmgDelta;
         return;
+    }
 
-    case 9:
+    case 9: {
         // 寒冰哥布林: 冻伤, 每回合 + 5 伤害
-        dmg += 5;
-        if (round == 1)
-            msg.push_back("冻伤,每回合+5伤害");
+        double dmgDelta = 5;
+        ice_atk(round, dmgDelta, b, msg);
+        dmg += dmgDelta;
         return;
+    }
+    }
+
+    // 一次性装备相关
+    if (a.equipItems.size() > 0) {
+        if (a.equipItems.find(5) != a.equipItems.end()) {
+            // 蟒毒: 给对方造成中毒, 每回合 + 7 伤害
+            dmg += 5;
+            if (round == 1)
+                msg.push_back("蟒毒:对方中毒,每回合-7血");
+        }
+    }
+
+    // 装备相关
+    if (a.equipments.size() > 0) {
+        if (a.equipments.find(17) != a.equipments.end()) {
+            // 火弓: 给对方造成烧伤, 每回合 + 10 伤害
+            double dmgDelta = 10;
+            fire_atk(round, dmgDelta, b, msg);
+            dmg += dmgDelta;
+            return;
+        }
+        if (a.equipments.find(20) != a.equipments.end()) {
+            // 冰弩: 给对方造成冻伤, 每回合 + 10 伤害
+            double dmgDelta = 10;
+            ice_atk(round, dmgDelta, b, msg);
+            dmg += dmgDelta;
+            return;
+        }
     }
 }
 
 // 检查 a 的血值相关技能
-inline void check_hp_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
-
-}
-
-// 检查 a 的魔法值相关技能
-inline void check_mp_buff(LL round, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &postMsg, std::vector<std::string> &msg) {
+CHECK_BUFF(hp) {
 
 }

@@ -1556,8 +1556,8 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
 
         // 进行对战
         bool playerFirst, playerWins;
-        std::string postMsg;
-        auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst, postMsg);
+        std::string preMsg, postMsg;
+        auto rounds = bg_fight(fightable(PLAYER), fightable(monster), playerWins, playerFirst, preMsg, postMsg);
 
         std::vector<std::pair<std::string, unsigned char>> drops;       // [[装备名称, 装备类型], ...]
         std::vector<std::pair<std::string, int>> errors;
@@ -1610,16 +1610,20 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
             }
         }
 
+        // 把怪物出场消息和战斗前消息拼接起来
+        if (monster.message.length() > 0 && preMsg.length() > 0)
+            preMsg = monster.message + "\n" + preMsg;
+        
         bg_http_reply(bgReq.req, 200, json {
             { "fighterFirst", playerFirst },
             { "rounds", rounds },
             { "targetName", monster.name },
-            { "msg", monster.message },
+            { "msg", preMsg },
             { "drops", drops },
             { "coins", playerWins ? monster.coin : loseCoins },
             { "exp", monster.exp },
             { "energy", PLAYER.get_energy() },
-            { "postMsg", "" },                  // todo
+            { "postMsg", postMsg },
             { "win", playerWins },
             { "errors", errors }
         }.dump().c_str());

@@ -62,7 +62,7 @@ player::player(const player &p) {
     this->upgrading = false;
 }
 
-player::player(const LL &qq) {
+player::player(LL qq) {
     this->id = qq;
     this->nickname = "";
     this->signInCount = 0;
@@ -88,7 +88,7 @@ player::player(const LL &qq) {
 #define SET_LL_PROP_ZERO(prop) p. prop = 0; p. prop## _cache = true;
 
 // 无条件添加玩家到数据库和字典中. 抛出的异常需要由外部处理
-bool bg_player_add(const LL &id) {
+bool bg_player_add(LL id) {
     // 把所有装备都设置为 -1 (空)
     auto equipments = bsoncxx::builder::stream::document{};
     for (LL i = 0; i <= 9; ++i) {
@@ -286,7 +286,7 @@ bool bg_get_all_players_from_db() {
         return tmp;                                                             \
     }                                                                           \
                                                                                 \
-    bool player::set_ ##propName (const LL &val) {                              \
+    bool player::set_ ##propName (LL val) {                                     \
         LOCK_CURR_PLAYER;                                                       \
         if (dbUpdateOne(DB_COLL_USERDATA, "id", this->id, "$set",               \
             bsoncxx::builder::stream::document{} << #propName << val            \
@@ -301,7 +301,7 @@ bool bg_get_all_players_from_db() {
         return false;                                                           \
     }                                                                           \
                                                                                 \
-    bool player::inc_ ##propName (const LL &val) {                              \
+    bool player::inc_ ##propName (LL val) {                                     \
         if (! propName## _cache) {                                              \
             get_ ##propName ();                                                 \
             if (! propName## _cache) {                                          \
@@ -462,7 +462,7 @@ LL player::get_inventory_size(bool use_cache) {
 }
 
 // 按照指定序号移除背包物品. 如果指定序号无效, 则返回 false
-bool player::remove_at_inventory(const LL &index) {
+bool player::remove_at_inventory(LL index) {
     LOCK_CURR_PLAYER;
     // 必须有缓存才能继续
     if (!inventory_cache) {
@@ -596,12 +596,12 @@ std::unordered_map<LL, LL> player::get_buyCount(bool use_cache) {
 }
 
 // 获取购买次数表中某个商品的购买次数. 如果找不到对应的商品购买记录, 则返回 0
-LL player::get_buyCount_item(const LL &id, bool use_cache) {
+LL player::get_buyCount_item(LL id, bool use_cache) {
     return 0;
 }
 
 // 设置购买次数表中某个商品的购买次数. 如果对应商品的购买记录不存在, 则会创建
-bool player::set_buyCount_item(const LL &id, const LL &count) {
+bool player::set_buyCount_item(LL id, LL count) {
     return false;
 }
 
@@ -713,7 +713,7 @@ LL player::get_equipItems_size(bool use_cache) {
 }
 
 // 移除某个已装备的一次性物品. 如果指定序号无效, 则返回 false
-bool player::remove_at_equipItems(const LL &index) {
+bool player::remove_at_equipItems(LL index) {
     // 必须有缓存才能继续
     if (!equipItems_cache) {
         get_equipItems();
@@ -792,6 +792,32 @@ bool player::add_equipItems_item(const inventoryData &item) {
         return true;
     }
     return false;
+}
+
+// 根据指定装备 ID 移除某个已装备的一次性物品
+bool player::remove_equipItem_by_id(LL id) {
+    // 必须有缓存才能继续
+    if (!equipItems_cache) {
+        get_equipItems();
+        if (!equipItems_cache)
+            return false;
+    }
+
+    // 查找指定的装备
+    LL index = 0;
+    bool found = false;
+    std::unique_lock _lock(this->mutexPlayer);
+    for (const auto &item : equipItems) {
+        if (item.id == id) {
+            found = true;
+            break;
+        }
+        ++index;
+    }
+    _lock.unlock();
+    if (!found)
+        return false;
+    return remove_at_equipItems(index);
 }
 
 // --------------------------------------------------
@@ -918,7 +944,7 @@ void player::waitConfirmComplete() {
 // 懒人宏
 // 为所有玩家的指定属性增加指定数值
 #define ALL_PLAYER_MODIFY(field)                                        \
-    bool bg_all_player_inc_ ##field (const LL &val) {                   \
+    bool bg_all_player_inc_ ##field (LL val) {                          \
         /* 更新数据库, 成功后再更新本地缓存 */                            \
         std::scoped_lock<std::mutex> _lock(mutexAllPlayers);            \
         if (dbUpdateAll(DB_COLL_USERDATA, "$inc",                       \
@@ -943,7 +969,7 @@ void player::waitConfirmComplete() {
         return false;                                                   \
     }                                                                   \
                                                                         \
-    bool bg_all_player_set_ ##field (const LL &val) {                   \
+    bool bg_all_player_set_ ##field (LL val) {                          \
         /* 更新数据库, 成功后再更新本地缓存 */                            \
         std::scoped_lock<std::mutex> _lock(mutexAllPlayers);            \
         if (dbUpdateAll(DB_COLL_USERDATA, "$set",                       \

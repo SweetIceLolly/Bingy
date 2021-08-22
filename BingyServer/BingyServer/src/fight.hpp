@@ -17,6 +17,8 @@ public:
     
     // 只有玩家才会有以下内容
     LL playerId;                                                // 玩家 ID
+    std::unordered_set<LL> equipItems;                          // 玩家的一次性装备
+    std::unordered_set<LL> equipments;                          // 玩家的装备
 
     // 只有怪物才会有以下内容
     LL monsterId;                                               // 怪物 ID
@@ -37,4 +39,4 @@ public:
 
 // 令两个对象对战, 返回对战的回合信息
 // 格式为: [[A打出的伤害, B的剩余血量, 附加信息], [B打出的伤害, A的剩余血量, 附加信息], ...]
-std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, const fightable &obj_b, bool &a_wins, bool &a_first, std::string &postMsg);
+std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, const fightable &obj_b, bool &a_wins, bool &a_first, std::string &preMsg, std::string &postMsg);
