@@ -363,7 +363,17 @@ CHECK_BUFF(atk) {
 
     // 装备相关
     if (a.equipments.size() > 0) {
-
+        
+    }
+    if (b.equipments.size() > 0) {
+        if (b.equipments.find(36) != b.equipments.end()) {
+            // 如果对方有狮毛护腿: 前三回合攻击减弱 30% - 60%
+            if (round <= 3) {
+                double atkPercent = rndRangeFloat(0.4, 0.7);
+                msg.push_back("攻击减弱" + std::to_string(static_cast<LL>(atkPercent * 100)) + "％");
+                a.atk *= atkPercent;
+            }
+        }
     }
 }
 
@@ -428,6 +438,13 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
             double dmgDelta = 10;
             ice_atk(round, dmgDelta, b, msg);
             dmg += dmgDelta;
+            return;
+        }
+        if (a.equipments.find(27) != a.equipments.end()) {
+            // 嗜血之刃: 每回合吸取打出攻击的 5% - 50%血量
+            double hpBonus = rndRangeFloat(dmg * 0.05, dmg * 0.5);
+            a.currHp += hpBonus;
+            msg.push_back("吸血" + std::to_string(static_cast<LL>(hpBonus)) + "点");
             return;
         }
     }

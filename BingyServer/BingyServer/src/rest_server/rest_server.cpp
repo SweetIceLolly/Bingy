@@ -22,7 +22,7 @@ inline void str_ucase(char *str) {
 }
 
 // 把请求类型字符串 (指定的长度) 中所有字符转换为大写
-inline void str_ucase(char *str, const int &len) {
+inline void str_ucase(char *str, int len) {
     for (unsigned int i = 0; i < len; ++i) {
         if (str[i] == '\0')
             return;
@@ -50,7 +50,7 @@ void rest_server::removePollHandler() {
     this->pollHandler = nullptr;
 }
 
-void rest_server::startServer(const std::string& connStr, const int &pollFreq, void *userdata) {
+void rest_server::startServer(const std::string& connStr, int pollFreq, void *userdata) {
     struct mg_mgr mgr;
     dispatcherInfo info;
 

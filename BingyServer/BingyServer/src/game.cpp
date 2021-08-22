@@ -959,6 +959,7 @@ bool preUpgradeBlessingCallback(const bgGameHttpReq &bgReq, LL upgradeTimes, LL 
             );
             return false;
         }
+        return true;
     }
     else {
         //   祝福升 n 级价格
@@ -1196,7 +1197,7 @@ void postBuyTradeCallback(const bgGameHttpReq& bgReq, LL tradeId) {
 }
 
 // 上架交易场商品前检查
-bool preSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, const bool& hasPassword) {
+bool preSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, bool hasPassword) {
     try {
         if (!accountCheck(bgReq))
             return false;
@@ -1242,7 +1243,7 @@ bool preSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, const 
 }
 
 // 上架交易场商品
-void postSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, const bool &hasPassword) {
+void postSellTradeCallback(const bgGameHttpReq& bgReq, LL invId, LL price, bool hasPassword) {
     try {
         // 如果是有密码的交易, 则随机生成一个密码
         std::string password = "";

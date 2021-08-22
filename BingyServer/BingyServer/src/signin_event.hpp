@@ -36,10 +36,10 @@ public:
     signInEvent();
     signInEvent(const signInEvent &ev);
     LL get_signInCount(bool use_cache = true);
-    bool inc_signInCount(const LL &val);
-    bool set_signInCount(const LL &val);
+    bool inc_signInCount(LL val);
+    bool set_signInCount(LL val);
     LL get_prevActiveTime(bool use_cache = true);
-    bool set_prevActiveTime(const LL &val);
+    bool set_prevActiveTime(LL val);
 };
 
 extern std::vector<signInEvent> allSignInEvents;

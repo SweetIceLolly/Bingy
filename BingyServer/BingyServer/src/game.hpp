@@ -52,8 +52,8 @@ void postUpgradeBlessingCallback(const bgGameHttpReq &bgReq, LL upgradeTimes, LL
 PRE_POST(ViewTrade);
 bool preBuyTradeCallback(const bgGameHttpReq &bgReq, LL tradeId, const std::string &password);
 void postBuyTradeCallback(const bgGameHttpReq &bgReq, LL tradeId);
-bool preSellTradeCallback(const bgGameHttpReq &bgReq, LL invId, LL price, const bool &hasPassword);
-void postSellTradeCallback(const bgGameHttpReq &bgReq, LL invId, LL price, const bool &hasPassword);
+bool preSellTradeCallback(const bgGameHttpReq &bgReq, LL invId, LL price, bool hasPassword);
+void postSellTradeCallback(const bgGameHttpReq &bgReq, LL invId, LL price, bool hasPassword);
 bool preRecallTradeCallback(const bgGameHttpReq &bgReq, LL tradeId);
 void postRecallTradeCallback(const bgGameHttpReq &bgReq, LL tradeId);
 bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, const std::string &target, LL &targetId, LL &coins, LL &level);

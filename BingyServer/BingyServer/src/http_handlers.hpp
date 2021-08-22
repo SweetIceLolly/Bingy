@@ -26,14 +26,14 @@ typedef struct _http_req {
 } http_req;
 
 // 写入请求回应
-inline void bg_http_reply(http_req *req, const int &http_code, const char *body) {
+inline void bg_http_reply(http_req *req, int http_code, const char *body) {
     *req->res_http_code = http_code;
     *(req->res_body) = strdup(body);
     *req->signal = 1;
 }
 
 // 发送请求错误回应
-inline void bg_http_reply_error(http_req *req, const int &http_code, const std::string &msg, const int &errid) {
+inline void bg_http_reply_error(http_req *req, int http_code, const std::string &msg, int errid) {
     bg_http_reply(req, http_code, ("{ \"msg\": \"" + msg + "\", \"errid\": " + std::to_string(errid) + "}").c_str());
 }
 

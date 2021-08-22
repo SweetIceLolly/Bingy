@@ -22,4 +22,4 @@ public:
 extern std::unordered_multimap<LL, synthesisInfo>   allSyntheses;
 
 // 根据所提供的条件来配对可用的合成. 如果有符合条件的合成, 则返回 true, coins 为所需硬币; 否则返回 false; coins 的值不被修改
-bool bg_match_synthesis(const LL &targetId, const std::unordered_multiset<LL> &materials, LL &coins);
+bool bg_match_synthesis(LL targetId, const std::unordered_multiset<LL> &materials, LL &coins);

@@ -27,7 +27,7 @@ public:
     state: 在回调函数中对该值进行修改以切换到另一个 state
     返回 false 以中断配置文件读取
 
-    bool propGetCallback(const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo)
+    bool propGetCallback(const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo)
     属性行读取回调函数
     propName: 属性名
     propValue: 属性值
@@ -35,18 +35,18 @@ public:
     lineNo: 当前所在行
     返回 false 以中断配置文件读取
 
-    bool beginCallback(const char &state)
+    bool beginCallback(char state)
     读取到开始标记的回调函数
     state: 当前的 state
 
-    bool endCallback(const char &state)
+    bool endCallback(char state)
     读取到结束标记的回调函数
     state: 当前的 state
     */
     bool load(
         std::function<bool(const std::string &line, char &state)> stateChangeCallback,
-        std::function<bool(const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo)> propGetCallback,
-        std::function<bool(const char &state)> beginCallback,
-        std::function<bool(const char &state)> endCallback
+        std::function<bool(const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo)> propGetCallback,
+        std::function<bool(char state)> beginCallback,
+        std::function<bool(char state)> endCallback
     );
 };

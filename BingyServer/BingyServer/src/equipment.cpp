@@ -25,7 +25,7 @@ bool bg_load_equipment_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo) -> bool {
             try {
                 if (propName == "id")
                     temp->id = std::stoll(propValue);
@@ -66,13 +66,13 @@ bool bg_load_equipment_config() {
         },
 
         // 开始标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             temp = new equipmentData();
             return true;
         },
 
         // 结束标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             bool rtn = allEquipments.insert({ temp->id, *temp }).second;
             delete temp;
             if (!rtn)

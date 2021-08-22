@@ -33,7 +33,7 @@ void console_log(const std::string &msg, const LogType &type = LogType::info);
 
 // 字符串相关
 std::string str_trim(const std::string &str);
-std::vector<std::string> str_split(const std::string &str, const char &delimiter);
+std::vector<std::string> str_split(const std::string &str, char delimiter);
 void str_lcase(std::string &str);
 LL str_to_ll(const std::string &str);
 
@@ -90,10 +90,13 @@ public:
 bool is_day_sequential(const dateTime &a, const dateTime &b);
 
 // 线程安全地获取一个 [min, max] 内的随机数
-LL rndRange(const LL &min, const LL &max);
+LL rndRange(LL min, LL max);
 
 // 线程安全地获取一个 [0, max] 内的随机数
-LL rndRange(const LL &max);
+LL rndRange(LL max);
+
+// 线程安全地获取一个 [min, max] 内的随机浮点数
+double rndRangeFloat(double min, double max);
 
 // 线程安全的抽奖机
 class luckyDraw {
@@ -108,10 +111,10 @@ public:
     luckyDraw(const luckyDraw &b) : items(b.items), maxIndex(b.maxIndex), currIndex(b.currIndex) {};
 
     // 添加一个条目到抽奖机. 抽中它的概率为: weight / (所有条目的 weight 总和)
-    void insertItem(const LL &itemId, const LL &weight);
+    void insertItem(LL itemId, LL weight);
 
     // 从抽奖机移除一个条目. 若找不到指定的条目, 函数返回 false
-    bool removeItem(const LL &itemId);
+    bool removeItem(LL itemId);
 
     // 从抽奖机中抽取一个条目
     LL draw();

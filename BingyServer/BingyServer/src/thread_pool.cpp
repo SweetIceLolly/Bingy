@@ -26,7 +26,7 @@ void thread_pool::init(const size_t& threadCount) {
         std::thread(worker, this).detach();
 }
 
-void thread_pool::shutdown(const bool& finishRemainingJobs) {
+void thread_pool::shutdown(bool finishRemainingJobs) {
     this->mutexQueue.lock();
     while (!this->jobs.empty()) {
         if (finishRemainingJobs) {

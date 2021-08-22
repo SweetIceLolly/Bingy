@@ -70,7 +70,7 @@ LL signInEvent::get_signInCount(bool use_cache) {
     return tmp;
 }
 
-bool signInEvent::inc_signInCount(const LL &val) {
+bool signInEvent::inc_signInCount(LL val) {
     std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$inc",
         bsoncxx::builder::stream::document{} << "signInCount" << val
@@ -82,7 +82,7 @@ bool signInEvent::inc_signInCount(const LL &val) {
     return false;
 }
 
-bool signInEvent::set_signInCount(const LL &val) {
+bool signInEvent::set_signInCount(LL val) {
     std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "signInCount" << val
@@ -122,7 +122,7 @@ LL signInEvent::get_prevActiveTime(bool use_cache) {
     return tmp;
 }
 
-bool signInEvent::set_prevActiveTime(const LL &val) {
+bool signInEvent::set_prevActiveTime(LL val) {
     std::scoped_lock<std::mutex> lock(this->mutexSignInCount);
     if (dbUpdateOne(DB_COLL_SIGNIN, "id", this->id, "$set",
         bsoncxx::builder::stream::document{} << "prevActiveTime" << val

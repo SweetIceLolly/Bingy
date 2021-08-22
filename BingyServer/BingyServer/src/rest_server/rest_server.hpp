@@ -47,7 +47,7 @@ public:
     void removePollHandler();
 
     // 启动服务器
-    void startServer(const std::string &connStr, const int &pollFreq, void *userdata);
+    void startServer(const std::string &connStr, int pollFreq, void *userdata);
 
     // 停止服务器
     void stopServer();

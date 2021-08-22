@@ -18,7 +18,7 @@ bool                    currTradeId_cache = false;      // 交易 ID 缓存
 
 bool bg_init_tradeId();                                 // 在数据库中初始化交易 ID 记录
 
-LL bg_get_tradeId(const bool &use_cache) {
+LL bg_get_tradeId(bool use_cache) {
     if (currTradeId_cache && use_cache)
         return currTradeId;
 
@@ -46,7 +46,7 @@ LL bg_get_tradeId(const bool &use_cache) {
     return tmp;
 }
 
-bool bg_set_tradeId(const LL &val) {
+bool bg_set_tradeId(LL val) {
     std::scoped_lock lock(mutexTradeId);
     if (dbUpdateOne(DB_COLL_TRADE, "type", "tradeId", "$set",
         bsoncxx::builder::stream::document{} << "value" << val << bsoncxx::builder::stream::finalize)) {
@@ -107,7 +107,7 @@ void tradeMapFromBson(const bsoncxx::document::view &elem, std::map<LL, tradeDat
     container.insert({ tItem.tradeId, tItem });
 }
 
-std::map<LL, tradeData>& bg_trade_get_items(const bool &use_cache) {
+std::map<LL, tradeData>& bg_trade_get_items(bool use_cache) {
     if (allTradeItems_cache && use_cache)
         return allTradeItems;
 
@@ -154,7 +154,7 @@ bool bg_trade_insert_item(const tradeData &itemData) {
     return false;
 }
 
-bool bg_trade_remove_item(const LL &tradeId) {
+bool bg_trade_remove_item(LL tradeId) {
     // 必须有缓存才能继续
     if (!allTradeItems_cache) {
         bg_trade_get_items();

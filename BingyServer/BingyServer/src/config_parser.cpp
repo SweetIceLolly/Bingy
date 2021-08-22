@@ -14,9 +14,9 @@ configParser::configParser(std::string path) {
 
 bool configParser::load(
     std::function<bool(const std::string &line, char &state)> stateChangeCallback,
-    std::function<bool(const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo)> propGetCallback,
-    std::function<bool(const char &state)> beginCallback,
-    std::function<bool(const char &state)> endCallback
+    std::function<bool(const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo)> propGetCallback,
+    std::function<bool(char state)> beginCallback,
+    std::function<bool(char state)> endCallback
 ) {
     std::ifstream  file;
     file.open(this->path);

@@ -21,10 +21,6 @@
 #define WHITE       15
 #endif
 
-// 初始化随机数产生器
-std::mt19937_64 rndGen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-std::mutex mutexRndGen;
-
 void console_log(const std::string &msg, const LogType &type) {
 #ifdef _WIN32
     // 为 Windows 控制台修改输出颜色
@@ -91,7 +87,7 @@ std::string str_trim(const std::string &str) {
         return "";
 }
 
-std::vector<std::string> str_split(const std::string &str, const char &delimiter) {
+std::vector<std::string> str_split(const std::string &str, char delimiter) {
     std::vector<std::string> rtn;
     size_t last = 0;
     size_t next;
@@ -135,21 +131,30 @@ LL str_to_ll(const std::string &str) {
 
 // --------------------------------------------------------------
 
-LL rndRange(const LL &min, const LL &max) {
-    std::scoped_lock<std::mutex> lock(mutexRndGen);
-    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(min, max);
-    return rnd(rndGen);
+LL rndRange(LL min, LL max) {
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<LL> dist(min, max);
+    return dist(gen);
 }
 
-LL rndRange(const LL &max) {
-    std::scoped_lock<std::mutex> lock(mutexRndGen);
-    std::uniform_int_distribution<std::mt19937_64::result_type> rnd(0, max);
-    return rnd(rndGen);
+LL rndRange(LL max) {
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<LL> dist(0, max);
+    return dist(gen);
+}
+
+double rndRangeFloat(double min, double max) {
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937_64 gen(rd());
+    std::uniform_real_distribution<double> dist(min, max);
+    return dist(gen);
 }
 
 // --------------------------------------------------------------
 
-bool is_leap_year(const int &year) {
+bool is_leap_year(int year) {
     if (year % 4 == 0) {
         if (year % 100 == 0)
             return (year % 400 == 0);
@@ -298,14 +303,14 @@ dateTime &dateTime::operator-= (const time_t &b) {
 
 // --------------------------------------------------------------
 
-void luckyDraw::insertItem(const LL &itemId, const LL &weight) {
+void luckyDraw::insertItem(LL itemId, LL weight) {
     std::scoped_lock<std::mutex> lock(mutexItems);
     maxIndex = currIndex + weight;
     items.push_back(std::make_pair(itemId, std::make_pair(currIndex, maxIndex)));
     currIndex = maxIndex;
 }
 
-bool luckyDraw::removeItem(const LL &itemId) {
+bool luckyDraw::removeItem(LL itemId) {
     std::scoped_lock<std::mutex> lock(mutexItems);
     for (auto it = items.begin(); it != items.end(); ++it) {
         if (it->first == itemId) {

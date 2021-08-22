@@ -27,7 +27,7 @@ bool bg_load_monster_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo) -> bool {
             try {
                 if (propName == "id")
                     temp->id = std::stoll(propValue);
@@ -81,13 +81,13 @@ bool bg_load_monster_config() {
         },
 
         // 开始标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             temp = new monsterData();
             return true;
         },
 
         // 结束标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             bool rtn = allMonsters.insert({ temp->id, *temp }).second;
             delete temp;
             if (!rtn)
@@ -136,9 +136,9 @@ void monsterData::initDropDraw() {
         noDropChance -= item.chance;
     }
     for (const auto &item : this->drop) {
-        this->dropDraw.insertItem(item.id, item.chance * pow(10.0, maxPrecision));
+        this->dropDraw.insertItem(item.id, static_cast<LL>(item.chance * pow(10.0, maxPrecision)));
     }
-    this->dropDraw.insertItem(-1, noDropChance * pow(10.0, maxPrecision));
+    this->dropDraw.insertItem(-1, static_cast<LL>(noDropChance * pow(10.0, maxPrecision)));
     if (noDropChance < 0) {
         console_log("怪物" + this->name + " (id: " + std::to_string(this->id) + ") 的装备掉落概率总和大于1!", LogType::warning);
     }

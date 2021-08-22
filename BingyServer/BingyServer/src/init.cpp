@@ -106,7 +106,7 @@ inline bool bg_load_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo) -> bool {
             // 处理一般配置
             if (state == 0) {
                 if (propName == "dburi")                           // 数据库 URI
@@ -252,7 +252,7 @@ inline bool bg_load_config() {
         },
 
         // 开始标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             if (state == 1)
                 signInEv = new signInEvent();
             else if (state == 2)
@@ -268,7 +268,7 @@ inline bool bg_load_config() {
         },
 
         // 结束标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             if (state == 1) {
                 allSignInEvents.push_back(*signInEv);
                 delete signInEv;

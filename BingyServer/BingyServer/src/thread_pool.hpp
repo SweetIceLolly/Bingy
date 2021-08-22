@@ -43,7 +43,7 @@ public:
      * 关闭线程池
      * finishRemainingJobs: 是否等待工作队列中所有任务完成. 默认为是
      */
-    void shutdown(const bool &finishRemainingJobs = true);
+    void shutdown(bool finishRemainingJobs = true);
 
     /**
      * 往工作队列中添加新任务
