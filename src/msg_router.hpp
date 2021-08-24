@@ -12,5 +12,5 @@ void bg_groupmsg_dispatch(const cq::MessageEvent &ev);
 void bg_privatemsg_dispatch(const cq::MessageEvent &ev);
 
 // msg 参数格式为: bg 命令
-void bg_groupmsg_router_add(const std::string &msg, const std::function<void(const cq::MessageEvent &ev)> &handler);
-void bg_privatemsg_router_add(const std::string &msg, const std::function<void(const cq::MessageEvent &ev)> &handler);
+void bg_groupmsg_router_add(const std::string &msg, const handlerFunc &handler);
+void bg_privatemsg_router_add(const std::string &msg, const handlerFunc &handler);

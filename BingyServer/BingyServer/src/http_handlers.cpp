@@ -12,6 +12,7 @@
 #include "bingy.hpp"
 #include "error_codes.hpp"
 #include "utils.hpp"
+#include "secrets.hpp"
 
 using namespace nlohmann;
 
@@ -591,4 +592,12 @@ CMD(admin_modify_field) {
         free_http_req(req);
     };
     threadPool.addJob(thread_pool_job(handler, req));
+}
+
+// 聊骚
+CMD(chat) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_post_handler_param<std::string>(preChatCallback, postChatCallback, "msg"), req));
 }

@@ -27,7 +27,7 @@ bool bg_load_monster_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, unsigned int lineNo) -> bool {
             try {
                 if (propName == "id")
                     temp->id = std::stoll(propValue);

@@ -342,3 +342,8 @@ CMD_ADMIN_MODIFY_FIELD(energy, "energy", "体力", Energy);
 CMD_ADMIN_MODIFY_FIELD(exp, "exp", "经验", Exp);
 CMD_ADMIN_MODIFY_FIELD(invCapacity, "invcapacity", "背包容量", InvCapacity);
 CMD_ADMIN_MODIFY_FIELD(vip, "vip", "VIP等级", Vip);
+
+// 和机器人聊骚
+CMD(chat) {
+    chatCallback(ev);
+}

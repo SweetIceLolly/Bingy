@@ -86,23 +86,21 @@ void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> 
 
     // 查找对应的命令处理函数
     auto handler = router.getMsgHandler(cmd);
-    if (handler) {
-        // 有对应的命令处理函数才继续处理字符串
-        // 移除字符串中所有多余的空格和换行符
-        for (pos; pos < ev.message.length(); ++pos) {
-            if (ev.message[pos] != ' ' || (ev.message[pos] == ' ' && pos + 1 < ev.message.length() && ev.message[pos + 1] != ' ')) {
-                if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
-                    cmd += ev.message[pos] | 32;    // 转换为小写字母
-                else
-                    cmd += ev.message[pos];
-            }
-        }
-        ev.message = cmd;
 
-        // 调用命令处理函数
+    // 移除字符串中所有多余的空格和换行符
+    for (pos; pos < ev.message.length(); ++pos) {
+        if (ev.message[pos] != ' ' || (ev.message[pos] == ' ' && pos + 1 < ev.message.length() && ev.message[pos + 1] != ' ')) {
+            if ((ev.message[pos] >= 'A' && ev.message[pos] <= 'Z') || (ev.message[pos] >= 'a' && ev.message[pos] <= 'z'))
+                cmd += ev.message[pos] | 32;    // 转换为小写字母
+            else
+                cmd += ev.message[pos];
+        }
+    }
+    ev.message = cmd;
+
+    // 有对应的命令处理函数则调用对应的函数, 否则调用聊骚接口
+    if (handler)
         handler(ev);
-    }
-    else {
-        
-    }
+    else
+        bg_cmd_chat(ev);
 }

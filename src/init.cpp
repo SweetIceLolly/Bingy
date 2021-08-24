@@ -162,7 +162,7 @@ inline bool bg_load_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, const char &state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, unsigned int lineNo) -> bool {
             // 处理一般配置
             if (state == 0) {
                 if (propName == "server") {                                 // 服务器地址
@@ -182,12 +182,12 @@ inline bool bg_load_config() {
         },
 
         // 开始标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             return true;
         },
 
         // 结束标记回调函数
-        [&](const char &state) -> bool {
+        [&](char state) -> bool {
             return true;
         }
     );

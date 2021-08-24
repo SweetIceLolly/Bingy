@@ -121,8 +121,7 @@ bg_http_response bg_http_get(const std::string &path, const std::vector<std::pai
 // 取得艾特玩家字符串
 std::string bg_at(const cq::MessageEvent &ev) {
     try {
-        auto gmi = cq::get_group_member_info(GROUP_ID, USER_ID);
-        return "[CQ:at,qq=" + std::to_string(gmi.user_id) + "] ";
+        return "[CQ:at,qq=" + std::to_string(ev.target.user_id.value()) + "] ";
     }
     catch (...) {
         return "@" + std::to_string(USER_ID) + " ";
@@ -901,6 +900,21 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "挑战副本发生错误: " + e.what());
+    }
+}
+
+// 聊骚
+void chatCallback(const cq::MessageEvent &ev) {
+    try {
+        auto res = bg_http_post("/chat", { MAKE_BG_JSON, { "msg", ev.message } });
+        if (res.code == 200) {
+            auto reply = res.content["reply"].get<std::string>();
+            if (!reply.empty())
+                cq::send_group_message(GROUP_ID, reply);
+        }
+    }
+    catch (...) {
+        return;
     }
 }
 

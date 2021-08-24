@@ -33,6 +33,7 @@
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\rest_server\mongoose.c" />
     <ClCompile Include="src\rest_server\rest_server.cpp" />
+    <ClCompile Include="src\secrets\chat.cpp" />
     <ClCompile Include="src\signin_event.cpp" />
     <ClCompile Include="src\synthesis.cpp" />
     <ClCompile Include="src\thread_pool.cpp" />
@@ -57,6 +58,9 @@
     <ClInclude Include="src\player.hpp" />
     <ClInclude Include="src\rest_server\mongoose.h" />
     <ClInclude Include="src\rest_server\rest_server.hpp" />
+    <ClInclude Include="src\secrets.hpp" />
+    <ClInclude Include="src\secrets\chat.hpp" />
+    <ClInclude Include="src\secrets\trie.hpp" />
     <ClInclude Include="src\signin_event.hpp" />
     <ClInclude Include="src\synthesis.hpp" />
     <ClInclude Include="src\thread_pool.hpp" />
@@ -171,7 +175,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;BINGY_ENABLE_SECRETS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>

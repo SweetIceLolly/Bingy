@@ -432,5 +432,22 @@ CMD(fight);
  *      val: 修改数值
  *  400: 失败, 详情见返回的 msg 和 errid
  *  500: 内部错误, 详情见返回的 msg 和 errid
-*/
+ */
 CMD(admin_modify_field);
+
+/**
+ * 和机器人聊骚
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  msg: 消息
+ * 返回值:
+ *  200: 成功, 返回 reply, 为回应的消息
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(chat);

@@ -12,3 +12,5 @@ BingyServer/Debug
 *.user
 BingyServer/BingyServer/Debug
 BingyServer/BingyServer/x64
+BingyServer/BingyServer/src/secrets
+BingyServer/BingyServer/chatRules.txt

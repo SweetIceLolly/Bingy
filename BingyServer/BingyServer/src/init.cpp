@@ -16,6 +16,7 @@
 #include "config_parser.hpp"
 #include "trade.hpp"
 #include "http_auth.hpp"
+#include "secrets/chat.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -34,6 +35,17 @@ bool bg_init() {
         return false;
     }
     console_log("成功读取配置文件: 共计" + std::to_string(allSignInEvents.size()) + "个签到活动, " + std::to_string(allSyntheses.size()) + "个装备合成");
+
+#ifdef BINGY_ENABLE_SECRETS
+    // 加载聊骚配置文件
+    console_log("正在读取聊骚配置文件...");
+    if (!bg_load_chat_config()) {
+        console_log("读取聊骚配置文件失败!", LogType::error);
+        return false;
+    }
+    console_log("成功读取聊骚配置文件");
+
+#endif
 
     // 加载怪物数据
     console_log("正在读取怪物数据...");
@@ -106,18 +118,20 @@ inline bool bg_load_config() {
         },
 
         // 获取属性值回调函数
-        [&](const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo) -> bool {
+        [&](const std::string &propName, const std::string &propValue, char state, unsigned int lineNo) -> bool {
             // 处理一般配置
             if (state == 0) {
-                if (propName == "dburi")                           // 数据库 URI
+                if (propName == "dburi")                            // 数据库 URI
                     dbUri = propValue + std::string("?authSource=admin");
-                else if (propName == "dbname")                     // 数据库名
+                else if (propName == "dbname")                      // 数据库名
                     dbName = propValue;
-                else if (propName == "monsters")                   // 怪物配置路径
+                else if (propName == "monsters")                    // 怪物配置路径
                     monsterConfigPath = propValue;
-                else if (propName == "equipments")                 // 装备配置路径
+                else if (propName == "equipments")                  // 装备配置路径
                     eqiConfigPath = propValue;
-                else if (propName == "admin") {                    // 管理员
+                else if (propName == "chat")                        // 聊骚配置路径
+                    chatConfigPath = propValue;
+                else if (propName == "admin") {                     // 管理员
                     try {
                         LL qq = std::stoll(propValue);
                         if (allAdmins.insert(qq).second)
@@ -135,7 +149,7 @@ inline bool bg_load_config() {
             }
 
             // 处理签到活动
-            else if (state == 1) {                                          // 配置
+            else if (state == 1) {
                 try {
                     if (propName == "id")
                         signInEv->id = std::stoll(propValue);

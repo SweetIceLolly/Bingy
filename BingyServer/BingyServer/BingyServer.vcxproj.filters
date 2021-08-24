@@ -8,6 +8,9 @@
     <Filter Include="Source Files\rest_server">
       <UniqueIdentifier>{1256236c-5150-49cd-b2d8-fa75052f3ac5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\secrets">
+      <UniqueIdentifier>{bf3f725b-ea44-46f3-8bba-392d7a00231d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bingy.cpp">
@@ -66,6 +69,9 @@
     </ClCompile>
     <ClCompile Include="src\fight.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\secrets\chat.cpp">
+      <Filter>Source Files\secrets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -134,6 +140,15 @@
     </ClInclude>
     <ClInclude Include="src\fight.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\secrets.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\secrets\chat.hpp">
+      <Filter>Source Files\secrets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\secrets\trie.hpp">
+      <Filter>Source Files\secrets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

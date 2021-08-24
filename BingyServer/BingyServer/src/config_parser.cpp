@@ -14,7 +14,7 @@ configParser::configParser(std::string path) {
 
 bool configParser::load(
     std::function<bool(const std::string &line, char &state)> stateChangeCallback,
-    std::function<bool(const std::string &propName, const std::string &propValue, char state, const unsigned int &lineNo)> propGetCallback,
+    std::function<bool(const std::string &propName, const std::string &propValue, char state, unsigned int lineNo)> propGetCallback,
     std::function<bool(char state)> beginCallback,
     std::function<bool(char state)> endCallback
 ) {
@@ -48,9 +48,11 @@ bool configParser::load(
                 return false;
         }
         else {
-            auto tmp = str_split(line, '=');
-            str_lcase(tmp[0]);
-            if (!propGetCallback(tmp[0], tmp[1], state, currLine))
+            auto pos = line.find_first_of('=');
+            std::string key = line.substr(0, pos);
+            std::string val = line.substr(pos + 1);
+            str_lcase(key);
+            if (!propGetCallback(key, val, state, currLine))
                 return false;
         }
     }

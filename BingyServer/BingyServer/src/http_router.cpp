@@ -43,5 +43,7 @@ bool init_server_router(rest_server &server) {
 
     POST("/adminmodifyfield", bg_cmd_admin_modify_field);
 
+    POST("/chat", bg_cmd_chat);
+
     return true;
 }

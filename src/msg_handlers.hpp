@@ -79,3 +79,5 @@ CMD(admin_set_energy);
 CMD(admin_set_exp);
 CMD(admin_set_invCapacity);
 CMD(admin_set_vip);
+
+CMD(chat);
