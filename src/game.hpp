@@ -36,6 +36,7 @@ void viewInventoryCallback(const cq::MessageEvent &ev);
 void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
 void viewPropertiesCallback(const cq::MessageEvent &ev);
 void viewEquipmentsCallback(const cq::MessageEvent &ev);
+void searchEquipmentsCallback(const cq::MessageEvent &ev, const std::string &arg);
 void equipCallback(const cq::MessageEvent &ev, const std::string &arg);
 void unequipHelmetCallback(const cq::MessageEvent &ev);
 void unequipBodyCallback(const cq::MessageEvent &ev);

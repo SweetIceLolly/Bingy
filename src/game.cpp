@@ -220,32 +220,9 @@ void viewInventoryCallback(const cq::MessageEvent &ev) {
 
                 msg = "背包 (" + std::to_string(items.size()) + "/" + std::to_string(res.content["capacity"].get<LL>()) + ")\n";
                 for (const auto &item : items) {
-                    msg += std::to_string(index) + ".";
-
-                    switch (static_cast<EqiType>(item.second)) {
-                    case EqiType::armor_helmet:
-                        msg += "(盔)"; break;
-                    case EqiType::armor_body:
-                        msg += "(甲)"; break;
-                    case EqiType::armor_leg:
-                        msg += "(腿)"; break;
-                    case EqiType::armor_boot:
-                        msg += "(靴)"; break;
-                    case EqiType::weapon_primary:
-                        msg += "(主)"; break;
-                    case EqiType::weapon_secondary:
-                        msg += "(副)"; break;
-                    case EqiType::ornament_earrings:
-                        msg += "(环)"; break;
-                    case EqiType::ornament_rings:
-                        msg += "(戒)"; break;
-                    case EqiType::ornament_necklace:
-                        msg += "(链)"; break;
-                    case EqiType::ornament_jewelry:
-                        msg += "(宝)"; break;
-                    }
-
-                    msg += item.first + " ";
+                    msg += std::to_string(index) + "." +
+                        eqiType_to_str_short(static_cast<EqiType>(item.second)) +
+                        item.first + " ";
                     ++index;
                 }
                 msg.pop_back();
@@ -386,6 +363,44 @@ void viewEquipmentsCallback(const cq::MessageEvent &ev) {
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查看装备发生错误: " + e.what());
+    }
+}
+
+// 查找装备
+void searchEquipmentsCallback(const cq::MessageEvent &ev, const std::string &arg) {
+    try {
+        std::string keyword;
+        for (const char ch : arg) {
+            if (ch != ' ')
+                keyword += ch;
+        }
+
+        auto res = bg_http_get("/searcheqi", { MAKE_BG_QUERY, {"keyword", keyword } });
+        if (res.code == 200) {
+            auto eqis = res.content["eqis"].get<std::vector<std::tuple<LL, std::string, unsigned char>>>();
+            if (eqis.size() > 0) {
+                std::string msg;
+                for (const auto &item : eqis) {
+                    EqiType type = static_cast<EqiType>(std::get<2>(item));
+                    if (type == EqiType::single_use)
+                        msg += "ID" + std::to_string(std::get<0>(item)) + ": [" + std::get<1>(item) + "], ";
+                    else
+                        msg += "ID" + std::to_string(std::get<0>(item)) + ": " + eqiType_to_str_short(type) + std::get<1>(item) + ", ";
+                }
+                msg.pop_back();
+                msg.pop_back();
+                cq::send_group_message(GROUP_ID, msg);
+            }
+            else {
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "没有找到这个装备哦! 换个名称试试?");
+            }
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查找装备发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查找装备发生错误: " + e.what());
     }
 }
 
@@ -792,6 +807,17 @@ void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string
                     msg += "$" + std::to_string(method.second);
                 }
                 cq::send_group_message(GROUP_ID, msg);
+            }
+            else if (res.content.find("matches") != res.content.end()) {
+                // 询问玩家想要合成哪个
+                auto eqis = res.content["matches"].get<std::vector<std::tuple<LL, std::string, unsigned char>>>();
+                std::string msg;
+                for (const auto &item : eqis)
+                    msg += "ID" + std::to_string(std::get<0>(item)) + ": " +
+                        eqiType_to_str_short(static_cast<EqiType>(std::get<2>(item))) + std::get<1>(item) + ", ";
+                msg.pop_back();
+                msg.pop_back();
+                cq::send_group_message(GROUP_ID, bg_at(ev) + "请问你是想合成哪个装备呢?\n" + msg);
             }
             else {
                 // 合成成功

@@ -88,6 +88,21 @@ CMD(view_equipments) {
     MATCH("查看装备", viewEquipments);
 }
 
+// 查找装备
+CMD(search_equipments) {
+    if (ev.message.length() < 16) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 查找装备指令格式为: \"bg 查找装备 关键字\"");
+        return;
+    }
+    auto param = ev.message.substr(16);
+    if (param.size() > 0) {
+        searchEquipmentsCallback(ev, param);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 查找装备指令格式为: \"bg 查找装备 关键字\"");
+    }
+}
+
 // 装备
 CMD(equip) {
     if (ev.message.length() < 10) {

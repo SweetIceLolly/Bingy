@@ -28,8 +28,28 @@ using namespace nlohmann;
 // 线程安全地获取当前对应的玩家
 #define PLAYER bg_player_get(bgReq.playerId)
 
+// ========================================================
+// 一些游戏的开关
+
+// 游戏是否暂停
+bool gamePaused = false;
+
+// 交易场是否禁用
+bool marketDisabled = false;
+
+// 冷却时间重载
+LL cdOverride = -1;
+
+// ========================================================
+
 // 通用账号检查
 bool accountCheck(const bgGameHttpReq &bgReq) {
+    // 检查游戏是否暂停
+    if (gamePaused) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_GAME_PAUSED, BG_ERR_GAME_PAUSED);
+        return false;
+    }
+
     // 检查玩家是否已经注册
     if (!bg_player_exist(bgReq.playerId)) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_UNREGISTERED, BG_ERR_UNREGISTERED);
@@ -47,6 +67,13 @@ bool accountCheck(const bgGameHttpReq &bgReq) {
 
 // 注册前检查
 bool preRegisterCallback(const bgGameHttpReq &bgReq) {
+    // 检查游戏是否暂停
+    if (gamePaused) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_GAME_PAUSED, BG_ERR_GAME_PAUSED);
+        return false;
+    }
+
+    // 检查玩家是否已经注册过了
     if (bg_player_exist(bgReq.playerId)) {
         bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_ALREADY_REGISTERED, BG_ERR_ALREADY_REGISTERED);
         return false;
@@ -429,6 +456,32 @@ std::string getEquipmentsStr(LL id) {
 void postViewEquipmentsCallback(const bgGameHttpReq& bgReq) {
     try {
         bg_http_reply(bgReq.req, 200, getEquipmentsStr(bgReq.playerId).c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// 查找装备前检查
+bool preSearchEquipmentsCallback(const bgGameHttpReq &bgReq, const std::string &keyword) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    // 检查关键字是否过长
+    if (keyword.length() > 20) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_KEYWORD_TOO_LONG, BG_ERR_KEYWORD_TOO_LONG);
+        return false;
+    }
+    return true;
+}
+
+// 查找装备
+void postSearchEquipmentsCallback(const bgGameHttpReq &bgReq, const std::string &keyword) {
+    try {
+        bg_http_reply(bgReq.req, 200, json{ {"eqis", bg_search_equipment(keyword)} }.dump().c_str());
     }
     catch (const std::exception &e) {
         bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
@@ -1380,16 +1433,31 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
         // 尝试根据指定的装备 ID 或者名称获取对应的装备
         try {
             targetId = str_to_ll(target);
+
+            // 检查目标装备是否存在
+            if (allEquipments.find(targetId) == allEquipments.end()) {
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_EQI_ID +
+                    std::string(": ") + std::to_string(targetId), BG_ERR_INVALID_EQI_ID);
+                return false;
+            }
         }
         catch (...) {
-            // todo 搜索对应的装备
-        }
+            auto eqis = bg_search_equipment(target);
 
-        // 检查目标装备是否存在
-        if (allEquipments.find(targetId) == allEquipments.end()) {
-            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_EQI_ID +
-                std::string(": ") + std::to_string(targetId), BG_ERR_INVALID_EQI_ID);
-            return false;
+            // 去掉不能合成的装备
+            for (size_t i = 0; i < eqis.size(); ++i) {
+                if (std::get<2>(eqis[i]) == EqiType::single_use || allSyntheses.find(std::get<0>(eqis[i])) == allSyntheses.end()) {
+                    eqis.erase(eqis.begin() + i);
+                    --i;
+                }
+            }
+
+            if (eqis.size() == 0)                   // 没有找到对应名称的装备
+                bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_EQI_NOT_FOUND, BG_ERR_EQI_NOT_FOUND);
+            else if (eqis.size() == 1)              // 找到唯一匹配, 继续
+                targetId = std::get<0>(eqis[0]);
+            else                                    // 找到多个匹配, 取消操作, 询问用户要合成哪个
+                bg_http_reply(bgReq.req, 200, json{ { "matches", eqis } }.dump().c_str());
         }
 
         // 如果只指定了目标装备, 则列出可用的合成
@@ -1517,9 +1585,10 @@ bool preFightCallback(const bgGameHttpReq& bgReq, const std::string&levelName, L
         }
 
         // 检查冷却时间
-        return true;        // todo
-        const auto timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
-        if (timeDiff < PLAYER.get_cd()) {
+        LL timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
+        LL fightCd = cdOverride == -1 ? PLAYER.get_cd() : cdOverride;
+        if (timeDiff < fightCd) {
+            timeDiff = fightCd - timeDiff;
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_IN_CD +
                 std::string(", 还剩") + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60), BG_ERR_IN_CD);
             return false;

@@ -47,3 +47,6 @@ extern std::string                             eqiConfigPath;
 extern std::unordered_map<LL, equipmentData>   allEquipments;
 
 bool bg_load_equipment_config();
+
+// 根据字符串来局部匹配装备名称
+std::vector<std::tuple<LL, std::string, EqiType>> bg_search_equipment(const std::string &str);

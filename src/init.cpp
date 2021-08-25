@@ -51,6 +51,7 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 属性", bg_cmd_view_properties);
 
     bg_groupmsg_router_add("bg 查看装备", bg_cmd_view_equipments);
+    bg_groupmsg_router_add("bg 查找装备", bg_cmd_search_equipments);
     bg_groupmsg_router_add("bg 装备", bg_cmd_equip);
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
 

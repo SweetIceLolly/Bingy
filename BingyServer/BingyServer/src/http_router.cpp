@@ -22,6 +22,7 @@ bool init_server_router(rest_server &server) {
     POST("/fight", bg_cmd_fight);
 
     GET("/vieweqi", bg_cmd_view_equipments);
+    GET("/searcheqi", bg_cmd_search_equipments);
     POST("/equip", bg_cmd_equip);
     POST("/unequip", bg_cmd_unequip);
     POST("/unequipweapon", bg_cmd_unequip_weapon);

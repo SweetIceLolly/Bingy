@@ -22,11 +22,14 @@
 // B-0. 未知错误
 // B-0.a. 操作前检查发生错误 (400 错误)
 #define BG_ERR_STR_PRE_OP_FAILED                    "操作前检查发生错误"
-#define BG_ERR_PRE_OP_FAILED                        1
+#define BG_ERR_PRE_OP_FAILED                        0
+
+#define BG_ERR_STR_GAME_PAUSED                      "游戏被暂停"
+#define BG_ERR_GAME_PAUSED                          1
 
 // B-0.b. 操作时发生错误 (500 错误)
 #define BG_ERR_STR_POST_OP_FAILED                   "执行指定操作时发生错误"
-#define BG_ERR_POST_OP_FAILED                       2
+#define BG_ERR_POST_OP_FAILED                       50
 
 // B-1. 通用账户检查错误
 // B-1.a. 400 错误
@@ -207,6 +210,9 @@
 #define BG_ERR_STR_SYNTHESIS_NOT_EXIST              "没有指定的合成"
 #define BG_ERR_SYNTHESIS_NOT_EXIST                  3502
 
+#define BG_ERR_STR_EQI_NOT_FOUND                    "没有找到指定的装备"
+#define BG_ERR_EQI_NOT_FOUND                        3503
+
 // B.17. 挑战副本错误
 // B.17.a. 400 错误
 #define BG_ERR_STR_INVALID_DUNGEON                  "无效的副本号"
@@ -237,6 +243,11 @@
 // B.19.a. 500 错误
 #define BG_ERR_STR_INC_BLESSING_FAILED              "为玩家添加祝福等级失败"
 #define BG_ERR_INC_BLESSING_FAILED                  3850
+
+// B.20. 查找装备错误
+// B.20.a. 400 错误
+#define BG_ERR_STR_KEYWORD_TOO_LONG                 "关键字过长"
+#define BG_ERR_KEYWORD_TOO_LONG                     3900
 
 // 错误号对应到回应字符串 (适用于 Bingy 客户端代码)
 // 以下宏用来检查是否为 Bingy 客户端
@@ -270,6 +281,8 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_NO_ENERGY, "你的体力已经耗尽啦!" },
     { BG_ERR_IN_CD, "" },
     { BG_ERR_MAX_ITEMS, "最多只能装备5个一次性物品哦!" },
-    { BG_ERR_ITEM_REPEATED, "同样的一次性物品只能装备一个哦!" }
+    { BG_ERR_ITEM_REPEATED, "同样的一次性物品只能装备一个哦!" },
+    { BG_ERR_KEYWORD_TOO_LONG, "你用膝盖想想啊! 怎么会有名字这么长的装备呢?" },
+    { BG_ERR_EQI_NOT_FOUND, "没有找到这个装备哦! 换个名称试试?" }
 };
 #endif

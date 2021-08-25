@@ -81,3 +81,20 @@ bool bg_load_equipment_config() {
         }
     );
 }
+
+std::vector<std::tuple<LL, std::string, EqiType>> bg_search_equipment(const std::string &str) {
+    std::vector<std::tuple<LL, std::string, EqiType>> rtn;
+    for (const auto &item : allEquipments) {
+        bool matched = true;
+        for (const char ch : str) {
+            if (item.second.name.find(ch) == std::string::npos) {
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            rtn.push_back({ item.first, item.second.name, item.second.type });
+        }
+    }
+    return rtn;
+}

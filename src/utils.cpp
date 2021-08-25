@@ -138,3 +138,8 @@ std::string eqiType_to_str(const EqiType &type) {
     const std::string names[] = { "头盔", "战甲", "护腿", "战靴", "主武器", "副武器", "耳环", "戒指", "项链", "宝石", "一次性物品" };
     return names[static_cast<LL>(type)];
 }
+
+std::string eqiType_to_str_short(const EqiType &type) {
+    const std::string names[] = { "(盔)", "(甲)", "(腿)", "(靴)", "(主)", "(副)", "(环)", "(戒)", "(链)", "(宝)", "" };
+    return names[static_cast<LL>(type)];
+}

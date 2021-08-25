@@ -229,6 +229,39 @@ CMD(view_equipments) {
     threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewEquipmentsCallback, postViewEquipmentsCallback), req));
 }
 
+// 查找装备
+CMD(search_equipments) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+
+    auto handler = [](void *_req) {
+        http_req *req = static_cast<http_req *>(_req);
+
+        try {
+            std::string appid = get_query_param(&req->query, "appid");
+            std::string secret = get_query_param(&req->query, "secret");
+            LL          playerId = str_to_ll(get_query_param(&req->query, "qq"));
+            LL          groupId = str_to_ll(get_query_param(&req->query, "groupId"));
+            std::string keyword = get_query_param(&req->query, "keyword");
+
+            if (appid == APPID_BINGY_GAME && bg_http_app_auth(appid, secret)) {
+                bgGameHttpReq bgReq = { req, playerId, groupId };
+                if (preSearchEquipmentsCallback(bgReq, keyword))
+                    postSearchEquipmentsCallback(bgReq, keyword);
+            }
+            else
+                bg_http_reply_error(req, 400, "", BG_ERR_AUTH_FAILED);
+        }
+        catch (...) {
+            bg_http_reply_error(req, 400, BG_ERR_STR_INVALID_REQUEST, BG_ERR_INVALID_REQUEST);
+        }
+
+        free_http_req(req);
+    };
+    threadPool.addJob(thread_pool_job(handler, req));
+}
+
 // 装备
 CMD(equip) {
     auto req = get_http_req(connection, ev_data);

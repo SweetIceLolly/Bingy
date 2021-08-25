@@ -33,3 +33,6 @@ LL str_to_ll(const std::string &str);
 
 // 获取 type 所对应的装备类型的名称
 std::string eqiType_to_str(const EqiType &type);
+
+// 获取 type 所对应的装备类型的名称缩写
+std::string eqiType_to_str_short(const EqiType &type);

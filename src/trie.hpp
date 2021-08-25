@@ -48,7 +48,7 @@ void bg_trie<T>::addMsg(const std::string &str, const T &handler) {
         return;
 
     trieNode<T> *curr = root;
-    for (const auto &ch : str) {
+    for (const auto ch : str) {
         // 从字典树一层一层查找对应的字符
         auto it = curr->child.find(ch);
         if (curr->child.end() == it) {
@@ -75,7 +75,7 @@ T bg_trie<T>::getMsgHandler(const std::string &str) const {
         return nullptr;
 
     trieNode<T> *curr = root;
-    for (const auto &ch : str) {
+    for (const auto ch : str) {
         // 从字典树一层一层查找对应的字符
         auto it = curr->child.find(ch);
         if (curr->child.end() == it) {

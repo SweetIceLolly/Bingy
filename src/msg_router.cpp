@@ -8,8 +8,6 @@
 #include "trie.hpp"
 #include "utils.hpp"
 
-typedef std::function<void(const cq::MessageEvent &ev)> handlerFunc;
-
 void bg_msg_parse_and_dispatch(cq::MessageEvent &ev, const bg_trie<handlerFunc> &router);
 
 bg_trie<handlerFunc> gm_router, pm_router;

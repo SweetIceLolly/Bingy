@@ -164,6 +164,23 @@ CMD(view_properties);
 CMD(view_equipments);
 
 /**
+ * 查找装备
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  keyword: 装备名称
+ * 返回值:
+ *  200: 成功, 返回 eqis, 格式为 [[ID1, 名称1, 装备类型1], ...]
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(search_equipments);
+
+/**
  * 装备
  * 类型: POST
  * 参数位置: body
@@ -373,9 +390,11 @@ CMD(recall_trade);
  *  invList: 存有背包序号的数组. 不可有重复序号
  *  target: 合成目标装备 ID 或者名称
  * 返回值:
- *  200: 成功, 如果指定了背包序号, 则返回:
+ *  200: 成功, 如果指定了背包序号或者有唯一匹配的装备名称, 则返回:
  *      name: 装备名称
  *      coins: 花费硬币
+ *      如果指定的装备名称多于一个匹配, 则返回:
+ *      matches: [[ID1, 名称1, 装备类型1], ...]
  *      如果没有指定背包序号, 则返回:
  *      name: 装备名称
  *      methods: 能够合成的方式列表. 格式为: [[[材料1, 材料2, ...], 需要硬币], ...]

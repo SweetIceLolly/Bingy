@@ -23,6 +23,7 @@ CMD(view_coins);
 CMD(view_inventory);
 CMD(view_properties);
 CMD(view_equipments);
+CMD(search_equipments);
 
 CMD(equip);
 CMD(unequip_helmet);

@@ -8,6 +8,8 @@
 
 #include "msg_handlers.hpp"
 
+typedef std::function<void(const cq::MessageEvent &ev)> handlerFunc;
+
 void bg_groupmsg_dispatch(const cq::MessageEvent &ev);
 void bg_privatemsg_dispatch(const cq::MessageEvent &ev);
 
