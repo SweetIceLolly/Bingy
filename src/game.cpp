@@ -834,48 +834,57 @@ void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string
     }
 }
 
+// 获取战斗的回合详情字符串
+std::string getFightRoundText(const bg_http_response &res) {
+    bool playerFirst = res.content["fighterFirst"].get<bool>();                                 // 是否玩家先手
+    auto rounds = res.content["rounds"].get<std::vector<std::tuple<LL, LL, std::string>>>();    // 回合详情
+    std::string fightText;
+    LL round = 0;
+    bool playerRound = playerFirst;
+
+    for (const auto &[dmg, hp, msg] : rounds) {
+        // 在先手的回合显示回合数
+        if (playerFirst == playerRound) {
+            ++round;
+            fightText += "R" + std::to_string(round) + "　";
+        }
+
+        // 显示回合详情
+        if (playerRound)
+            fightText += "我方伤害: ";
+        else
+            fightText += "对方伤害: ";
+        fightText += std::to_string(dmg) + ", 余" + std::to_string(hp);
+        if (!msg.empty())
+            fightText += " (" + msg + ")";
+
+        // 在后手一方攻击完后添加换行符
+        // 玩家先手 => 怪物回合后添加换行符; 怪物先手 => 玩家回合后添加换行符; 其它情况: 添加空格
+        if (playerFirst != playerRound)
+            fightText += "\n";
+        else
+            fightText += "　";
+
+        // 切换回合
+        playerRound = !playerRound;
+    }
+    return fightText;
+}
+
 // 挑战副本
 void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
     try {
         auto res = bg_http_post("/fight", { MAKE_BG_JSON, { "level", arg } });
         if (res.code == 200) {
-            bool playerFirst = res.content["fighterFirst"].get<bool>();                                 // 是否玩家先手
-            bool playerRound = playerFirst;
-            auto rounds = res.content["rounds"].get<std::vector<std::tuple<LL, LL, std::string>>>();    // 回合详情
             auto enterMsg = res.content["msg"].get<std::string>();                                      // 怪物出场消息
             std::string fightText;
-            LL round = 0;
 
             // 怪物出场消息
             if (enterMsg != "")
                 fightText = enterMsg + "\n";
 
-            for (const auto &[dmg, hp, msg] : rounds) {
-                // 在先手的回合显示回合数
-                if (playerFirst == playerRound) {
-                    ++round;
-                    fightText += "R" + std::to_string(round) + "　";
-                }
-
-                // 显示回合详情
-                if (playerRound)
-                    fightText += "玩家伤害：";
-                else
-                    fightText += "敌方伤害：";
-                fightText += std::to_string(dmg) + "，余" + std::to_string(hp);
-                if (!msg.empty())
-                    fightText += " (" + msg + ")";
-
-                // 在后手一方攻击完后添加换行符
-                // 玩家先手 => 怪物回合后添加换行符; 怪物先手 => 玩家回合后添加换行符; 其它情况: 添加空格
-                if (playerFirst != playerRound)
-                    fightText += "\n";
-                else
-                    fightText += "　";
-
-                // 切换回合
-                playerRound = !playerRound;
-            }
+            // 对战回合详情
+            fightText += getFightRoundText(res);
 
             // 对战结束后的附加消息
             if (fightText.back() != '\n')
@@ -926,6 +935,47 @@ void fightCallback(const cq::MessageEvent &ev, const std::string &arg) {
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "挑战副本发生错误: " + e.what());
+    }
+}
+
+// PVP
+void pvpCallback(const cq::MessageEvent &ev, const std::string &arg) {
+    try {
+        LL target = qq_parse(arg);
+        auto res = bg_http_post("/pvp", { MAKE_BG_JSON, { "target", target } });
+        if (res.code == 200) {
+            auto enterMsg = res.content["msg"].get<std::string>();
+            std::string fightText;
+
+            // 对方出场消息
+            if (enterMsg != "")
+                fightText = enterMsg + "\n";
+
+            // 对战回合详情
+            fightText += getFightRoundText(res);
+
+            // 对战结束后的附加消息
+            if (fightText.back() != '\n')
+                fightText += "\n";
+            auto postMsg = res.content["postMsg"].get<std::string>();
+            if (!postMsg.empty())
+                fightText += postMsg + "\n";
+
+            // 战斗结果
+            fightText += bg_at(ev);
+            if (res.content["win"].get<bool>())             // 玩家获胜
+                fightText += "你击败了" + res.content["targetName"].get<std::string>() + "！";
+            else                                            // 玩家战败
+                fightText += "你被" + res.content["targetName"].get<std::string>() + "击败了! ";
+
+            cq::send_group_message(GROUP_ID, fightText);
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "PVP发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "PVP发生错误: " + e.what());
     }
 }
 

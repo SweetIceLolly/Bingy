@@ -51,6 +51,7 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 属性", bg_cmd_view_properties);
 
     bg_groupmsg_router_add("bg 查看装备", bg_cmd_view_equipments);
+    bg_groupmsg_router_add("bg 我的装备", bg_cmd_view_equipments);
     bg_groupmsg_router_add("bg 查找装备", bg_cmd_search_equipments);
     bg_groupmsg_router_add("bg 装备", bg_cmd_equip);
     bg_groupmsg_router_add("bg 出售", bg_cmd_pawn);
@@ -127,7 +128,7 @@ inline void bg_msgrouter_init() {
     bg_groupmsg_router_add("bg 合成", bg_cmd_synthesis);
     bg_groupmsg_router_add("bg 挑战", bg_cmd_fight);
     bg_groupmsg_router_add("bg 挑战森林", nullptr);
-    bg_groupmsg_router_add("bg pvp", nullptr);
+    bg_groupmsg_router_add("bg pvp", bg_cmd_pvp);
     bg_groupmsg_router_add("bg vip", nullptr);
 
     bg_groupmsg_router_add("bg /addcoins", bg_cmd_admin_add_coins);

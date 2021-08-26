@@ -827,21 +827,20 @@ bool player::remove_equipItem_by_id(LL id) {
 // 根据指定参数获取某个属性的最终值
 #define PLAYER_GET_PROP(type, init_val, extra_val)                  \
     double player::get_ ##type () {                                 \
-        static double calc_result = init_val;                       \
-        if (! type##_cache) {                                       \
+        if (! calc_##type##_cache) {                                \
             /* ----------------------------------- */               \
             /* 重新计算 */                                          \
-            calc_result = init_val;                                 \
+            type##_cache = init_val;                                \
             for (auto &item : equipments) {                         \
                 if (item.first != EqiType::single_use) {            \
-                    calc_result += item.second.calc_ ##type ();     \
+                    type##_cache += item.second.calc_ ##type ();    \
                 }                                                   \
             }                                                       \
-            calc_result += extra_val ;                              \
+            type##_cache += extra_val ;                             \
             /* ----------------------------------- */               \
-            type## _cache = true;                                   \
+            calc_##type##_cache = true;                             \
         }                                                           \
-        return calc_result;                                         \
+        return type##_cache;                                        \
     }
 
 // 攻 = 20 + 所有装备攻总和 + 等级 * 1.1 + 祝福 * 2
@@ -864,21 +863,20 @@ PLAYER_GET_PROP(mp, 0, blessing * 1.7 + level * 1.7);
 
 // 暴 = 所有装备暴总和 * (1 + 玩家等级 / 170)
 double player::get_crt() {
-    static double calc_result = 0;
-    if (!crt_cache) {
+    if (!calc_crt_cache) {
         // -----------------------------------
         // 重新计算
-        calc_result = 0;
+        crt_cache = 0;
         for (auto &item : equipments) {
             if (item.first != EqiType::single_use) {
-                calc_result += item.second.calc_crt();
+                crt_cache += item.second.calc_crt();
             }
         }
-        calc_result *= (1.0 + level / 170.0);
+        crt_cache *= (1.0 + level / 170.0);
         // -----------------------------------
-        crt_cache = true;
+        calc_crt_cache = true;
     }
-    return calc_result;
+    return crt_cache;
 }
 
 // 升级所需经验 = 100 + 玩家等级 * 10 + 8 * 1.18 ^ 玩家等级
@@ -897,13 +895,13 @@ LL player::get_cd() {
 
 // 清空计算缓存
 void player::resetCache() {
-    atk_cache = false;
-    def_cache = false;
-    brk_cache = false;
-    agi_cache = false;
-    hp_cache = false;
-    mp_cache = false;
-    crt_cache = false;
+    calc_atk_cache = false;
+    calc_def_cache = false;
+    calc_brk_cache = false;
+    calc_agi_cache = false;
+    calc_hp_cache = false;
+    calc_mp_cache = false;
+    calc_crt_cache = false;
 
     for (auto &item : equipments) {
         if (item.first != EqiType::single_use) {

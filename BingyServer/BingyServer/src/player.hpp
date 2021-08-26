@@ -93,25 +93,32 @@ public:
     bool check_exp_upgrade();
 
     // 获取玩家属性
-    bool atk_cache = false;
+    bool calc_atk_cache = false;
+    double atk_cache = 0;
     double get_atk();           // 攻
 
-    bool def_cache = false;
+    bool calc_def_cache = false;
+    double def_cache = 0;
     double get_def();           // 防
 
-    bool brk_cache = false;
+    bool calc_brk_cache = false;
+    double brk_cache = 0;
     double get_brk();           // 破
 
-    bool agi_cache = false;
+    bool calc_agi_cache = false;
+    double agi_cache = 0;
     double get_agi();           // 敏
 
-    bool hp_cache = false;
+    bool calc_hp_cache = false;
+    double hp_cache = 0;
     double get_hp();            // 血
 
-    bool mp_cache = false;
+    bool calc_mp_cache = false;
+    double mp_cache = 0;
     double get_mp();            // 魔
 
-    bool crt_cache = false;
+    bool calc_crt_cache = false;
+    double crt_cache = 0;
     double get_crt();           // 暴
 
     LL get_exp_needed();        // 升级所需经验

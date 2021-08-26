@@ -107,11 +107,12 @@ void str_lcase(std::string &str) {
 }
 
 LL qq_parse(const std::string &str) {
-    if (str[0] == '[') {
-        if (str.length() < 11)
+    size_t pos = str[0] == ' ' ? 1 : 0;
+    if (str[pos] == '[') {
+        if (str.length() < 11 + pos)
             throw std::runtime_error("无效的 at 指令");
         else
-            return std::stoll(str.substr(10));
+            return std::stoll(str.substr(pos + 10));
     }
     else
         return std::stoll(str);

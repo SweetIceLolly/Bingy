@@ -432,6 +432,29 @@ CMD(synthesis);
 CMD(fight);
 
 /**
+ * PVP
+ * 类型: POST
+ * 参数位置: body
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ *  target: 对方 QQ 号 (字符串形式)
+ * 返回值:
+ *  200: 成功, 返回:
+ *      fighterFirst: 是否为发起挑战方先手
+ *      rounds: 回合详情. 格式为: [[A打出的伤害, B的剩余血量, 附加信息], [B打出的伤害, A的剩余血量, 附加信息], ...]
+ *      targetName: 挑战对象的名称
+ *      msg: 敌方出场消息
+ *      postMsg: 对战结束后的附加消息
+ *      win: 是否胜利
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(pvp);
+
+/**
  * 管理员修改玩家属性
  * 类型: POST
  * 参数位置: body

@@ -85,7 +85,13 @@ CMD(view_properties) {
 
 // 查看装备
 CMD(view_equipments) {
-    MATCH("查看装备", viewEquipments);
+    if (ev.message == "bg 查看装备" || ev.message == "bg 我的装备") {
+        viewEquipmentsCallback(ev);
+    }
+    else {
+        cq::send_group_message(GROUP_ID, bg_at(ev) +
+            "命令格式不对哦! 要查看装备的话发送\"bg 查看装备\"即可");
+    }
 }
 
 // 查找装备
@@ -253,7 +259,7 @@ CMD(upgrade_blessing) {
 
 // 祝福帮助
 CMD(blessing_help) {
-    cq::send_group_message(ev.target.group_id.value(), "祝福能够影响你的战斗力，发送\"bg 升级祝福\"可以升级你的祝福。命令后面可以跟需要升级的次数，例如：\"bg 升级祝福 5\"");
+    cq::send_group_message(ev.target.group_id.value(), "升级祝福等级能够提升你的战斗力，发送\"bg 升级祝福\"升级。命令后面可以跟需要升级的次数，例如：\"bg 升级祝福 5\"");
 }
 
 // 查看交易场
@@ -315,6 +321,16 @@ CMD(fight) {
     }
     auto param = ev.message.substr(9);
     fightCallback(ev, param);
+}
+
+// PVP
+CMD(pvp) {
+    if (ev.message.length() < 7) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! PVP指令格式为: \"bg pvp 目标\"");
+        return;
+    }
+    auto param = ev.message.substr(6);
+    pvpCallback(ev, param);
 }
 
 // 合成装备

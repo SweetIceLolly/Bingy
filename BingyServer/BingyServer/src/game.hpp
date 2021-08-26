@@ -62,5 +62,7 @@ bool preSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::gr
 void postSynthesisCallback(const bgGameHttpReq &bgReq, const std::set<LL, std::greater<LL>> &invList, LL targetId, LL coins, LL level);
 bool preFightCallback(const bgGameHttpReq &bgReq, const std::string &levelName, LL &levelId);
 void postFightCallback(const bgGameHttpReq &bgReq, LL levelId);
+bool prePvpCallback(const bgGameHttpReq &bgReq, LL targetId);
+void postPvpCallback(const bgGameHttpReq &bgReq, LL targetId);
 bool preAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, LL targetId, LL val);
 void postAdminModifyFieldCallback(const bgGameHttpReq &bgReq, unsigned char fieldType, unsigned char mode, LL targetId, LL val);

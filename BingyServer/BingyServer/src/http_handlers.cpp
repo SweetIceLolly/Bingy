@@ -590,6 +590,14 @@ CMD(fight) {
     threadPool.addJob(thread_pool_job(handler, req));
 }
 
+// PVP
+CMD(pvp) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_post_handler_param<LL>(prePvpCallback, postPvpCallback, "target"), req));
+}
+
 // 管理命令: 为玩家修改属性值
 CMD(admin_modify_field) {
     auto req = get_http_req(connection, ev_data);

@@ -283,6 +283,7 @@ const std::unordered_map<int, const char *> error_desc = {
     { BG_ERR_MAX_ITEMS, "最多只能装备5个一次性物品哦!" },
     { BG_ERR_ITEM_REPEATED, "同样的一次性物品只能装备一个哦!" },
     { BG_ERR_KEYWORD_TOO_LONG, "你用膝盖想想啊! 怎么会有名字这么长的装备呢?" },
-    { BG_ERR_EQI_NOT_FOUND, "没有找到这个装备哦! 换个名称试试?" }
+    { BG_ERR_EQI_NOT_FOUND, "没有找到这个装备哦! 换个名称试试?" },
+    { BG_ERR_INVALID_TARGET, "没有找到这个玩家哦! 快去邀请TA注册吧!" },
 };
 #endif

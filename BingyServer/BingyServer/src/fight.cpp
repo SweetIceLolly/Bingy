@@ -231,19 +231,19 @@ inline void fire_atk(LL round, double &dmgDelta, fightable &b, std::vector<std::
         // 如果对方有红色耳环或者火焰宝石, 则不受烧伤影响
         dmgDelta = 0;
         if (round == 1)
-            msg.push_back("不受烧伤影响");
+            msg.push_back("对方不受烧伤影响");
         return;
     }
     if (b.equipments.find(22) != b.equipments.end()) {
         // 如果对方有寒冰宝石, 则多受 10 点伤害
         dmgDelta += 10;
         if (round == 1)
-            msg.push_back("烧伤且拥有寒冰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
+            msg.push_back("对方烧伤且拥有寒冰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
     }
     else {
         // 没有寒冰宝石
         if (round == 1)
-            msg.push_back("烧伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
+            msg.push_back("对方烧伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
     }
 }
 
@@ -253,19 +253,19 @@ inline void ice_atk(LL round, double &dmgDelta, fightable &b, std::vector<std::s
         // 如果对方有蓝色耳环或者寒冰宝石, 则不受冻伤影响
         dmgDelta = 0;
         if (round == 1)
-            msg.push_back("不受冻伤影响");
+            msg.push_back("对方不受冻伤影响");
         return;
     }
     if (b.equipments.find(19) != b.equipments.end()) {
         // 如果对方有火焰宝石, 则多受 10 点伤害
         dmgDelta += 10;
         if (round == 1)
-            msg.push_back("冻伤且拥有火焰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
+            msg.push_back("对方冻伤且拥有火焰宝石,每回合-(" + std::to_string(static_cast<LL>(dmgDelta - 10)) + "+10)血");
     }
     else {
         // 没有火焰宝石
         if (round == 1)
-            msg.push_back("冻伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
+            msg.push_back("对方冻伤,每回合-" + std::to_string(static_cast<LL>(dmgDelta)) + "血");
     }
 }
 
@@ -337,7 +337,9 @@ CHECK_BUFF(def) {
     case 14:
         // 末狮: 狂狮怒吼, 玩家失去 10 点防护
         b.def -= 10;
-        preMsg += "末狮: 狂狮怒吼, 玩家失去10点防护\n";
+        if (round == 1) {
+            preMsg += "末狮: 狂狮怒吼, 玩家失去10点防护\n";
+        }
         return;
     }
 }
@@ -354,6 +356,10 @@ CHECK_BUFF(atk) {
     // 一次性装备相关
     if (a.equipItems.size() > 0) {
         if (a.equipItems.find(8) != a.equipItems.end()) {
+            // 移除这个物品
+            a.equipItems.erase(8);
+            bg_player_get(a.playerId).remove_equipItem_by_id(8);
+
             // 巨熊之胆: 加强 10 点攻击
             a.atk += 10;
             if (round == 1)

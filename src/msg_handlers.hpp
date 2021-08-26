@@ -18,6 +18,7 @@ CMD(sign_in);
 CMD(pawn);
 CMD(synthesis);
 CMD(fight);
+CMD(pvp);
 
 CMD(view_coins);
 CMD(view_inventory);

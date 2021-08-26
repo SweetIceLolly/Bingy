@@ -38,7 +38,7 @@ bool gamePaused = false;
 bool marketDisabled = false;
 
 // 冷却时间重载
-LL cdOverride = -1;
+LL cdOverride = 0;
 
 // ========================================================
 
@@ -1445,12 +1445,10 @@ bool preSynthesisCallback(const bgGameHttpReq& bgReq, const std::set<LL, std::gr
             auto eqis = bg_search_equipment(target);
 
             // 去掉不能合成的装备
-            for (size_t i = 0; i < eqis.size(); ++i) {
-                if (std::get<2>(eqis[i]) == EqiType::single_use || allSyntheses.find(std::get<0>(eqis[i])) == allSyntheses.end()) {
-                    eqis.erase(eqis.begin() + i);
-                    --i;
-                }
-            }
+            auto it = std::remove_if(eqis.begin(), eqis.end(), [](auto &item) {
+                return std::get<2>(item) == EqiType::single_use || allSyntheses.find(std::get<0>(item)) == allSyntheses.end();
+            });
+            eqis.erase(it, eqis.end());
 
             if (eqis.size() == 0)                   // 没有找到对应名称的装备
                 bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_EQI_NOT_FOUND, BG_ERR_EQI_NOT_FOUND);
@@ -1589,8 +1587,10 @@ bool preFightCallback(const bgGameHttpReq& bgReq, const std::string&levelName, L
         LL fightCd = cdOverride == -1 ? PLAYER.get_cd() : cdOverride;
         if (timeDiff < fightCd) {
             timeDiff = fightCd - timeDiff;
+            LL min = timeDiff / 60;
+            LL sec = timeDiff % 60;
             bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_IN_CD +
-                std::string(", 还剩") + std::to_string(timeDiff / 60) + ":" + std::to_string(timeDiff % 60), BG_ERR_IN_CD);
+                std::string(", 还剩") + (min < 10 ? "0" : "") + std::to_string(min) + ":" + (sec < 10 ? "0" : "") + std::to_string(sec), BG_ERR_IN_CD);
             return false;
         }
     }
@@ -1696,6 +1696,74 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
             { "postMsg", postMsg },
             { "win", playerWins },
             { "errors", errors }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
+// PVP 前检查
+bool prePvpCallback(const bgGameHttpReq &bgReq, LL targetId) {
+    if (!accountCheck(bgReq))
+        return false;
+
+    try {
+        // 检查等级是否有效
+        if (!bg_player_exist(targetId)) {
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_INVALID_TARGET, BG_ERR_INVALID_TARGET);
+            return false;
+        }
+
+        // 检查冷却时间
+        LL timeDiff = dateTime().get_timestamp() - PLAYER.get_lastFight();
+        LL fightCd = cdOverride == -1 ? PLAYER.get_cd() : cdOverride;
+        if (timeDiff < fightCd) {
+            timeDiff = fightCd - timeDiff;
+            LL min = timeDiff / 60;
+            LL sec = timeDiff % 60;
+            bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_IN_CD +
+                std::string(", 还剩") + (min < 10 ? "0" : "") + std::to_string(min) + ":" + (sec < 10 ? "0" : "") + std::to_string(sec), BG_ERR_IN_CD);
+            return false;
+        }
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED + std::string(": ") + e.what(), BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 400, BG_ERR_STR_PRE_OP_FAILED, BG_ERR_PRE_OP_FAILED);
+        return false;
+    }
+    return true;
+}
+
+// PVP
+void postPvpCallback(const bgGameHttpReq &bgReq, LL targetId) {
+    try {
+        // 更新最后打怪时间
+        if (!PLAYER.set_lastFight(dateTime().get_timestamp())) {
+            bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_SET_FIGHTTIME_FAILED, BG_ERR_SET_FIGHTTIME_FAILED);
+            return;
+        }
+
+        // 进行对战
+        bool playerFirst, playerWins;
+        std::string preMsg, postMsg;
+        auto rounds = bg_fight(fightable(PLAYER), fightable(bg_player_get(targetId)), playerWins, playerFirst, preMsg, postMsg);
+
+        // todo 出场消息
+
+        bg_http_reply(bgReq.req, 200, json{
+            { "fighterFirst", playerFirst },
+            { "rounds", rounds },
+            { "targetName", std::to_string(targetId) },     // todo 昵称
+            { "msg", preMsg },
+            { "postMsg", postMsg },
+            { "win", playerWins }
         }.dump().c_str());
     }
     catch (const std::exception &e) {

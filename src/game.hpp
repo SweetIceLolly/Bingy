@@ -62,6 +62,7 @@ void sellTradeCallback(const cq::MessageEvent &ev, const std::vector<std::string
 void recallTradeCallback(const cq::MessageEvent &ev, const std::string &arg);
 void synthesisCallback(const cq::MessageEvent &ev, const std::vector<std::string> &args);
 void fightCallback(const cq::MessageEvent &ev, const std::string &arg);
+void pvpCallback(const cq::MessageEvent &ev, const std::string &arg);
 void chatCallback(const cq::MessageEvent &ev);
 
 ADMIN(AddCoins);
