@@ -73,6 +73,9 @@
     <ClCompile Include="src\secrets\chat.cpp">
       <Filter>Source Files\secrets</Filter>
     </ClCompile>
+    <ClCompile Include="src\secrets\easter_eggs.cpp">
+      <Filter>Source Files\secrets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bingy.hpp">
@@ -148,6 +151,9 @@
       <Filter>Source Files\secrets</Filter>
     </ClInclude>
     <ClInclude Include="src\secrets\trie.hpp">
+      <Filter>Source Files\secrets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\secrets\easter_eggs.hpp">
       <Filter>Source Files\secrets</Filter>
     </ClInclude>
   </ItemGroup>

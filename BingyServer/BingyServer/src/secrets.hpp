@@ -8,4 +8,5 @@
 
 #ifdef BINGY_ENABLE_SECRETS
 #include "secrets/chat.hpp"
+#include "secrets/easter_eggs.hpp"
 #endif

@@ -17,10 +17,7 @@
 #include "json.hpp"
 #include "utils.hpp"
 #include "fight.hpp"
-
-#ifdef _WIN32
-#undef max
-#endif
+#include "secrets.hpp"
 
 using namespace nlohmann;
 
@@ -1633,27 +1630,34 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
         std::vector<std::pair<std::string, int>> errors;
         LL loseCoins;
         if (playerWins) {
-            // 掉落装备
-            std::unordered_set<LL> dropped;                             // 已经掉落的装备
-            for (int i = 0; i < monster.drop.size(); i++) {
-                LL drop = monster.dropDraw.draw();
-                if (dropped.find(drop) == dropped.end())                // 防止掉落重复的装备
-                    dropped.insert(drop);
-                else
-                    continue;
+            // 如果背包还有空间则掉落装备
+            if (PLAYER.get_inventory_size() < PLAYER.get_invCapacity()) {
+                std::unordered_set<LL> dropped;                             // 已经掉落的装备
+                for (int i = 0; i < monster.drop.size(); i++) {
+                    LL drop = monster.dropDraw.draw();
+                    if (dropped.find(drop) == dropped.end())                // 防止掉落重复的装备
+                        dropped.insert(drop);
+                    else
+                        continue;
 
-                if (drop != -1) {
-                    auto &item = allEquipments[drop];
-                    inventoryData itemData;
+                    if (drop != -1) {
+                        auto &item = allEquipments[drop];
+                        inventoryData itemData;
 
-                    itemData.id = drop;
-                    itemData.level = 0;
-                    itemData.wear = item.wear;
-                    drops.push_back({ item.name, static_cast<unsigned char>(item.type) });
-                    if (!PLAYER.add_inventory_item(itemData)) {
-                        errors.push_back({ BG_ERR_STR_ADD_ITEM_FAILED + std::string(": ") + item.name, BG_ERR_ADD_ITEM_FAILED });
+                        itemData.id = drop;
+                        itemData.level = 0;
+                        itemData.wear = item.wear;
+                        drops.push_back({ item.name, static_cast<unsigned char>(item.type) });
+                        if (!PLAYER.add_inventory_item(itemData)) {
+                            errors.push_back({ BG_ERR_STR_ADD_ITEM_FAILED + std::string(": ") + item.name, BG_ERR_ADD_ITEM_FAILED });
+                        }
                     }
                 }
+            }
+            else {
+                if (!postMsg.empty() && postMsg.back() != '\n')
+                    postMsg += "\n";
+                postMsg += "【警告】你的背包已满, 将不能获得掉落物品! 请及时清理或者扩容。";
             }
 
             // 添加经验
@@ -1677,6 +1681,12 @@ void postFightCallback(const bgGameHttpReq& bgReq, LL levelId) {
             loseCoins = rndRange(static_cast<LL>(dLoseCoins) / 3, static_cast<LL>(dLoseCoins));
             if (!PLAYER.inc_coins(loseCoins)) {
                 errors.push_back({ BG_ERR_STR_DEC_COINS_FAILED + std::string(": ") + std::to_string(loseCoins), BG_ERR_DEC_COINS_FAILED });
+            }
+
+            // 返还一部分体力
+            if (!PLAYER.inc_energy(5)) {
+                errors.push_back({ BG_ERR_STR_DEC_ENERGY_FAILED, BG_ERR_DEC_ENERGY_FAILED });
+                return;
             }
         }
 

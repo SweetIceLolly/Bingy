@@ -16,7 +16,7 @@
 #include "config_parser.hpp"
 #include "trade.hpp"
 #include "http_auth.hpp"
-#include "secrets/chat.hpp"
+#include "secrets.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -35,17 +35,6 @@ bool bg_init() {
         return false;
     }
     console_log("成功读取配置文件: 共计" + std::to_string(allSignInEvents.size()) + "个签到活动, " + std::to_string(allSyntheses.size()) + "个装备合成");
-
-#ifdef BINGY_ENABLE_SECRETS
-    // 加载聊骚配置文件
-    console_log("正在读取聊骚配置文件...");
-    if (!bg_load_chat_config()) {
-        console_log("读取聊骚配置文件失败!", LogType::error);
-        return false;
-    }
-    console_log("成功读取聊骚配置文件");
-
-#endif
 
     // 加载怪物数据
     console_log("正在读取怪物数据...");
@@ -84,6 +73,24 @@ bool bg_init() {
     console_log("正在读取交易场数据...");
     bg_trade_get_items();
     console_log("成功读取交易场数据: 共计" + std::to_string(allTradeItems.size()) + "个条目, 下一个交易 ID 为" + std::to_string(bg_get_tradeId()));
+
+#ifdef BINGY_ENABLE_SECRETS
+    // 加载聊骚配置文件
+    console_log("正在读取聊骚配置文件...");
+    if (!bg_load_chat_config()) {
+        console_log("读取聊骚配置文件失败!", LogType::error);
+        return false;
+    }
+    console_log("成功读取聊骚配置文件");
+
+    // 初始化所有彩蛋
+    console_log("正在初始化彩蛋...");
+    if (!bg_init_easter_eggs()) {
+        console_log("彩蛋初始化失败!", LogType::error);
+        return false;
+    }
+    console_log("彩蛋初始化完毕");
+#endif
 
     // 启动 BgKeepAlive
 

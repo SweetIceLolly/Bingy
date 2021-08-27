@@ -5,6 +5,7 @@
 */
 
 #include "fight.hpp"
+#include "secrets.hpp"
 
 #define FLOAT_PRECISION 1e-6            // 内部计算的数值精度, 绝对值小于这个的数值视为 0
 
@@ -31,7 +32,7 @@ CHECK_BUFF(atk);
 CHECK_BUFF(crt);
 inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg, std::vector<std::string> &msg);
 CHECK_BUFF(hp);
-
+inline void remove_single_items(fightable &target);
 
 fightable::fightable() {
     throw std::runtime_error("必须通过玩家或者怪物创建 fightable!");
@@ -216,11 +217,16 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
         a_round = !a_round;
     }
 
+    // 检查彩蛋
+    postFightEasterEgg(b.monsterId, a.playerId, a_wins, preMsg, postMsg);
+
     // 去掉多余的换行符
     if (preMsg.length() > 0) {
         if (preMsg.back() == '\n')
             preMsg.pop_back();
     }
+
+    // todo 一起移除一次性物品
 
     return rounds;
 }
@@ -373,10 +379,10 @@ CHECK_BUFF(atk) {
     }
     if (b.equipments.size() > 0) {
         if (b.equipments.find(36) != b.equipments.end()) {
-            // 如果对方有狮毛护腿: 前三回合攻击减弱 30% - 60%
+            // 如果对方有狮毛护腿: 前三回合攻击减弱 5% - 25%
             if (round <= 3) {
-                double atkPercent = rndRangeFloat(0.4, 0.7);
-                msg.push_back("攻击减弱" + std::to_string(static_cast<LL>(atkPercent * 100)) + "％");
+                double atkPercent = rndRangeFloat(0.05, 0.25);
+                msg.push_back("攻击减弱" + std::to_string(static_cast<LL>(100 - atkPercent * 100)) + "％");
                 a.atk *= atkPercent;
             }
         }
@@ -423,6 +429,10 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
     // 一次性装备相关
     if (a.equipItems.size() > 0) {
         if (a.equipItems.find(5) != a.equipItems.end()) {
+            // 移除这个物品
+            a.equipItems.erase(5);
+            bg_player_get(a.playerId).remove_equipItem_by_id(5);
+
             // 蟒毒: 给对方造成中毒, 每回合 + 7 伤害
             dmg += 5;
             if (round == 1)
@@ -437,21 +447,30 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
             double dmgDelta = 10;
             fire_atk(round, dmgDelta, b, msg);
             dmg += dmgDelta;
-            return;
         }
         if (a.equipments.find(20) != a.equipments.end()) {
             // 冰弩: 给对方造成冻伤, 每回合 + 10 伤害
             double dmgDelta = 10;
             ice_atk(round, dmgDelta, b, msg);
             dmg += dmgDelta;
-            return;
+        }
+        if (a.equipments.find(19) != a.equipments.end()) {
+            // 火焰宝石: 给对方造成烧伤, 每回合 + 10 伤害
+            double dmgDelta = 10;
+            fire_atk(round, dmgDelta, b, msg);
+            dmg += dmgDelta;
+        }
+        if (a.equipments.find(19) != a.equipments.end()) {
+            // 寒冰宝石: 给对方造成冻伤, 每回合 + 10 伤害
+            double dmgDelta = 10;
+            ice_atk(round, dmgDelta, b, msg);
+            dmg += dmgDelta;
         }
         if (a.equipments.find(27) != a.equipments.end()) {
-            // 嗜血之刃: 每回合吸取打出攻击的 5% - 50%血量
-            double hpBonus = rndRangeFloat(dmg * 0.05, dmg * 0.5);
+            // 嗜血之刃: 每回合吸取打出攻击的 5% - 10%血量
+            double hpBonus = rndRangeFloat(dmg * 0.05, dmg * 0.1);
             a.currHp += hpBonus;
             msg.push_back("吸血" + std::to_string(static_cast<LL>(hpBonus)) + "点");
-            return;
         }
     }
 }

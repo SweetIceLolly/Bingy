@@ -34,6 +34,7 @@
     <ClCompile Include="src\rest_server\mongoose.c" />
     <ClCompile Include="src\rest_server\rest_server.cpp" />
     <ClCompile Include="src\secrets\chat.cpp" />
+    <ClCompile Include="src\secrets\easter_eggs.cpp" />
     <ClCompile Include="src\signin_event.cpp" />
     <ClCompile Include="src\synthesis.cpp" />
     <ClCompile Include="src\thread_pool.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="src\rest_server\rest_server.hpp" />
     <ClInclude Include="src\secrets.hpp" />
     <ClInclude Include="src\secrets\chat.hpp" />
+    <ClInclude Include="src\secrets\easter_eggs.hpp" />
     <ClInclude Include="src\secrets\trie.hpp" />
     <ClInclude Include="src\signin_event.hpp" />
     <ClInclude Include="src\synthesis.hpp" />

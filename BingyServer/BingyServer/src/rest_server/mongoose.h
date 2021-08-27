@@ -252,6 +252,10 @@ typedef enum { false = 0, true = 1 } bool;
 
 #include <winsock2.h>
 
+#ifdef _WIN32
+#undef max
+#endif
+
 // Protect from calls like std::snprintf in app code
 // See https://github.com/cesanta/mongoose/issues/1047
 #ifndef __cplusplus
