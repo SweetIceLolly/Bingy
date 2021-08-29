@@ -261,6 +261,13 @@ bool bg_get_all_players_from_db() {
     }
 }
 
+// 获取 VIP 玩家数量
+LL bg_player_get_count_vip() {
+    return dbGetDocumentCount(DB_COLL_USERDATA, "vip",
+        bsoncxx::builder::stream::document{} << "$gt" << 0 << bsoncxx::builder::stream::finalize
+    );
+}
+
 // --------------------------------------------------
 // 各种属性的 getter 和 setter
 

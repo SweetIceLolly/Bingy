@@ -36,6 +36,7 @@ PRE_POST(ViewProperties);
 PRE_POST(ViewEquipments);
 bool preSearchEquipmentsCallback(const bgGameHttpReq &bgReq, const std::string &keyword);
 void postSearchEquipmentsCallback(const bgGameHttpReq &bgReq, const std::string &keyword);
+PRE_POST(ViewVip);
 bool preEquipCallback(const bgGameHttpReq &bgReq, LL equipItem);
 void postEquipCallback(const bgGameHttpReq &bgReq, LL equipItem);
 bool preUnequipCallback(const bgGameHttpReq &bgReq, const EqiType &type);

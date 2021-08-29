@@ -488,6 +488,27 @@ void postSearchEquipmentsCallback(const bgGameHttpReq &bgReq, const std::string 
     }
 }
 
+// 查看 VIP 信息前检查
+bool preViewVipCallback(const bgGameHttpReq &bgReq) {
+    return accountCheck(bgReq);
+}
+
+// 查看 VIP 信息
+void postViewVipCallback(const bgGameHttpReq &bgReq) {
+    try {
+        bg_http_reply(bgReq.req, 200, json {
+            { "level", PLAYER.get_vip() },
+            { "count", bg_player_get_count_vip() }
+        }.dump().c_str());
+    }
+    catch (const std::exception &e) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED + std::string(": ") + e.what(), BG_ERR_POST_OP_FAILED);
+    }
+    catch (...) {
+        bg_http_reply_error(bgReq.req, 500, BG_ERR_STR_POST_OP_FAILED, BG_ERR_POST_OP_FAILED);
+    }
+}
+
 // 装备前检查
 bool preEquipCallback(const bgGameHttpReq& bgReq, LL equipItem) {
     if (!accountCheck(bgReq))

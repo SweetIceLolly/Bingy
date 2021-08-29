@@ -7,6 +7,7 @@
 #include "msg_handlers.hpp"
 #include "game.hpp"
 #include "utils.hpp"
+#include "help.hpp"
 
 // 懒人宏
 // 命令必须要全字匹配才呼叫对应的 pre 和 post 回调函数
@@ -23,6 +24,16 @@
 CMD(bg) {
     if (ev.message == "bg")
         cq::send_group_message(ev.target.group_id.value(), "我在呀!");
+}
+
+// 帮助
+CMD(help) {
+    if (ev.message.length() < 10) {
+        cq::send_group_message(GROUP_ID, bg_get_help_general());
+        return;
+    }
+    auto param = (ev.message[9] == ' ' || ev.message[9] == '\n') ? ev.message.substr(10) : ev.message.substr(9);
+    cq::send_group_message(GROUP_ID, bg_get_help_topic(param));
 }
 
 // 注册
@@ -107,6 +118,11 @@ CMD(search_equipments) {
     else {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "命令格式不对哦! 查找装备指令格式为: \"bg 查找装备 关键字\"");
     }
+}
+
+// 查看 VIP
+CMD(vip) {
+    MATCH("vip", viewVip);
 }
 
 // 装备

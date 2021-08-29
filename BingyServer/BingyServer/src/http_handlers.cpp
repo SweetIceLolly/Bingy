@@ -262,6 +262,14 @@ CMD(search_equipments) {
     threadPool.addJob(thread_pool_job(handler, req));
 }
 
+// 查看 VIP 等级
+CMD(view_vip) {
+    auto req = get_http_req(connection, ev_data);
+    if (!req)
+        return;
+    threadPool.addJob(thread_pool_job(make_bg_get_handler(preViewVipCallback, postViewVipCallback), req));
+}
+
 // 装备
 CMD(equip) {
     auto req = get_http_req(connection, ev_data);

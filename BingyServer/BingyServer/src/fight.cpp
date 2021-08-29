@@ -32,7 +32,7 @@ CHECK_BUFF(atk);
 CHECK_BUFF(crt);
 inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable &aOriginal, fightable &b, const fightable &bOriginal, std::string &preMsg, std::string &postMsg, std::vector<std::string> &msg);
 CHECK_BUFF(hp);
-inline void remove_single_items(fightable &target);
+inline void remove_single_items(fightable &a);
 
 fightable::fightable() {
     throw std::runtime_error("必须通过玩家或者怪物创建 fightable!");
@@ -72,7 +72,6 @@ fightable::fightable(player &p) {
         if (item.second.id != -1)
             equipments.insert(item.second.id);
     }
-        
 }
 
 fightable::fightable(const monsterData &m) {
@@ -226,7 +225,9 @@ std::vector<std::tuple<LL, LL, std::string>> bg_fight(const fightable &obj_a, co
             preMsg.pop_back();
     }
 
-    // todo 一起移除一次性物品
+    // 移除使用过的一次性物品
+    remove_single_items(a);
+    remove_single_items(b);
 
     return rounds;
 }
@@ -301,7 +302,7 @@ inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable 
                 }
                 else {
                     // 不成功
-                    preMsg += "哥布林认出了这个哥布林护符不是你的并向你发起了攻击!";
+                    preMsg += "哥布林认出了这个哥布林护符不是你的并向你发起了攻击!\n";
                 }
             }
         }
@@ -312,7 +313,7 @@ inline void check_init_buff(fightable &a, const fightable &aOriginal, fightable 
 
             // 轻盈之羽: + 20 敏
             a.agi += 20;
-            preMsg += std::to_string(a.playerId) + ": 轻盈之羽, +20敏";
+            preMsg += std::to_string(a.playerId) + ": 轻盈之羽, +20敏\n";
         }
     }
 
@@ -362,10 +363,6 @@ CHECK_BUFF(atk) {
     // 一次性装备相关
     if (a.equipItems.size() > 0) {
         if (a.equipItems.find(8) != a.equipItems.end()) {
-            // 移除这个物品
-            a.equipItems.erase(8);
-            bg_player_get(a.playerId).remove_equipItem_by_id(8);
-
             // 巨熊之胆: 加强 10 点攻击
             a.atk += 10;
             if (round == 1)
@@ -381,7 +378,7 @@ CHECK_BUFF(atk) {
         if (b.equipments.find(36) != b.equipments.end()) {
             // 如果对方有狮毛护腿: 前三回合攻击减弱 5% - 25%
             if (round <= 3) {
-                double atkPercent = rndRangeFloat(0.05, 0.25);
+                double atkPercent = rndRangeFloat(0.75, 0.95);
                 msg.push_back("攻击减弱" + std::to_string(static_cast<LL>(100 - atkPercent * 100)) + "％");
                 a.atk *= atkPercent;
             }
@@ -429,10 +426,6 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
     // 一次性装备相关
     if (a.equipItems.size() > 0) {
         if (a.equipItems.find(5) != a.equipItems.end()) {
-            // 移除这个物品
-            a.equipItems.erase(5);
-            bg_player_get(a.playerId).remove_equipItem_by_id(5);
-
             // 蟒毒: 给对方造成中毒, 每回合 + 7 伤害
             dmg += 5;
             if (round == 1)
@@ -460,7 +453,7 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
             fire_atk(round, dmgDelta, b, msg);
             dmg += dmgDelta;
         }
-        if (a.equipments.find(19) != a.equipments.end()) {
+        if (a.equipments.find(22) != a.equipments.end()) {
             // 寒冰宝石: 给对方造成冻伤, 每回合 + 10 伤害
             double dmgDelta = 10;
             ice_atk(round, dmgDelta, b, msg);
@@ -478,4 +471,17 @@ inline void check_dmg_buff(LL round, double &dmg, fightable &a, const fightable 
 // 检查 a 的血值相关技能
 CHECK_BUFF(hp) {
 
+}
+
+// 移除目标玩家的一次性用品
+inline void remove_single_items(fightable &a) {
+    if (a.equipItems.size() > 0) {
+        // 蟒毒
+        if (a.equipItems.find(5) != a.equipItems.end())
+            bg_player_get(a.playerId).remove_equipItem_by_id(5);
+
+        // 巨熊之胆
+        if (a.equipItems.find(8) != a.equipItems.end())
+            bg_player_get(a.playerId).remove_equipItem_by_id(8);
+    }
 }

@@ -13,6 +13,7 @@
 #define CMD(cmd) void bg_cmd_##cmd##(const cq::MessageEvent &ev)
 
 CMD(bg);
+CMD(help);
 CMD(register);
 CMD(sign_in);
 CMD(pawn);
@@ -25,6 +26,7 @@ CMD(view_inventory);
 CMD(view_properties);
 CMD(view_equipments);
 CMD(search_equipments);
+CMD(vip);
 
 CMD(equip);
 CMD(unequip_helmet);

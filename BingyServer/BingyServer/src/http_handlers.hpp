@@ -181,6 +181,24 @@ CMD(view_equipments);
 CMD(search_equipments);
 
 /**
+ * 查看 VIP 信息
+ * 类型: GET
+ * 参数位置: query
+ * 参数:
+ *  appid: 应用 ID
+ *  secret: 密匙
+ *  groupId: 群号
+ *  qq: QQ 号
+ * 返回值:
+ *  200: 成功, 返回:
+ *      level: 玩家的 VIP 等级
+ *      count: 目前已经开通了 VIP 的用户数
+ *  400: 失败, 详情见返回的 msg 和 errid
+ *  500: 内部错误, 详情见返回的 msg 和 errid
+ */
+CMD(view_vip);
+
+/**
  * 装备
  * 类型: POST
  * 参数位置: body

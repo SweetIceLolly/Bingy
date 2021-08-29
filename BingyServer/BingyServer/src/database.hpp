@@ -77,6 +77,10 @@ bool dbDeleteOne(const char *collName, const std::string &filterKey, const T &fi
 template <typename T>
 bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &filterVal);
 
+// 获取指定 collection 中所有符合条件的文档数量
+template <typename T>
+int64_t dbGetDocumentCount(const char *collName, const std::string &filterKey, const T &filterValue);
+
 // ===========================================================================
 
 template <typename T1, typename T2>
@@ -259,5 +263,21 @@ bool dbDeleteAll(const char *collName, const std::string &filterKey, const T &fi
     }
     catch (...) {
         return false;
+    }
+}
+
+template <typename T>
+int64_t dbGetDocumentCount(const char *collName, const std::string &filterKey, const T &filterValue) {
+    try {
+        return dbGetCollection(dbName.c_str(), collName).count_documents(
+            bsoncxx::builder::stream::document{} << filterKey << filterValue << bsoncxx::builder::stream::finalize
+        );
+    }
+    catch (const mongocxx::exception &e) {
+        console_log(e.what(), LogType::error);
+        return 0;
+    }
+    catch (...) {
+        return 0;
     }
 }

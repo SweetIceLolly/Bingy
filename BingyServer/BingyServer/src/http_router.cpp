@@ -15,6 +15,7 @@ bool init_server_router(rest_server &server) {
     GET("/viewcoins", bg_cmd_view_coins);
     GET("/viewinv", bg_cmd_view_inventory);
     GET("/viewprop", bg_cmd_view_properties);
+    GET("/vip", bg_cmd_view_vip);
 
     POST("/register", bg_cmd_register);
     POST("/signin", bg_cmd_sign_in);

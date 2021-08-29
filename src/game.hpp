@@ -29,6 +29,7 @@ std::string bg_at(const cq::MessageEvent &ev);
 #define GROUP_ID    ev.target.group_id.value()      // 从 ev 获取群号
 #define USER_ID     ev.target.user_id.value()       // 从 ev 获取玩家 QQ 号
 
+void helpCallback(const cq::MessageEvent &ev);
 void registerCallback(const cq::MessageEvent &ev);
 void viewCoinsCallback(const cq::MessageEvent &ev);
 void signInCallback(const cq::MessageEvent &ev);
@@ -37,6 +38,7 @@ void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &ar
 void viewPropertiesCallback(const cq::MessageEvent &ev);
 void viewEquipmentsCallback(const cq::MessageEvent &ev);
 void searchEquipmentsCallback(const cq::MessageEvent &ev, const std::string &arg);
+void viewVipCallback(const cq::MessageEvent &ev);
 void equipCallback(const cq::MessageEvent &ev, const std::string &arg);
 void unequipHelmetCallback(const cq::MessageEvent &ev);
 void unequipBodyCallback(const cq::MessageEvent &ev);

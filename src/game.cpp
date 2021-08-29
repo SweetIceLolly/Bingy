@@ -255,8 +255,12 @@ void pawnCallback(const cq::MessageEvent &ev, const std::vector<std::string> &ar
                         return;
                     }
                     auto start = str_to_ll(range[0]), end = str_to_ll(range[1]);
-                    if (end < start || start <= 0 || end < 0 || end - start > 100) {
+                    if (end < start || start <= 0 || end < 0) {
                         cq::send_group_message(GROUP_ID, bg_at(ev) + "出售范围有误!");
+                        return;
+                    }
+                    if (invList.size() + (end - start) > 100) {
+                        cq::send_group_message(GROUP_ID, bg_at(ev) + "你一次过出售的东西实在太多啦! 麻烦你分几次吧。");
                         return;
                     }
                     for (LL i = start; i <= end; ++i)
@@ -401,6 +405,40 @@ void searchEquipmentsCallback(const cq::MessageEvent &ev, const std::string &arg
     }
     catch (const std::exception &e) {
         cq::send_group_message(GROUP_ID, bg_at(ev) + "查找装备发生错误: " + e.what());
+    }
+}
+
+// 查看 VIP
+void viewVipCallback(const cq::MessageEvent &ev) {
+    try {
+        auto res = bg_http_get("/vip", { MAKE_BG_QUERY });
+        if (res.code == 200) {
+            LL level = res.content["level"].get<LL>();
+            LL count = res.content["count"].get<LL>();
+            std::string msg;
+            if (level > 0) {
+                msg = "欢迎成为Bingy的VIP! 你的VIP等级为: " + std::to_string(level) + "。目前有" + std::to_string(count) +
+                    "人是VIP, 你是他们其中的一员哦! VIP相关命令 (既可以在私聊也可以群聊里发):\n"
+                    "修改昵称: bg 修改昵称\n"
+                    "修改出场消息: bg 修改出场消息\n"
+                    "修改胜利消息: bg 修改胜利消息\n"
+                    "修改战败消息: bg 修改战败消息";
+            }
+            else {
+                msg = "目前已经有" + std::to_string(count) + "人成为Bingy的VIP, 快成为他们其中的一员吧!\n"
+                    "--- VIP有什么用? ---\n"
+                    "VIP并不会给你带来任何游戏层面的优势, 所有玩家都是公平游戏。但是, VIP能让你能够高度自定义Bingy的提示文本, 让你在游戏中更加酷炫。\n"
+                    "--- 为什么要开通VIP? ---\n"
+                    "游戏虽然看上去简单，但实际上开发者也耗费了许多心血和时间，开发的过程也并不容易，十分希望玩家能够给予适当的鼓励。";
+            }
+            cq::send_group_message(GROUP_ID, bg_at(ev) + msg);
+        }
+        else {
+            cq::send_group_message(GROUP_ID, bg_at(ev) + bg_get_err_msg(res, "查看VIP信息发生错误: "));
+        }
+    }
+    catch (const std::exception &e) {
+        cq::send_group_message(GROUP_ID, bg_at(ev) + "查看VIP信息发生错误: " + e.what());
     }
 }
 

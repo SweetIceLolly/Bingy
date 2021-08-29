@@ -211,6 +211,9 @@ inline size_t bg_player_get_count() {
     return allPlayers.size();
 }
 
+// 获取 VIP 玩家数量
+LL bg_player_get_count_vip();
+
 bool bg_all_player_inc_coins(LL val);
 bool bg_all_player_inc_heroCoin(LL val);
 bool bg_all_player_inc_level(LL val);
